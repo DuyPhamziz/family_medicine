@@ -1,0 +1,353 @@
+-- =====================================================
+-- SETUP & CONFIGURATION
+-- =====================================================
+-- Kích hoạt extension để tạo UUID tự động (nếu dùng Postgres < 13 cần uuid-ossp, bản mới dùng gen_random_uuid())
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- =====================================================
+-- 1. AUTH & PERMISSION
+-- =====================================================
+
+CREATE TABLE roles (
+    role_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    role_code VARCHAR(50) NOT NULL UNIQUE,
+    role_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE users (
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    role_id UUID NOT NULL
+);
+
+-- =====================================================
+-- 2. DEPARTMENT & STAFF
+-- =====================================================
+
+CREATE TABLE departments (
+    department_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    department_code VARCHAR(50) NOT NULL UNIQUE,
+    department_name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE staff (
+    staff_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE, -- 1 User chỉ là 1 Staff
+    department_id UUID,
+    staff_type VARCHAR(50), -- VD: Doctor, Nurse, Admin
+    license_number VARCHAR(100),
+    specialization VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- =====================================================
+-- 3. PATIENT CORE
+-- =====================================================
+
+CREATE TABLE patients (
+    patient_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    medical_record_number VARCHAR(50) NOT NULL UNIQUE,
+    full_name VARCHAR(255) NOT NULL,
+    dob DATE,
+    gender VARCHAR(20),
+    phone VARCHAR(50),
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
+-- 4. PATIENT CONDITION
+-- =====================================================
+
+CREATE TABLE patient_conditions (
+    condition_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    condition_code VARCHAR(50),
+    condition_name VARCHAR(255),
+    diagnosed_date DATE,
+    status VARCHAR(50), -- VD: Active, Cured, Chronic
+    note TEXT
+);
+
+-- =====================================================
+-- 5. FORM BUILDER
+-- =====================================================
+
+CREATE TABLE forms (
+    form_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    form_code VARCHAR(50) NOT NULL UNIQUE,
+    form_name VARCHAR(255) NOT NULL,
+    version VARCHAR(20),
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE form_sections (
+    section_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    form_id UUID NOT NULL,
+    section_name VARCHAR(255),
+    display_order INT
+);
+
+CREATE TABLE form_fields (
+    field_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    section_id UUID NOT NULL,
+    indicator_id UUID NOT NULL,
+    display_order INT,
+    required BOOLEAN DEFAULT FALSE
+);
+
+-- =====================================================
+-- 6. INDICATOR & OPTION
+-- =====================================================
+
+CREATE TABLE indicators (
+    indicator_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    indicator_code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    data_type VARCHAR(50), -- VD: Number, String, Boolean, Choice
+    unit VARCHAR(50),
+    is_input BOOLEAN DEFAULT TRUE,
+    is_derived BOOLEAN DEFAULT FALSE,
+    description TEXT
+);
+
+CREATE TABLE indicator_options (
+    option_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    indicator_id UUID NOT NULL,
+    option_code VARCHAR(50),
+    display_text VARCHAR(255),
+    score_value DOUBLE PRECISION
+);
+
+-- =====================================================
+-- 7. ASSESSMENT & APPROVAL
+-- =====================================================
+
+CREATE TABLE assessments (
+    assessment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    created_by UUID NOT NULL, -- Link to USER
+    form_id UUID NOT NULL,
+    version_no INT DEFAULT 1,
+    assessment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50), -- VD: Draft, Pending, Approved
+    snapshot_data TEXT -- Lưu JSON toàn bộ form tại thời điểm đánh giá
+);
+
+CREATE TABLE assessment_approvals (
+    approval_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assessment_id UUID NOT NULL,
+    doctor_id UUID NOT NULL, -- Link to STAFF
+    decision VARCHAR(50), -- VD: Approved, Rejected
+    comment TEXT,
+    approved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
+-- 8. ANSWER & HISTORY
+-- =====================================================
+
+CREATE TABLE answers (
+    answer_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assessment_id UUID NOT NULL,
+    indicator_id UUID NOT NULL,
+    option_id UUID, -- Nullable nếu câu trả lời là text/number
+    value_number DOUBLE PRECISION,
+    value_text TEXT
+);
+
+CREATE TABLE indicator_history (
+    history_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    indicator_id UUID NOT NULL,
+    value_number DOUBLE PRECISION,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    source VARCHAR(100) -- VD: Assessment, Lab Result, Device
+);
+
+-- =====================================================
+-- 9. FORMULA & VARIABLE
+-- =====================================================
+
+CREATE TABLE variables (
+    variable_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    variable_code VARCHAR(50) NOT NULL UNIQUE,
+    data_type VARCHAR(50),
+    description TEXT
+);
+
+CREATE TABLE formulas (
+    formula_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    target_variable_id UUID NOT NULL,
+    expression TEXT NOT NULL, -- Chuỗi công thức toán học
+    version VARCHAR(20),
+    effective_from DATE,
+    effective_to DATE
+);
+
+CREATE TABLE formula_dependencies (
+    formula_id UUID NOT NULL,
+    source_indicator_id UUID NOT NULL,
+    PRIMARY KEY (formula_id, source_indicator_id)
+);
+
+-- =====================================================
+-- 10. RISK ENGINE
+-- =====================================================
+
+CREATE TABLE risk_levels (
+    risk_level_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(50) NOT NULL UNIQUE, -- VD: HIGH, MEDIUM, LOW
+    color VARCHAR(20), -- VD: #FF0000
+    priority INT
+);
+
+CREATE TABLE risk_rules (
+    rule_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    target_variable_id UUID NOT NULL,
+    condition_expression TEXT, -- Logic: IF score > 10
+    risk_level_id UUID NOT NULL,
+    message TEXT
+);
+
+CREATE TABLE assessment_results (
+    result_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assessment_id UUID NOT NULL,
+    variable_id UUID NOT NULL,
+    value_number DOUBLE PRECISION,
+    risk_level_id UUID,
+    explanation TEXT
+);
+
+-- =====================================================
+-- 11. ALERT & RECOMMENDATION
+-- =====================================================
+
+CREATE TABLE health_alerts (
+    alert_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    indicator_id UUID,
+    alert_level VARCHAR(50), -- VD: Critical, Warning
+    message TEXT,
+    triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE recommendations (
+    recommendation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    risk_level_id UUID NOT NULL,
+    content TEXT,
+    target_role VARCHAR(50) -- VD: Patient, Doctor
+);
+
+-- =====================================================
+-- 12. PATIENT TIMELINE
+-- =====================================================
+
+CREATE TABLE patient_timeline (
+    timeline_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id UUID NOT NULL,
+    event_type VARCHAR(50), -- VD: Visit, Diagnosis, Assessment
+    reference_id UUID, -- ID của bảng liên quan (assessment_id, condition_id...)
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================
+-- 13. AUDIT LOG
+-- =====================================================
+
+CREATE TABLE audit_logs (
+    audit_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_name VARCHAR(100), -- Tên bảng bị thay đổi
+    entity_id UUID, -- ID dòng bị thay đổi
+    action VARCHAR(20), -- INSERT, UPDATE, DELETE
+    changed_by UUID, -- User ID
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    old_value TEXT, -- JSON snapshot
+    new_value TEXT  -- JSON snapshot
+);
+
+-- =====================================================
+-- RELATIONSHIPS (FOREIGN KEYS)
+-- =====================================================
+
+-- Users & Roles
+ALTER TABLE users ADD CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES roles(role_id);
+
+-- Staff
+ALTER TABLE staff ADD CONSTRAINT fk_staff_user FOREIGN KEY (user_id) REFERENCES users(user_id);
+ALTER TABLE staff ADD CONSTRAINT fk_staff_dept FOREIGN KEY (department_id) REFERENCES departments(department_id);
+
+-- Patient Conditions
+ALTER TABLE patient_conditions ADD CONSTRAINT fk_cond_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE;
+
+-- Form Structure
+ALTER TABLE form_sections ADD CONSTRAINT fk_section_form FOREIGN KEY (form_id) REFERENCES forms(form_id) ON DELETE CASCADE;
+ALTER TABLE form_fields ADD CONSTRAINT fk_field_section FOREIGN KEY (section_id) REFERENCES form_sections(section_id) ON DELETE CASCADE;
+ALTER TABLE form_fields ADD CONSTRAINT fk_field_indicator FOREIGN KEY (indicator_id) REFERENCES indicators(indicator_id);
+
+-- Indicator Options
+ALTER TABLE indicator_options ADD CONSTRAINT fk_opt_indicator FOREIGN KEY (indicator_id) REFERENCES indicators(indicator_id) ON DELETE CASCADE;
+
+-- Assessment
+ALTER TABLE assessments ADD CONSTRAINT fk_assess_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id);
+ALTER TABLE assessments ADD CONSTRAINT fk_assess_creator FOREIGN KEY (created_by) REFERENCES users(user_id);
+ALTER TABLE assessments ADD CONSTRAINT fk_assess_form FOREIGN KEY (form_id) REFERENCES forms(form_id);
+
+-- Assessment Approval
+ALTER TABLE assessment_approvals ADD CONSTRAINT fk_approval_assess FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DELETE CASCADE;
+ALTER TABLE assessment_approvals ADD CONSTRAINT fk_approval_doctor FOREIGN KEY (doctor_id) REFERENCES staff(staff_id);
+
+-- Answers
+ALTER TABLE answers ADD CONSTRAINT fk_ans_assess FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DELETE CASCADE;
+ALTER TABLE answers ADD CONSTRAINT fk_ans_indicator FOREIGN KEY (indicator_id) REFERENCES indicators(indicator_id);
+ALTER TABLE answers ADD CONSTRAINT fk_ans_option FOREIGN KEY (option_id) REFERENCES indicator_options(option_id);
+
+-- Indicator History
+ALTER TABLE indicator_history ADD CONSTRAINT fk_hist_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id);
+ALTER TABLE indicator_history ADD CONSTRAINT fk_hist_indicator FOREIGN KEY (indicator_id) REFERENCES indicators(indicator_id);
+
+-- Formulas
+ALTER TABLE formulas ADD CONSTRAINT fk_formu_variable FOREIGN KEY (target_variable_id) REFERENCES variables(variable_id);
+ALTER TABLE formula_dependencies ADD CONSTRAINT fk_dep_formula FOREIGN KEY (formula_id) REFERENCES formulas(formula_id) ON DELETE CASCADE;
+ALTER TABLE formula_dependencies ADD CONSTRAINT fk_dep_indicator FOREIGN KEY (source_indicator_id) REFERENCES indicators(indicator_id);
+
+-- Risk Rules
+ALTER TABLE risk_rules ADD CONSTRAINT fk_rule_variable FOREIGN KEY (target_variable_id) REFERENCES variables(variable_id);
+ALTER TABLE risk_rules ADD CONSTRAINT fk_rule_risk_level FOREIGN KEY (risk_level_id) REFERENCES risk_levels(risk_level_id);
+
+-- Assessment Results
+ALTER TABLE assessment_results ADD CONSTRAINT fk_res_assess FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DELETE CASCADE;
+ALTER TABLE assessment_results ADD CONSTRAINT fk_res_variable FOREIGN KEY (variable_id) REFERENCES variables(variable_id);
+ALTER TABLE assessment_results ADD CONSTRAINT fk_res_risk FOREIGN KEY (risk_level_id) REFERENCES risk_levels(risk_level_id);
+
+-- Alerts & Recommendations
+ALTER TABLE health_alerts ADD CONSTRAINT fk_alert_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id);
+ALTER TABLE health_alerts ADD CONSTRAINT fk_alert_indicator FOREIGN KEY (indicator_id) REFERENCES indicators(indicator_id);
+ALTER TABLE recommendations ADD CONSTRAINT fk_rec_risk FOREIGN KEY (risk_level_id) REFERENCES risk_levels(risk_level_id);
+
+-- Timeline & Audit
+ALTER TABLE patient_timeline ADD CONSTRAINT fk_timeline_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE;
+ALTER TABLE audit_logs ADD CONSTRAINT fk_audit_user FOREIGN KEY (changed_by) REFERENCES users(user_id);
+
+-- =====================================================
+-- INDEXES (PERFORMANCE OPTIMIZATION)
+-- =====================================================
+
+CREATE INDEX idx_user_role ON users(role_id);
+CREATE INDEX idx_staff_user ON staff(user_id);
+CREATE INDEX idx_staff_dept ON staff(department_id);
+CREATE INDEX idx_cond_patient ON patient_conditions(patient_id);
+CREATE INDEX idx_field_section ON form_fields(section_id);
+CREATE INDEX idx_opt_indicator ON indicator_options(indicator_id);
+CREATE INDEX idx_assess_patient ON assessments(patient_id);
+CREATE INDEX idx_ans_assess ON answers(assessment_id);
+CREATE INDEX idx_res_assess ON assessment_results(assessment_id);
+CREATE INDEX idx_hist_patient_indicator ON indicator_history(patient_id, indicator_id);
+CREATE INDEX idx_alert_patient ON health_alerts(patient_id);

@@ -1,9 +1,9 @@
 package com.familymed.common;
 
-import com.familymed.user.Role;
-import com.familymed.user.RoleRepository;
-import com.familymed.user.User;
-import com.familymed.user.UserRepository;
+import com.familymed.user.entity.Role;
+import com.familymed.user.repository.RoleRepository;
+import com.familymed.user.entity.User;
+import com.familymed.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
@@ -23,11 +23,11 @@ public class DefaultUserSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        Role adminRole = roleRepository.findByRoleCode("ADMIN")
-                .orElseThrow(() -> new RuntimeException("ADMIN role not found"));
+        Role adminRole = roleRepository.findByRoleCode("ROLE_ADMIN")
+                .orElseThrow(() -> new RuntimeException("ROLE_ADMIN role not found"));
 
-        Role doctorRole = roleRepository.findByRoleCode("DOCTOR")
-                .orElseThrow(() -> new RuntimeException("DOCTOR role not found"));
+        Role doctorRole = roleRepository.findByRoleCode("ROLE_DOCTOR")
+                .orElseThrow(() -> new RuntimeException("ROLE_DOCTOR role not found"));
 
         createUserIfMissing(
                 "admin@familymed.vn",

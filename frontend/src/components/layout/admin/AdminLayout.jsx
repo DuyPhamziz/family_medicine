@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { useAuth } from "../../../hooks/auth/useAuth";
 import { ROLES } from "../../../constants/roles";
@@ -77,7 +77,7 @@ const AdminLayout = ({ children }) => {
         {/* Nội dung chính */}
         <main className="flex-1 overflow-y-auto p-6 md:p-10">
           <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {children}
+            {children || <Outlet />}
           </div>
         </main>
       </div>

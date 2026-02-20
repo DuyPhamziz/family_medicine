@@ -24,6 +24,9 @@ public class JwtTokenProvider {
     
     @Value("${jwt.refresh-expiration:604800000}") // 7 days default
     private Long refreshExpiration;
+
+    @Value("${jwt.clock-skew-ms:120000}")
+    private Long clockSkewMs;
     
     private SecretKey getSigningKey() {
         // Đảm bảo secret key đủ dài (tối thiểu 256 bits = 32 bytes)
@@ -42,19 +45,30 @@ public class JwtTokenProvider {
         return createToken(claims, userDetails.getUsername());
     }
     
-    public String generateToken(String username, String role) {
+    public String generateToken(String username, String role, String userId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
+        claims.put("userId", userId);
+        claims.put("typ", "access");
         return createToken(claims, username);
     }
     
     public String generateRefreshToken(String username) {
         return Jwts.builder()
                 .subject(username)
+                .claim("typ", "refresh")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public long getRefreshExpirationSeconds() {
+        return refreshExpiration / 1000;
+    }
+
+    public String generateRefreshToken(com.familymed.user.entity.User user) {
+        return generateRefreshToken(user.getEmail());
     }
     
     private String createToken(Map<String, Object> claims, String subject) {
@@ -82,6 +96,24 @@ public class JwtTokenProvider {
             return null;
         }
     }
+
+    public String extractUserId(String token) {
+        try {
+            Object userIdObj = extractClaim(token, claims -> claims.get("userId"));
+            return userIdObj != null ? userIdObj.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String extractTokenType(String token) {
+        try {
+            Object typ = extractClaim(token, claims -> claims.get("typ"));
+            return typ != null ? typ.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
     
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
@@ -99,11 +131,21 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
+    public Claims parseRefreshClaims(String token) {
+        Claims claims = extractAllClaims(token);
+        Object typ = claims.get("typ");
+        if (typ == null || !"refresh".equals(typ.toString())) {
+            throw new RuntimeException("Invalid refresh token type");
+        }
+        return claims;
+    }
     
     public Boolean isTokenExpired(String token) {
         try {
             Date expiration = extractExpiration(token);
-            return expiration.before(new Date());
+            Date skewedNow = new Date(System.currentTimeMillis() - clockSkewMs);
+            return expiration.before(skewedNow);
         } catch (Exception e) {
             return true; // Nếu không extract được expiration thì coi như expired
         }

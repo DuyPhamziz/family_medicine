@@ -22,6 +22,8 @@ api.interceptors.request.use(
 );
 
 // Response interceptor - Xử lý lỗi authentication và authorization
+let refreshPromise = null;
+
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -31,29 +33,46 @@ api.interceptors.response.use(
 
     // Xử lý lỗi 401 Unauthorized - Token hết hạn hoặc không hợp lệ
     if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      // Clear auth data và redirect về login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('role');
-      
-      // Redirect về login page (chỉ khi không phải đang ở login page)
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      if (window.location.pathname === '/login') {
+        return Promise.reject(error);
       }
 
-      return Promise.reject(error);
+      originalRequest._retry = true;
+
+      // Nếu đang có một yêu cầu refresh khác, đợi nó
+      if (!refreshPromise) {
+        refreshPromise = api.post('/api/auth/refresh', {}, { withCredentials: true })
+          .then(res => {
+            const token = res.data.token;
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+            return token;
+          })
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+
+      try {
+        const token = await refreshPromise;
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Clear auth data và redirect về login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('role');
+        
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(refreshError);
+      }
     }
 
     // Xử lý lỗi 403 Forbidden - Không có quyền truy cập
     if (error.response?.status === 403) {
-      // Có thể hiển thị thông báo hoặc redirect
       console.error('Access forbidden:', error.response.data);
-      // Redirect về dashboard hoặc trang không có quyền
-      if (window.location.pathname !== '/') {
-        // window.location.href = '/';
-      }
     }
 
     return Promise.reject(error);

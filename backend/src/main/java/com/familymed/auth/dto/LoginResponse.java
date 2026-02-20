@@ -1,6 +1,6 @@
 package com.familymed.auth.dto;
 
-import com.familymed.user.User;
+import com.familymed.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

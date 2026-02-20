@@ -1,6 +1,6 @@
 package com.familymed.patient.dto;
 
-import com.familymed.patient.Patient;
+import com.familymed.patient.entity.Patient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

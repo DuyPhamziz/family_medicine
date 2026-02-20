@@ -46,6 +46,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             
             String username = jwtTokenProvider.extractUsername(token);
             String role = jwtTokenProvider.extractRole(token);
+            String tokenType = jwtTokenProvider.extractTokenType(token);
+            if (tokenType == null || !"access".equals(tokenType)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 // Xử lý trường hợp role null hoặc empty - dùng ADMIN làm default để tránh lỗi

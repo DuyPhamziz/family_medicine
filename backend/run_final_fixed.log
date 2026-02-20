@@ -1,0 +1,154 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------------< com.example:demo >--------------------------
+[INFO] Building demo 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.2.5:run (default-cli) > test-compile @ demo >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ demo ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 5 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ demo ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ demo ---
+[INFO] skip non existing resourceDirectory H:\family_medicine\backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ demo ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] <<< spring-boot:3.2.5:run (default-cli) < test-compile @ demo <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.2.5:run (default-cli) @ demo ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-02-20 16:31:33.182 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2026-02-20 16:31:33.218 INFO  [main] com.familymed.FamilyMedApplication - Starting FamilyMedApplication using Java 17.0.18 with PID 5744 (H:\family_medicine\backend\target\classes started by acer in H:\family_medicine\backend)
+2026-02-20 16:31:33.219 DEBUG [main] com.familymed.FamilyMedApplication - Running with Spring Boot v3.2.5, Spring v6.1.6
+2026-02-20 16:31:33.219 INFO  [main] com.familymed.FamilyMedApplication - No active profile set, falling back to 1 default profile: "default"
+2026-02-20 16:31:34.273 INFO  [main] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-02-20 16:31:34.443 INFO  [main] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 163 ms. Found 25 JPA repository interfaces.
+2026-02-20 16:31:35.125 INFO  [main] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8081 (http)
+2026-02-20 16:31:35.132 INFO  [main] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8081"]
+2026-02-20 16:31:35.134 INFO  [main] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-02-20 16:31:35.134 INFO  [main] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.20]
+2026-02-20 16:31:35.214 INFO  [main] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-02-20 16:31:35.216 INFO  [main] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1960 ms
+2026-02-20 16:31:35.521 INFO  [main] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-02-20 16:31:35.558 INFO  [main] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.4.4.Final
+2026-02-20 16:31:35.584 INFO  [main] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-02-20 16:31:35.741 INFO  [main] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-02-20 16:31:35.760 INFO  [main] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-02-20 16:31:35.929 INFO  [main] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2586e878
+2026-02-20 16:31:35.930 INFO  [main] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-02-20 16:31:35.973 WARN  [main] org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-02-20 16:31:37.200 INFO  [main] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-02-20 16:31:37.559 INFO  [main] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-02-20 16:31:37.853 DEBUG [main] c.f.a.filter.JwtAuthenticationFilter - Filter 'jwtAuthenticationFilter' configured for use
+2026-02-20 16:31:37.855 DEBUG [main] c.f.security.RateLimitingFilter - Filter 'rateLimitingFilter' configured for use
+2026-02-20 16:31:37.914 INFO  [main] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-02-20 16:31:39.308 WARN  [main] o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-02-20 16:31:39.653 INFO  [main] o.s.b.a.e.web.EndpointLinksResolver - Exposing 3 endpoint(s) beneath base path '/actuator'
+2026-02-20 16:31:39.740 INFO  [main] o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@60171a27, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@436c910e, org.springframework.security.web.context.SecurityContextHolderFilter@3b00276, org.springframework.security.web.header.HeaderWriterFilter@41ad5874, org.springframework.web.filter.CorsFilter@75defbd2, org.springframework.security.web.authentication.logout.LogoutFilter@4b2c95ff, com.familymed.auth.filter.JwtAuthenticationFilter@1b1e1f02, com.familymed.security.RateLimitingFilter@4825aad0, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@567400fb, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@4a83736a, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@1f5359a8, org.springframework.security.web.session.SessionManagementFilter@39211108, org.springframework.security.web.access.ExceptionTranslationFilter@192b9e35, org.springframework.security.web.access.intercept.AuthorizationFilter@4977e527]
+2026-02-20 16:31:40.225 INFO  [main] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8081"]
+2026-02-20 16:31:40.245 INFO  [main] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8081 (http) with context path ''
+2026-02-20 16:31:40.259 INFO  [main] com.familymed.FamilyMedApplication - Started FamilyMedApplication in 7.471 seconds (process running for 7.761)
+? Initializing roles...
+2026-02-20 16:31:40.386 DEBUG [main] org.hibernate.SQL - 
+    select
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at 
+    from
+        roles r1_0 
+    where
+        r1_0.role_code=?
+2026-02-20 16:31:40.399 DEBUG [main] org.hibernate.SQL - 
+    select
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at 
+    from
+        roles r1_0 
+    where
+        r1_0.role_code=?
+2026-02-20 16:31:40.401 DEBUG [main] org.hibernate.SQL - 
+    select
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at 
+    from
+        roles r1_0 
+    where
+        r1_0.role_code=?
+? Initialized roles: ROLE_ADMIN, ROLE_DOCTOR, ROLE_USER
+2026-02-20 16:31:40.403 DEBUG [main] org.hibernate.SQL - 
+    select
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at 
+    from
+        roles r1_0 
+    where
+        r1_0.role_code=?
+2026-02-20 16:31:40.404 DEBUG [main] org.hibernate.SQL - 
+    select
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at 
+    from
+        roles r1_0 
+    where
+        r1_0.role_code=?
+2026-02-20 16:31:40.408 DEBUG [main] org.hibernate.SQL - 
+    select
+        u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=? 
+    fetch
+        first ? rows only
+2026-02-20 16:31:40.410 DEBUG [main] org.hibernate.SQL - 
+    select
+        u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=? 
+    fetch
+        first ? rows only
+2026-02-20 16:31:40.425 DEBUG [main] org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        icd10_code ic1_0
+2026-02-20 16:31:40.427 WARN  [main] c.f.icd10.Icd10DataInitializer - ICD10_INIT skipped, icd10_codes.csv not found on classpath
+2026-02-20 16:31:40.430 DEBUG [main] org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        diagnostic_forms df1_0
+? Diagnostic forms already initialized, skipping...

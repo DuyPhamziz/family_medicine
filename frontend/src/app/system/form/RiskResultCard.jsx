@@ -35,6 +35,9 @@ const RiskResultCard = ({
   };
 
   const riskColor = getRiskColor(displayPercentage);
+  const questionCount = form?.sections
+    ? form.sections.reduce((total, section) => total + (section.questions?.length || 0), 0)
+    : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
@@ -148,10 +151,10 @@ const RiskResultCard = ({
               Trung bình câu hỏi
             </p>
             <p className="text-4xl font-bold text-purple-600">
-              {(result.totalScore / form.questions?.length).toFixed(1) || 0}
+              {(result.totalScore / (questionCount || 1)).toFixed(1) || 0}
             </p>
             <p className="text-xs text-gray-500 mt-2">
-              {form.questions?.length} câu hỏi
+              {questionCount} câu hỏi
             </p>
           </div>
 

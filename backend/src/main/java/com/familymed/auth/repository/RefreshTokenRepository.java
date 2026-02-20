@@ -1,0 +1,18 @@
+package com.familymed.auth.repository;
+
+import com.familymed.auth.entity.RefreshToken;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
+    Optional<RefreshToken> findByTokenHash(String tokenHash);
+
+    List<RefreshToken> findByUserUserId(UUID userId);
+
+    long deleteByExpiresAtBefore(LocalDateTime cutoff);
+}

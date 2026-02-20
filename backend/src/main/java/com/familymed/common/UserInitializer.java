@@ -1,15 +1,13 @@
 package com.familymed.common;
 
-import com.familymed.user.Role;
-import com.familymed.user.RoleRepository;
-import com.familymed.user.User;
-import com.familymed.user.UserRepository;
+import com.familymed.user.entity.Role;
+import com.familymed.user.repository.RoleRepository;
+import com.familymed.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -25,37 +23,34 @@ public class UserInitializer implements CommandLineRunner {
         try {
             System.out.println("🔄 Initializing roles...");
 
-                // Create or get ADMIN role
-                Role adminRole = roleRepository.findByRoleCode("ADMIN")
-                        .orElseGet(() -> {
-                            Role role = new Role();
-                            role.setRoleId(UUID.randomUUID());
-                            role.setRoleCode("ADMIN");
-                            role.setRoleName("Administrator");
-                            return roleRepository.save(role);
-                        });
+            // Create or get ADMIN role
+            roleRepository.findByRoleCode("ROLE_ADMIN")
+                    .orElseGet(() -> {
+                        Role role = new Role();
+                        role.setRoleCode("ROLE_ADMIN");
+                        role.setRoleName("Administrator");
+                        return roleRepository.save(role);
+                    });
 
-                // Create or get DOCTOR role
-                Role doctorRole = roleRepository.findByRoleCode("DOCTOR")
-                        .orElseGet(() -> {
-                            Role role = new Role();
-                            role.setRoleId(UUID.randomUUID());
-                            role.setRoleCode("DOCTOR");
-                            role.setRoleName("Doctor");
-                            return roleRepository.save(role);
-                        });
+            // Create or get DOCTOR role
+            roleRepository.findByRoleCode("ROLE_DOCTOR")
+                    .orElseGet(() -> {
+                        Role role = new Role();
+                        role.setRoleCode("ROLE_DOCTOR");
+                        role.setRoleName("Doctor");
+                        return roleRepository.save(role);
+                    });
 
-                // Create or get NURSE role
-                Role nurseRole = roleRepository.findByRoleCode("NURSE")
-                        .orElseGet(() -> {
-                            Role role = new Role();
-                            role.setRoleId(UUID.randomUUID());
-                            role.setRoleCode("NURSE");
-                            role.setRoleName("Nurse");
-                            return roleRepository.save(role);
-                        });
+            // Create or get USER role
+            roleRepository.findByRoleCode("ROLE_USER")
+                    .orElseGet(() -> {
+                        Role role = new Role();
+                        role.setRoleCode("ROLE_USER");
+                        role.setRoleName("Regular User");
+                        return roleRepository.save(role);
+                    });
 
-                System.out.println("✓ Initialized roles: ADMIN, DOCTOR, NURSE");
+            System.out.println("✓ Initialized roles: ROLE_ADMIN, ROLE_DOCTOR, ROLE_USER");
 
             // (Temporarily disabled) Fix plaintext passwords (rehash if not BCrypt)
             // int updatedCount = 0;

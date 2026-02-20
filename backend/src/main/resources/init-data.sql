@@ -1,49 +1,91 @@
--- Insert default roles
-INSERT INTO roles (role_code, role_name) VALUES 
-('ADMIN', 'Administrator'),
-('DOCTOR', 'Doctor'),
-('NURSE', 'Nurse'),
-('DATA_ENTRY', 'Data Entry Staff'),
-('PHARMACIST', 'Pharmacist'),
-('RECEPTIONIST', 'Receptionist')
+-- Enable UUID generation
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Insert roles
+INSERT INTO roles (role_id, role_code, role_name) VALUES
+(gen_random_uuid(), 'ADMIN', 'Administrator'),
+(gen_random_uuid(), 'DOCTOR', 'Doctor'),
+(gen_random_uuid(), 'NURSE', 'Nurse')
 ON CONFLICT (role_code) DO NOTHING;
 
--- Insert default departments
-INSERT INTO departments (department_code, department_name) VALUES
-('CARD', 'Cardiology'),
-('NEURO', 'Neurology'),
-('GEN', 'General Medicine'),
-('PEDI', 'Pediatrics'),
-('OB_GYN', 'Obstetrics & Gynecology')
-ON CONFLICT (department_code) DO NOTHING;
+-- Insert users (password: 123456)
+INSERT INTO users (user_id, username, password_hash, full_name, email, role_id, is_active, created_at)
+SELECT gen_random_uuid(), 'ADMIN001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator', 'admin@familymed.vn', r.role_id, true, NOW()
+FROM roles r WHERE r.role_code = 'ADMIN'
+ON CONFLICT (email) DO NOTHING;
 
--- Insert risk levels
-INSERT INTO risk_levels (code, color, priority) VALUES
-('LOW', '#10b981', 3),
-('MEDIUM', '#f59e0b', 2),
-('HIGH', '#ef4444', 1)
-ON CONFLICT (code) DO NOTHING;
+INSERT INTO users (user_id, username, password_hash, full_name, email, role_id, is_active, created_at)
+SELECT gen_random_uuid(), 'DOCTOR001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Dr Nguyen Van A', 'doctor@familymed.vn', r.role_id, true, NOW()
+FROM roles r WHERE r.role_code = 'DOCTOR'
+ON CONFLICT (email) DO NOTHING;
 
--- Insert sample indicators
-INSERT INTO indicators (indicator_code, name, data_type, unit, is_input, is_derived) VALUES
-('BP_SYS', 'Blood Pressure Systolic', 'Number', 'mmHg', true, false),
-('BP_DIA', 'Blood Pressure Diastolic', 'Number', 'mmHg', true, false),
-('HEART_RATE', 'Heart Rate', 'Number', 'bpm', true, false),
-('BMI', 'Body Mass Index', 'Number', 'kg/m2', false, true),
-('GLUCOSE', 'Blood Glucose', 'Number', 'mg/dL', true, false),
-('CHOLESTEROL', 'Total Cholesterol', 'Number', 'mg/dL', true, false)
-ON CONFLICT (indicator_code) DO NOTHING;
+INSERT INTO users (user_id, username, password_hash, full_name, email, role_id, is_active, created_at)
+SELECT gen_random_uuid(), 'NURSE001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Nurse Tran Thi B', 'nurse@familymed.vn', r.role_id, true, NOW()
+FROM roles r WHERE r.role_code = 'NURSE'
+ON CONFLICT (email) DO NOTHING;
 
--- Insert sample form
-INSERT INTO forms (form_code, form_name, version, is_active) VALUES
-('GENERAL_CHECKUP', 'General Medical Checkup', '1.0', true),
-('CARDIAC_RISK', 'Cardiac Risk Assessment', '1.0', true),
-('DIABETES_SCREEN', 'Diabetes Screening', '1.0', true)
-ON CONFLICT (form_code) DO NOTHING;
+-- Insert patients (assign to doctor)
+INSERT INTO patients (patient_id, patient_code, full_name, date_of_birth, gender, phone_number, email, address, doctor_id, status)
+SELECT gen_random_uuid(), 'PT001', 'Nguyen Van C', '1980-05-15', 'MALE', '0934567890', 'patient1@example.com', '123 Nguyen Hue, Q1, HCMC', u.user_id, 'ACTIVE'
+FROM users u WHERE u.email = 'doctor@familymed.vn'
+ON CONFLICT (patient_code) DO NOTHING;
 
--- Insert variables for risk calculation
-INSERT INTO variables (variable_code, data_type, description) VALUES
-('RISK_SCORE', 'Number', 'Overall risk score'),
-('CARDIAC_RISK', 'Number', 'Cardiac risk score'),
-('DIABETES_RISK', 'Number', 'Diabetes risk score')
-ON CONFLICT (variable_code) DO NOTHING;
+INSERT INTO patients (patient_id, patient_code, full_name, date_of_birth, gender, phone_number, email, address, doctor_id, status)
+SELECT gen_random_uuid(), 'PT002', 'Tran Thi D', '1975-08-22', 'FEMALE', '0945678901', 'patient2@example.com', '456 Le Loi, Q3, HCMC', u.user_id, 'ACTIVE'
+FROM users u WHERE u.email = 'doctor@familymed.vn'
+ON CONFLICT (patient_code) DO NOTHING;
+
+INSERT INTO patients (patient_id, patient_code, full_name, date_of_birth, gender, phone_number, email, address, doctor_id, status)
+SELECT gen_random_uuid(), 'PT003', 'Le Van E', '1990-12-10', 'MALE', '0956789012', 'patient3@example.com', '789 Hai Ba Trung, Q1, HCMC', u.user_id, 'ACTIVE'
+FROM users u WHERE u.email = 'doctor@familymed.vn'
+ON CONFLICT (patient_code) DO NOTHING;
+
+-- Insert sample diagnostic form with sections and questions
+DO $$
+DECLARE
+    v_form_id UUID;
+    v_section1_id UUID;
+    v_section2_id UUID;
+    v_section3_id UUID;
+BEGIN
+    v_form_id := gen_random_uuid();
+
+    INSERT INTO diagnostic_forms (form_id, form_name, description, category, status, version)
+    VALUES (
+        v_form_id,
+        'Diabetes risk assessment',
+        'Sample screening form',
+        'Prevention',
+        'ACTIVE',
+        1
+    );
+
+    v_section1_id := gen_random_uuid();
+    INSERT INTO form_sections (section_id, form_id, section_name, section_order)
+    VALUES (v_section1_id, v_form_id, 'Basic information', 1);
+
+    INSERT INTO form_questions (question_id, section_id, question_code, question_order, question_text, question_type, options, required)
+    VALUES
+    (gen_random_uuid(), v_section1_id, 'Q1', 1, 'Age', 'SINGLE_CHOICE', '["<45","45-54","55-64","65+"]', true),
+    (gen_random_uuid(), v_section1_id, 'Q2', 2, 'BMI', 'SINGLE_CHOICE', '["<25","25-30",">30"]', true),
+    (gen_random_uuid(), v_section1_id, 'Q3', 3, 'Waist circumference', 'SINGLE_CHOICE', '["<90","90-100",">100"]', true);
+
+    v_section2_id := gen_random_uuid();
+    INSERT INTO form_sections (section_id, form_id, section_name, section_order)
+    VALUES (v_section2_id, v_form_id, 'Lifestyle', 2);
+
+    INSERT INTO form_questions (question_id, section_id, question_code, question_order, question_text, question_type, required)
+    VALUES
+    (gen_random_uuid(), v_section2_id, 'Q4', 1, 'Exercise at least 30 minutes per day?', 'BOOLEAN', true),
+    (gen_random_uuid(), v_section2_id, 'Q5', 2, 'Eat vegetables or fruit daily?', 'BOOLEAN', true),
+    (gen_random_uuid(), v_section2_id, 'Q6', 3, 'On blood pressure medication?', 'BOOLEAN', true),
+    (gen_random_uuid(), v_section2_id, 'Q7', 4, 'History of high blood glucose?', 'BOOLEAN', true);
+
+    v_section3_id := gen_random_uuid();
+    INSERT INTO form_sections (section_id, form_id, section_name, section_order)
+    VALUES (v_section3_id, v_form_id, 'Family history', 3);
+
+    INSERT INTO form_questions (question_id, section_id, question_code, question_order, question_text, question_type, options, required)
+    VALUES
+    (gen_random_uuid(), v_section3_id, 'Q8', 1, 'Family history of diabetes?', 'SINGLE_CHOICE', '["None","Parents","Siblings"]', true);
+END $$;

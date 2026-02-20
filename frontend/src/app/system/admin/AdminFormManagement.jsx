@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../service/api";
+import ConfirmDialog from "../../../components/common/ConfirmDialog";
+import MessageDialog from "../../../components/common/MessageDialog";
+import Pagination from "../../../components/common/Pagination";
 
 const AdminFormManagement = () => {
   const navigate = useNavigate();
@@ -8,6 +11,19 @@ const AdminFormManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingForm, setEditingForm] = useState(null);
+  const [page, setPage] = useState(1);
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: null,
+  });
+  const [messageDialog, setMessageDialog] = useState({
+    open: false,
+    title: "",
+    description: "",
+  });
+  const pageSize = 9;
   const [formData, setFormData] = useState({
     formName: "",
     description: "",
@@ -24,7 +40,11 @@ const AdminFormManagement = () => {
       setForms(response.data);
     } catch (error) {
       console.error("Error loading forms:", error);
-      alert("Lỗi khi tải danh sách biểu mẫu");
+      setMessageDialog({
+        open: true,
+        title: "Không thể tải",
+        description: "Lỗi khi tải danh sách biểu mẫu.",
+      });
     } finally {
       setLoading(false);
     }
@@ -42,17 +62,29 @@ const AdminFormManagement = () => {
     e.preventDefault();
 
     if (!formData.formName.trim()) {
-      alert("Vui lòng nhập tên biểu mẫu");
+      setMessageDialog({
+        open: true,
+        title: "Thiếu thông tin",
+        description: "Vui lòng nhập tên biểu mẫu.",
+      });
       return;
     }
 
     try {
       if (editingForm) {
-        await api.put(`/api/forms/admin/${editingForm.id}`, formData);
-        alert("Cập nhật biểu mẫu thành công");
+        await api.put(`/api/forms/admin/${editingForm.formId}`, formData);
+        setMessageDialog({
+          open: true,
+          title: "Cập nhật thành công",
+          description: "Biểu mẫu đã được cập nhật.",
+        });
       } else {
         await api.post("/api/forms/admin/create", formData);
-        alert("Tạo biểu mẫu thành công");
+        setMessageDialog({
+          open: true,
+          title: "Tạo thành công",
+          description: "Biểu mẫu mới đã được tạo.",
+        });
       }
       setFormData({ formName: "", description: "", category: "" });
       setEditingForm(null);
@@ -60,7 +92,11 @@ const AdminFormManagement = () => {
       loadForms();
     } catch (error) {
       console.error("Error saving form:", error);
-      alert("Lỗi khi lưu biểu mẫu");
+      setMessageDialog({
+        open: true,
+        title: "Không thể lưu",
+        description: "Lỗi khi lưu biểu mẫu. Vui lòng thử lại.",
+      });
     }
   };
 
@@ -74,19 +110,64 @@ const AdminFormManagement = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xóa biểu mẫu này?")) {
-      return;
-    }
+  const handleDelete = (id) => {
+    setConfirmDialog({
+      open: true,
+      title: "Xóa biểu mẫu?",
+      description: "Bạn có chắc muốn xóa biểu mẫu này?",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/forms/admin/${id}`);
+          setConfirmDialog({ open: false, title: "", description: "", onConfirm: null });
+          setMessageDialog({
+            open: true,
+            title: "Đã xóa",
+            description: "Biểu mẫu đã được xóa.",
+          });
+          loadForms();
+        } catch (error) {
+          console.error("Error deleting form:", error);
+          setConfirmDialog({ open: false, title: "", description: "", onConfirm: null });
+          setMessageDialog({
+            open: true,
+            title: "Không thể xóa",
+            description: "Lỗi khi xóa biểu mẫu. Vui lòng thử lại.",
+          });
+        }
+      },
+    });
+  };
 
-    try {
-      await api.delete(`/api/forms/admin/${id}`);
-      alert("Xóa biểu mẫu thành công");
-      loadForms();
-    } catch (error) {
-      console.error("Error deleting form:", error);
-      alert("Lỗi khi xóa biểu mẫu");
-    }
+  const handleCreateVersion = (form) => {
+    setConfirmDialog({
+      open: true,
+      title: "Tạo phiên bản mới?",
+      description: "Tạo phiên bản mới từ biểu mẫu hiện tại?",
+      onConfirm: async () => {
+        try {
+          await api.post(`/api/forms/admin/${form.formId}/versions`, {
+            formName: form.formName,
+            description: form.description,
+            category: form.category,
+          });
+          setConfirmDialog({ open: false, title: "", description: "", onConfirm: null });
+          setMessageDialog({
+            open: true,
+            title: "Tạo thành công",
+            description: "Phiên bản mới đã được tạo.",
+          });
+          loadForms();
+        } catch (error) {
+          console.error("Error creating new version:", error);
+          setConfirmDialog({ open: false, title: "", description: "", onConfirm: null });
+          setMessageDialog({
+            open: true,
+            title: "Không thể tạo",
+            description: "Lỗi khi tạo phiên bản mới. Vui lòng thử lại.",
+          });
+        }
+      },
+    });
   };
 
   const handleCancel = () => {
@@ -94,6 +175,14 @@ const AdminFormManagement = () => {
     setEditingForm(null);
     setFormData({ formName: "", description: "", category: "" });
   };
+
+  const pagedForms = useMemo(() => {
+    return forms.slice((page - 1) * pageSize, page * pageSize);
+  }, [forms, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [forms.length]);
 
   if (loading) {
     return (
@@ -196,9 +285,9 @@ const AdminFormManagement = () => {
       {/* Forms List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {forms.length > 0 ? (
-          forms.map((form) => (
+          pagedForms.map((form) => (
             <div
-              key={form.id}
+              key={form.formId}
               className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
             >
               <h3 className="text-xl font-bold text-gray-800 mb-2">
@@ -213,15 +302,22 @@ const AdminFormManagement = () => {
               </div>
 
               <div className="text-sm text-gray-500 mb-4">
-                📚 {form.questions?.length || 0} câu hỏi
+                📚 {form.sections?.reduce((total, section) => total + (section.questions?.length || 0), 0) || 0} câu hỏi
+                <span className="ml-2 text-xs text-slate-400">v{form.version || 1}</span>
               </div>
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => navigate(`/system/admin/forms/${form.id}/questions`)}
+                  onClick={() => navigate(`/system/admin/forms/${form.formId}/questions`)}
                   className="flex-1 px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm font-medium"
                 >
                   ❓ Quản lý Câu hỏi
+                </button>
+                <button
+                  onClick={() => handleCreateVersion(form)}
+                  className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm font-medium"
+                >
+                  🧬 Tạo phiên bản
                 </button>
                 <button
                   onClick={() => handleEdit(form)}
@@ -230,7 +326,7 @@ const AdminFormManagement = () => {
                   ✏️ Sửa
                 </button>
                 <button
-                  onClick={() => handleDelete(form.id)}
+                  onClick={() => handleDelete(form.formId)}
                   className="flex-1 px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
                 >
                   🗑️ Xóa
@@ -250,6 +346,31 @@ const AdminFormManagement = () => {
           </div>
         )}
       </div>
+
+      <Pagination
+        currentPage={page}
+        pageSize={pageSize}
+        totalItems={forms.length}
+        onPageChange={setPage}
+      />
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmLabel="Xác nhận"
+        cancelLabel="Hủy"
+        onConfirm={confirmDialog.onConfirm}
+        onClose={() => setConfirmDialog({ open: false, title: "", description: "", onConfirm: null })}
+      />
+
+      <MessageDialog
+        open={messageDialog.open}
+        title={messageDialog.title}
+        description={messageDialog.description}
+        onClose={() => setMessageDialog({ open: false, title: "", description: "" })}
+        actionLabel="Đóng"
+      />
     </div>
   );
 };

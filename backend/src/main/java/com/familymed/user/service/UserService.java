@@ -1,7 +1,7 @@
 package com.familymed.user.service;
 
-import com.familymed.user.User;
-import com.familymed.user.UserRepository;
+import com.familymed.user.entity.User;
+import com.familymed.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;

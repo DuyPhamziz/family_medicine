@@ -1,10 +1,13 @@
 package com.familymed.auth.service;
 
+import com.familymed.auth.dto.AuthTokens;
 import com.familymed.auth.dto.LoginRequest;
 import com.familymed.auth.dto.LoginResponse;
+import com.familymed.auth.refresh.RefreshTokenService;
 import com.familymed.auth.util.JwtTokenProvider;
-import com.familymed.user.User;
-import com.familymed.user.UserRepository;
+import com.familymed.security.LoginAttemptService;
+import com.familymed.user.entity.User;
+import com.familymed.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,17 +21,34 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptService loginAttemptService;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     
-    public LoginResponse login(LoginRequest request) {
+    public void changePassword(String emailOrUsername, String currentPassword, String newPassword) {
+        User user = userRepository.findByEmailOrUsername(emailOrUsername, emailOrUsername)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("Mật khẩu hiện tại không đúng");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    public AuthTokens login(LoginRequest request) {
+        User user = null;
         try {
             // Tìm user theo email hoặc username
-            User user = userRepository.findByEmailOrUsername(
+            user = userRepository.findByEmailOrUsername(
                 request.getEmailOrCode(),
                 request.getEmailOrCode()
             ).orElseThrow(() -> new RuntimeException("Email hoặc mật khẩu không đúng"));
 
             // Kiểm tra user có active không
             if (!Boolean.TRUE.equals(user.getActive())) {
+            loginAttemptService.recordFailure(request.getEmailOrCode(), user.getUserId());
             throw new RuntimeException("Tài khoản đã bị vô hiệu hóa");
             }
 
@@ -42,6 +62,7 @@ public class AuthService {
                 )
             );
             } catch (org.springframework.security.core.AuthenticationException e) {
+            loginAttemptService.recordFailure(request.getEmailOrCode(), user.getUserId());
             throw new RuntimeException("Email hoặc mật khẩu không đúng");
             }
 
@@ -50,19 +71,31 @@ public class AuthService {
             // Tạo JWT token sau khi authenticate thành công
             String token = jwtTokenProvider.generateToken(
                 user.getEmail(),
-                roleCode
+                roleCode,
+                user.getUserId().toString()
             );
 
-            String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
+            String refreshToken = refreshTokenService.issueRefreshToken(user);
 
             // Tạo response
-            return LoginResponse.builder()
+            LoginResponse response = LoginResponse.builder()
                 .token(token)
-                .refreshToken(refreshToken)
+                .refreshToken(null)
                 .user(LoginResponse.UserDTO.fromUser(user))
+                .build();
+            loginAttemptService.recordSuccess(request.getEmailOrCode(), user.getUserId());
+            return AuthTokens.builder()
+                .accessToken(token)
+                .refreshToken(refreshToken)
+                .response(response)
                 .build();
         } catch (DataAccessException e) {
             throw new RuntimeException("Hệ thống đang bận, vui lòng thử lại sau");
+        } catch (RuntimeException ex) {
+            if (user == null) {
+                loginAttemptService.recordFailure(request.getEmailOrCode(), null);
+            }
+            throw ex;
         }
     }
 }

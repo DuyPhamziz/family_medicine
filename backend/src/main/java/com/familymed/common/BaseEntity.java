@@ -3,19 +3,24 @@ package com.familymed.common;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @MappedSuperclass
-public class BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@EntityListeners(AuditingEntityListener.class)
+public abstract class BaseEntity implements Serializable {
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreatedDate
+    @Column(nullable = true, updatable = false)
+    private LocalDateTime createdAt;
 
-    @Transient
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @LastModifiedDate
+    @Column(nullable = true)
+    private LocalDateTime updatedAt;
 }

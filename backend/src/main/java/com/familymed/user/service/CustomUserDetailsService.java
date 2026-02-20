@@ -3,8 +3,8 @@ package com.familymed.user.service;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
-import com.familymed.user.User;
-import com.familymed.user.UserRepository;
+import com.familymed.user.entity.User;
+import com.familymed.user.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
@@ -28,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
-            .authorities("ROLE_" + roleCode)
+            .authorities(roleCode.startsWith("ROLE_") ? roleCode : "ROLE_" + roleCode)
                 .build();
     }
 }

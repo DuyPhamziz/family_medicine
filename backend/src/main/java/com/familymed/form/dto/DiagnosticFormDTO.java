@@ -1,7 +1,8 @@
 package com.familymed.form.dto;
 
-import com.familymed.form.DiagnosticForm;
-import com.familymed.form.FormQuestion;
+import com.familymed.form.entity.DiagnosticForm;
+import com.familymed.form.entity.FormQuestion;
+import com.familymed.form.entity.FormSection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -21,9 +23,9 @@ public class DiagnosticFormDTO {
     private String category;
     private String status;
     private Integer version;
-    private List<FormQuestionDTO> questions;
+    private List<FormSectionDTO> sections;
     
-    public static DiagnosticFormDTO fromForm(DiagnosticForm form, List<FormQuestion> questions) {
+    public static DiagnosticFormDTO fromForm(DiagnosticForm form, List<FormSection> sections) {
         return DiagnosticFormDTO.builder()
                 .formId(form.getFormId())
                 .formName(form.getFormName())
@@ -31,7 +33,10 @@ public class DiagnosticFormDTO {
                 .category(form.getCategory())
                 .status(form.getStatus().name())
                 .version(form.getVersion())
-                .questions(questions.stream().map(FormQuestionDTO::fromQuestion).toList())
+                .sections(sections != null ? 
+                        sections.stream()
+                                .map(FormSectionDTO::fromSection)
+                                .collect(Collectors.toList()) : List.of())
                 .build();
     }
 }

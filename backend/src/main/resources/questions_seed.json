@@ -1,0 +1,226 @@
+[
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "2. số điện thoại",
+    "text": "liên lạc",
+    "type": "TEXT",
+    "originalType": "câu trả lời ngắn"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "3. Tuổi / năm sinh",
+    "text": "lấy năm sinh từ V1",
+    "type": "TEXT",
+    "originalType": "nhập năm sinh: tuổi = năm hiện tại - năm sinh"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "4. Giới ",
+    "text": "giới tính ",
+    "type": "TEXT",
+    "originalType": ""
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "5. Nghề nghiệp",
+    "text": "gồm 2 phần :\nHiện tại :Ghi rõ công việc chính (chiếm nhiều thười gian nhất) đang làm hiện tại\nTrước đây: liệt kê tất cả các công việc bạn đã từng làm từ trước đến nay (kể cả đã nghỉ), nếu từng làm liên tục từ 6 tháng trở lên và có các yêu tố tính chất công việc trên từ mức độ trung bình trở lên",
+    "type": "TEXT",
+    "originalType": "câu trả lời ngắn/ có thể dùng dạng bảng check , nếu có công việc củ thì tik thêm cột"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "- Gắng sức thể chất",
+    "text": "Công việc cần dùng nhiều sức, mang vác, đứng/ngồi lâu, thao tác lặp đi lặp lại",
+    "type": "SINGLE_CHOICE",
+    "originalType": "câu trả lời lựa chọn: nhẹ-trung bình-nặng"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "- Tiếp xúc bụi",
+    "text": "Thường xuyên tiếp xúc với bụi trong không khí – bụi đất, xi măng, gỗ, kim loại...",
+    "type": "SINGLE_CHOICE",
+    "originalType": "câu trả lời lựa chọn: nhẹ-trung bình-nặng"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "- Tiếp xúc hóa chất",
+    "text": "Làm việc với sơn, dung môi, thuốc trừ sâu, chất tẩy, xăng dầu...",
+    "type": "SINGLE_CHOICE",
+    "originalType": "câu trả lời lựa chọn: nhẹ-trung bình-nặng"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "- Khác: ghi rõ",
+    "text": "tính chất khác mà bạn nghĩ nó ảnh hưởng đến sức khỏe của bạn",
+    "type": "SINGLE_CHOICE",
+    "originalType": "câu trả lời lựa chọn: nhẹ-trung bình-nặng"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "  6.2.1. cường độ",
+    "text": "Hoạt động thể lực làm tim đập nhanh, thở nhanh, đổ mồ hôi.\n - vẫn nói chuyện được: => mức hoạt động trung bình\n - thở gấp, khó nói trọn câu => mức hoạt động nặng",
+    "type": "TEXT",
+    "originalType": "câu trả lời ngắn. phân ra:\n1. mức hoạt động trung bình\n2. Mức hoặt động nặng\nVới mỗi mwucs hoạt động trả lời 2 câu bến dưới"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "  6.2.2 tần suất",
+    "text": "Các hoạt động đó thực hiện bao nhiêu ngày 1 tuần",
+    "type": "NUMBER",
+    "originalType": "số ngày"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "  6.2.3 thơi gian",
+    "text": "Các hoạt động đó thực hiện bao nhiêu giờ 1 ngày",
+    "type": "NUMBER",
+    "originalType": "số phút"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "8. Kinh nguyệt",
+    "text": "áp dụng khi 4.1 chọn nữ, trừ trường hợp 4.3.1 KH đã phẫu thuật loại bỏ tư cung ",
+    "type": "TEXT",
+    "originalType": ""
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "8.2.1 tuổi mãn kinh",
+    "text": "Áp dụng khi 8.2 chọn 4 mãn kinh. Tuổi mãn kinh",
+    "type": "NUMBER",
+    "originalType": "tuổi"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "9. Tiền sử sản khoa",
+    "text": "áp dụng khi 4.1 chọn là nữ ",
+    "type": "TEXT",
+    "originalType": ""
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "  9.5.1 sanh mổ",
+    "text": "hỏi số lần sanh mổ",
+    "type": "SINGLE_CHOICE",
+    "originalType": "lựa chọn. 1. chưa từng, 2. 1 lần, 3 >=2 lần"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": " 10.5 Bệnh lý STI",
+    "text": " với mục từng mắc STI có thể liên hệ mục tiền sử bệnh tật ",
+    "type": "TEXT",
+    "originalType": "1. từng mắc STI, 2: có triệu chứng nghi STI: loét, đau, tiểu buốt, khí hư...), 3: không có, 4: khác:...."
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "11. Chiều cao",
+    "text": "chiều cao hiện tại",
+    "type": "TEXT",
+    "originalType": "cm"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "12. cân nặng",
+    "text": "Cân nặng hiện tại",
+    "type": "TEXT",
+    "originalType": "kg"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "13. vòng eo/mông",
+    "text": "Cách đo chuẩn (WHO):\n– Đo tại điểm giữa bờ dưới xương sườn cuối và mào chậu, khi thở ra nhẹ\n– Đơn vị: cm",
+    "type": "TEXT",
+    "originalType": "cm"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "14. Tần số tim",
+    "text": "Nhịp tim trung bình, (khi đi khám, đo điện tim, máy huyết áp)",
+    "type": "NUMBER",
+    "originalType": "số chu kỳ/phút"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "15. chế độ ăn uống",
+    "text": "chế độ ăn đặc biệt",
+    "type": "TEXT",
+    "originalType": "1. không, 2: ăn chay (>10 ngày/ tháng), 3. keto, 4. khác:"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "17. Hút thuốc lá",
+    "text": "tính trạng hút thuốc lá hiện tại",
+    "type": "SINGLE_CHOICE",
+    "originalType": "Lựa chọn: 1 chưa từng hút, 2: đã từng hút nhưng đã bỏ, 3. đang hút"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": " 17.2 Thơi gian hút",
+    "text": "khi 17 chọn 2 or 3\nThời gian hút",
+    "type": "TEXT",
+    "originalType": "sô năm"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": " 17.2 số điếu/ngày",
+    "text": "khi 17 chọn 2 or 3\ntrung bình số điều hút trên ngày",
+    "type": "NUMBER",
+    "originalType": "số điếu/ngày"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "19. tiền sử dị ứng",
+    "text": "lựa chọn và ghi rõ ",
+    "type": "TEXT",
+    "originalType": "1. dị ứng thuốc\n2.dị ứng thức ăn\n3. phản ứng sau tiêm chủng\n4. dị ứng khác: hóa chất/ ong đót, phân hoa, dị nguyên khác.... \n5. chưa ghi nhân"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "  21.2.2 Nôi tiết",
+    "text": "Anh/chị có từng được chẩn đoán bệnh nội tiết hay chuyển hóa nào không?\n(ví dụ: tiểu đường (type 1,2, tiểu đường thai kỳ), tiền đái tháo đường, bệnh tuyến giáp (suy giáp, cường giáp, viêm tuyến giáp), mỡ máu cao, bệnh tuyến yên (u tuyến yên, tăng prolactin...), tuyến thượng thận (u tyến thượng thận, hội chứng cushing, suy thượng thận)....",
+    "type": "TEXT",
+    "originalType": "1. đái tháo đường type 1\n2. đía tháo dường type 2. \n3. tiền sử đại tháo đường thai kỳ\n4. tiền đái tháo đường\n5 cường giáp\n6. suy giáp\n7. rối loạn lipid máu\n8. suy sinh dục: bệnh gây giảm hormon sinh dục"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "  21.2.4 Hô hấp",
+    "text": "Anh/chị có từng được chẩn đoán bệnh hô hấp nào không? hen phế quản, COPD, lao phổi, lao ngoài phổi, viêm phổi tái diễn (nhập viện vì phổi: viêm phổi, covid), bệnh phổi mô kẻ, xơ phổi,dãn phế quản, ngưng thở khi ngủ...\n",
+    "type": "TEXT",
+    "originalType": "1. Hen phế quản\n2. COPD\n3. Lao phổi \n"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "   21.2.12 mắt",
+    "text": "Anh/chị có từng được chẩn đoán bệnh về mắt không? tật khúc xạ (cận viễn, loạn, lão) thủy tinh thể, giác mạc...",
+    "type": "TEXT",
+    "originalType": ""
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "   21.2.13 da liễu",
+    "text": "Anh/chị có từng được chẩn đoán bệnh về da mạn tính không?  viêm da cơ địa, vây nến, viêm da tiếp xúc mạn, mề đay mạn tính",
+    "type": "TEXT",
+    "originalType": ""
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": " 22.1 TCMR",
+    "text": "Trước dây anh chị đã tiêm ngừa đầy đủ theo chương trình tiêm chủng mở rộng chưa?",
+    "type": "SINGLE_CHOICE",
+    "originalType": "Lựa chọn:\nĐầy đủ\nChưa tiêm / tiêm không đầy đủ\nkhông rõ"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "27. cận lâm sàng",
+    "text": "KH scan chụp tất cả các kết quả xét nghiệm chẩn đoán hình ảnh, cận lâm sàng. CB CSKH. BS sẽ lọc ra các chỉ số có ý nghĩa điền cụ thể hoặc chỉ cần ghi kết quả bình thường hay bất thường. hiển thị theo thời gian và theo cận lâm sàng. ví dụ: \n theo thời gian: ngày 5/1/2024 : thực hiện các xét nghiệm CTM, glu, thận, siêu âm x quang\n Theo cận lâm sàng: khi nhấp vào đường huyết sẽ hiện các kết quả theo thười gian các lần thực hiện",
+    "type": "NUMBER",
+    "originalType": "các chỉ số cố định, ưu tiên đơn vị mmol/L hoặc cả đơn vị mg/dl\n1. Cholesterol total:\n1.1: triglyceride:\n2. LDL\n2. HDL\n3. GLU\n4. Hba1c\n5. Creatinin => độ lọc cầu thận\n5.1 ACR: \n6. Mật độ xương phương pháp DEXA\n- các chỉ số theo dõi theo bệnh lý:\n- có thể thêm bớt khi cập nhật kết quả"
+  },
+  {
+    "section": "PHẦN THÔNG TIN CHUNG",
+    "code": "Kham lâm sàng",
+    "text": "Ghi nhận khi BS thăm khám trực tiếp",
+    "type": "TEXT",
+    "originalType": "1. có thực hiện\n2. chưa thực hiện\n"
+  }
+]

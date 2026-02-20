@@ -1,6 +1,6 @@
 package com.familymed.form.dto;
 
-import com.familymed.form.PatientFormSubmission;
+import com.familymed.form.entity.PatientFormSubmission;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,8 +14,11 @@ import java.util.UUID;
 public class PatientFormSubmissionDTO {
     private UUID submissionId;
     private UUID patientId;
+    private String patientName;
+    private String patientCode;
     private UUID formId;
     private String formName;
+    private String category;
     private Double totalScore;
     private String riskLevel;
     private String diagnosticResult;
@@ -23,16 +26,22 @@ public class PatientFormSubmissionDTO {
     private String status;
     
     public static PatientFormSubmissionDTO fromSubmission(PatientFormSubmission submission) {
+        var patient = submission.getPatient();
+        var form = submission.getForm();
+        var status = submission.getStatus();
         return PatientFormSubmissionDTO.builder()
                 .submissionId(submission.getSubmissionId())
-                .patientId(submission.getPatient().getPatientId())
-                .formId(submission.getForm().getFormId())
-                .formName(submission.getForm().getFormName())
+            .patientId(patient != null ? patient.getPatientId() : null)
+            .patientName(patient != null ? patient.getFullName() : null)
+            .patientCode(patient != null ? patient.getPatientCode() : null)
+            .formId(form != null ? form.getFormId() : null)
+            .formName(form != null ? form.getFormName() : null)
+            .category(form != null ? form.getCategory() : null)
                 .totalScore(submission.getTotalScore())
                 .riskLevel(submission.getRiskLevel())
                 .diagnosticResult(submission.getDiagnosticResult())
                 .notes(submission.getNotes())
-                .status(submission.getStatus().name())
+            .status(status != null ? status.name() : null)
                 .build();
     }
 }

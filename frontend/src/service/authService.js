@@ -8,10 +8,11 @@ const authService = {
    * @returns {Promise} Response từ API với token và user info
    */
   async login(emailOrCode, password) {
-    const response = await api.post('/api/auth/login', {
-      emailOrCode,
-      password,
-    });
+    const response = await api.post(
+      '/api/auth/login',
+      { emailOrCode, password },
+      { withCredentials: true }
+    );
     return response.data;
   },
 
@@ -21,7 +22,7 @@ const authService = {
    */
   async logout() {
     try {
-      await api.post('/api/auth/logout');
+      await api.post('/api/auth/logout', null, { withCredentials: true });
     } catch (error) {
       // Nếu API không có endpoint logout, vẫn clear local storage
       console.warn('Logout API call failed:', error);
@@ -33,9 +34,7 @@ const authService = {
    * @returns {Promise} New token
    */
   async refreshToken() {
-    const response = await api.post('/api/auth/refresh', {
-      refreshToken: localStorage.getItem('refreshToken'),
-    });
+    const response = await api.post('/api/auth/refresh', null, { withCredentials: true });
     return response.data;
   },
 

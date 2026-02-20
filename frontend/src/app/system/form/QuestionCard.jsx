@@ -93,7 +93,7 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
               >
                 <input
                   type="radio"
-                  name={`question_${question.id}`}
+                  name={`question_${question.questionId}`}
                   value={option}
                   checked={value === option}
                   onChange={(e) => onChange(e.target.value)}
@@ -114,11 +114,7 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
           multiOptions = question.options ? question.options.split(",") : [];
         }
 
-        const selectedMulti = Array.isArray(value)
-          ? value
-          : value
-          ? [value]
-          : [];
+        const selectedMulti = Array.isArray(value) ? value : [];
 
         return (
           <div className="space-y-2">
@@ -138,18 +134,47 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
                   checked={selectedMulti.includes(option)}
                   onChange={(e) => {
                     if (e.target.checked) {
-                      onChange(JSON.stringify([...selectedMulti, option]));
+                      onChange([...selectedMulti, option]);
                     } else {
-                      onChange(
-                        JSON.stringify(
-                          selectedMulti.filter((o) => o !== option)
-                        )
-                      );
+                      onChange(selectedMulti.filter((o) => o !== option));
                     }
                   }}
                   className="w-4 h-4 accent-blue-600"
                 />
                 <span className="ml-3 font-medium text-gray-700">{option}</span>
+              </label>
+            ))}
+          </div>
+        );
+      }
+
+      case "BOOLEAN": {
+        const selectedValue = value === true ? "true" : value === false ? "false" : "";
+        return (
+          <div className="flex gap-3">
+            {[
+              { label: "Có", value: "true" },
+              { label: "Không", value: "false" },
+            ].map((option) => (
+              <label
+                key={option.value}
+                className={`flex items-center gap-2 px-4 py-3 border-2 rounded-lg cursor-pointer transition-all ${
+                  selectedValue === option.value
+                    ? "border-blue-500 bg-blue-50"
+                    : error
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`question_${question.questionId}`}
+                  value={option.value}
+                  checked={selectedValue === option.value}
+                  onChange={(e) => onChange(e.target.value === "true")}
+                  className="w-4 h-4 accent-blue-600"
+                />
+                <span className="font-medium text-gray-700">{option.label}</span>
               </label>
             ))}
           </div>

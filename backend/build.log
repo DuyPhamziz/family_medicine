@@ -1,0 +1,587 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------------< com.example:demo >--------------------------
+[INFO] Building demo 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ demo ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 5 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ demo ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 210 source files with javac [debug release 17] to target\classes
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/refresh/RefreshTokenServiceImpl.java:[7,37] cannot access com.familymed.auth.repository.RefreshTokenRepository
+  bad source file: H:\family_medicine\backend\src\main\java\com\familymed\auth\repository\RefreshTokenRepository.java
+    file does not contain class com.familymed.auth.repository.RefreshTokenRepository
+    Please remove or make sure it appears in the correct subdirectory of the sourcepath.
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/audit/repository/AuditLogRepository.java:[9,59] cannot find symbol
+  symbol: class AuditLog
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/audit/repository/AuditLogRepository.java:[10,10] cannot find symbol
+  symbol:   class AuditLog
+  location: interface com.familymed.audit.AuditLogRepository
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/form/service/FormService.java:[26,29] cannot find symbol
+  symbol:   class Patient
+  location: package com.familymed.patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/dto/Icd10CodeResponse.java:[3,27] cannot find symbol
+  symbol:   class Icd10Code
+  location: package com.familymed.icd10
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/dto/Icd10CodeResponse.java:[15,48] cannot find symbol
+  symbol:   class Icd10Code
+  location: class com.familymed.icd10.dto.Icd10CodeResponse
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/diagnosis/dto/CreatePatientDiagnosisRequest.java:[3,31] cannot find symbol
+  symbol:   class PatientDiagnosis
+  location: package com.familymed.diagnosis
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/diagnosis/dto/CreatePatientDiagnosisRequest.java:[20,29] package PatientDiagnosis does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanGoalCreateRequest.java:[3,30] cannot find symbol
+  symbol:   class CarePlanGoal
+  location: package com.familymed.careplan
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanActionCreateRequest.java:[3,30] cannot find symbol
+  symbol:   class CarePlanAction
+  location: package com.familymed.careplan
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanActionCreateRequest.java:[12,27] package CarePlanAction does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanActionCreateRequest.java:[21,27] package CarePlanAction does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanGoalCreateRequest.java:[19,25] package CarePlanGoal does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/Icd10DataInitializer.java:[24,19] cannot find symbol
+  symbol:   class Icd10CodeRepository
+  location: class com.familymed.icd10.Icd10DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/Icd10DataInitializer.java:[27,33] cannot find symbol
+  symbol:   class Icd10CodeRepository
+  location: class com.familymed.icd10.Icd10DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[4,39] package com.familymed.form.FormQuestion does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[21,19] cannot find symbol
+  symbol:   class DiagnosticFormRepository
+  location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[22,19] cannot find symbol
+  symbol:   class FormSectionRepository
+  location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[23,19] cannot find symbol
+  symbol:   class FormQuestionRepository
+  location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[27,28] cannot find symbol
+  symbol:   class DiagnosticFormRepository
+  location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[28,27] cannot find symbol
+  symbol:   class FormSectionRepository
+  location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[29,27] cannot find symbol
+  symbol:   class FormQuestionRepository
+  location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[3,1] package com.familymed.form does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/appointment/dto/AppointmentStatusUpdateRequest.java:[3,33] cannot find symbol
+  symbol:   class Appointment
+  location: package com.familymed.appointment
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/appointment/dto/AppointmentStatusUpdateRequest.java:[11,24] package Appointment does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/repository/RefreshTokenRepository.java:[10,8] duplicate class: com.familymed.auth.refresh.RefreshTokenRepository
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/repository/RefreshTokenRepository.java:[10,63] cannot find symbol
+  symbol: class RefreshToken
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/repository/RefreshTokenRepository.java:[11,14] cannot find symbol
+  symbol:   class RefreshToken
+  location: interface com.familymed.auth.refresh.RefreshTokenRepository
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/repository/RefreshTokenRepository.java:[13,10] cannot find symbol
+  symbol:   class RefreshToken
+  location: interface com.familymed.auth.refresh.RefreshTokenRepository
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanStatusUpdateRequest.java:[3,30] cannot find symbol
+  symbol:   class CarePlan
+  location: package com.familymed.careplan
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanStatusUpdateRequest.java:[11,21] package CarePlan does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/audit/dto/AuditLogResponse.java:[3,27] cannot find symbol
+  symbol:   class AuditLog
+  location: package com.familymed.audit
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/audit/dto/AuditLogResponse.java:[21,47] cannot find symbol
+  symbol:   class AuditLog
+  location: class com.familymed.audit.dto.AuditLogResponse
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/Icd10Service.java:[18,19] cannot find symbol
+  symbol:   class Icd10CodeRepository
+  location: class com.familymed.icd10.Icd10Service
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[30,29] cannot find symbol
+  symbol:   method setRoleCode(java.lang.String)
+  location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[31,29] cannot find symbol
+  symbol:   method setRoleName(java.lang.String)
+  location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[39,29] cannot find symbol
+  symbol:   method setRoleCode(java.lang.String)
+  location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[40,29] cannot find symbol
+  symbol:   method setRoleName(java.lang.String)
+  location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[48,29] cannot find symbol
+  symbol:   method setRoleCode(java.lang.String)
+  location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[49,29] cannot find symbol
+  symbol:   method setRoleName(java.lang.String)
+  location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[27,36] cannot find symbol
+  symbol:   method builder()
+  location: class com.familymed.prescription.dto.PrescriptionResponse
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[28,33] cannot find symbol
+  symbol:   method getId()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[29,40] cannot find symbol
+  symbol:   method getPatient()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[30,42] cannot find symbol
+  symbol:   method getDiagnosis()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[30,80] cannot find symbol
+  symbol:   method getDiagnosis()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[31,41] cannot find symbol
+  symbol:   method getCarePlan()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[31,78] cannot find symbol
+  symbol:   method getCarePlan()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[32,37] cannot find symbol
+  symbol:   method getStatus()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[33,39] cannot find symbol
+  symbol:   method getIssuedAt()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[34,40] cannot find symbol
+  symbol:   method getCreatedAt()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[35,40] cannot find symbol
+  symbol:   method getCreatedBy()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[36,40] cannot find symbol
+  symbol:   method getUpdatedAt()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[37,40] cannot find symbol
+  symbol:   method getUpdatedBy()
+  location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[27,40] cannot find symbol
+  symbol:   method builder()
+  location: class com.familymed.prescription.dto.PrescriptionItemResponse
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[28,25] cannot find symbol
+  symbol:   method getId()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[29,37] cannot find symbol
+  symbol:   method getPrescription()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[30,31] cannot find symbol
+  symbol:   method getDrugName()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[31,29] cannot find symbol
+  symbol:   method getDosage()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[32,28] cannot find symbol
+  symbol:   method getRoute()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[33,32] cannot find symbol
+  symbol:   method getFrequency()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[34,31] cannot find symbol
+  symbol:   method getDuration()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[35,35] cannot find symbol
+  symbol:   method getInstructions()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[36,32] cannot find symbol
+  symbol:   method getCreatedAt()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[37,32] cannot find symbol
+  symbol:   method getCreatedBy()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[38,32] cannot find symbol
+  symbol:   method getUpdatedAt()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[39,32] cannot find symbol
+  symbol:   method getUpdatedBy()
+  location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/PatientController.java:[33,38] cannot find symbol
+  symbol:   method getUserId()
+  location: variable user of type com.familymed.user.entity.User
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/PatientController.java:[34,33] incompatible types: no instance(s) of type variable(s) X exist so that java.lang.Object conforms to java.util.UUID
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/PatientController.java:[62,38] cannot find symbol
+  symbol:   method getUserId()
+  location: variable user of type com.familymed.user.entity.User
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/PatientController.java:[63,33] incompatible types: no instance(s) of type variable(s) X exist so that java.lang.Object conforms to java.util.UUID
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[33,37] cannot find symbol
+  symbol:   method getPatientCode()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[46,16] cannot find symbol
+  symbol:   method setPatientId(java.util.UUID)
+  location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[47,16] cannot find symbol
+  symbol:   method setPatientCode(java.lang.String)
+  location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[48,36] cannot find symbol
+  symbol:   method getFullName()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[49,39] cannot find symbol
+  symbol:   method getDateOfBirth()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[52,61] cannot find symbol
+  symbol:   method getGender()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[54,20] cannot find symbol
+  symbol:   method setGender(com.familymed.patient.entity.Patient.Gender)
+  location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[57,39] cannot find symbol
+  symbol:   method getPhoneNumber()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[58,33] cannot find symbol
+  symbol:   method getEmail()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[59,35] cannot find symbol
+  symbol:   method getAddress()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[60,42] cannot find symbol
+  symbol:   method getMedicalHistory()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[61,46] cannot find symbol
+  symbol:   method getCurrentMedications()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[62,37] cannot find symbol
+  symbol:   method getAllergies()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[63,16] cannot find symbol
+  symbol:   method setDoctor(com.familymed.user.entity.User)
+  location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[64,33] cannot find symbol
+  symbol:   method getNotes()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[65,16] cannot find symbol
+  symbol:   method setStatus(com.familymed.patient.entity.Patient.PatientStatus)
+  location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[71,25] cannot find symbol
+  symbol:   method getPatientId()
+  location: variable savedPatient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[83,45] cannot find symbol
+  symbol:   method getPatientCode()
+  location: class com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[118,36] cannot find symbol
+  symbol:   method getFullName()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[119,39] cannot find symbol
+  symbol:   method getDateOfBirth()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[122,61] cannot find symbol
+  symbol:   method getGender()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[127,39] cannot find symbol
+  symbol:   method getPhoneNumber()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[128,33] cannot find symbol
+  symbol:   method getEmail()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[129,35] cannot find symbol
+  symbol:   method getAddress()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[130,42] cannot find symbol
+  symbol:   method getMedicalHistory()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[131,46] cannot find symbol
+  symbol:   method getCurrentMedications()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[132,37] cannot find symbol
+  symbol:   method getAllergies()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[133,33] cannot find symbol
+  symbol:   method getNotes()
+  location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[139,27] cannot find symbol
+  symbol:   method getPatientId()
+  location: variable updatedPatient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[140,49] cannot find symbol
+  symbol:   method getUserId()
+  location: class com.familymed.user.entity.User
+[INFO] 100 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  4.835 s
+[INFO] Finished at: 2026-02-20T15:21:16+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project demo: Compilation failure: Compilation failure: 
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/refresh/RefreshTokenServiceImpl.java:[7,37] cannot access com.familymed.auth.repository.RefreshTokenRepository
+[ERROR]   bad source file: H:\family_medicine\backend\src\main\java\com\familymed\auth\repository\RefreshTokenRepository.java
+[ERROR]     file does not contain class com.familymed.auth.repository.RefreshTokenRepository
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the sourcepath.
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/audit/repository/AuditLogRepository.java:[9,59] cannot find symbol
+[ERROR]   symbol: class AuditLog
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/audit/repository/AuditLogRepository.java:[10,10] cannot find symbol
+[ERROR]   symbol:   class AuditLog
+[ERROR]   location: interface com.familymed.audit.AuditLogRepository
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/form/service/FormService.java:[26,29] cannot find symbol
+[ERROR]   symbol:   class Patient
+[ERROR]   location: package com.familymed.patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/dto/Icd10CodeResponse.java:[3,27] cannot find symbol
+[ERROR]   symbol:   class Icd10Code
+[ERROR]   location: package com.familymed.icd10
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/dto/Icd10CodeResponse.java:[15,48] cannot find symbol
+[ERROR]   symbol:   class Icd10Code
+[ERROR]   location: class com.familymed.icd10.dto.Icd10CodeResponse
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/diagnosis/dto/CreatePatientDiagnosisRequest.java:[3,31] cannot find symbol
+[ERROR]   symbol:   class PatientDiagnosis
+[ERROR]   location: package com.familymed.diagnosis
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/diagnosis/dto/CreatePatientDiagnosisRequest.java:[20,29] package PatientDiagnosis does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanGoalCreateRequest.java:[3,30] cannot find symbol
+[ERROR]   symbol:   class CarePlanGoal
+[ERROR]   location: package com.familymed.careplan
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanActionCreateRequest.java:[3,30] cannot find symbol
+[ERROR]   symbol:   class CarePlanAction
+[ERROR]   location: package com.familymed.careplan
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanActionCreateRequest.java:[12,27] package CarePlanAction does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanActionCreateRequest.java:[21,27] package CarePlanAction does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanGoalCreateRequest.java:[19,25] package CarePlanGoal does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/Icd10DataInitializer.java:[24,19] cannot find symbol
+[ERROR]   symbol:   class Icd10CodeRepository
+[ERROR]   location: class com.familymed.icd10.Icd10DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/Icd10DataInitializer.java:[27,33] cannot find symbol
+[ERROR]   symbol:   class Icd10CodeRepository
+[ERROR]   location: class com.familymed.icd10.Icd10DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[4,39] package com.familymed.form.FormQuestion does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[21,19] cannot find symbol
+[ERROR]   symbol:   class DiagnosticFormRepository
+[ERROR]   location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[22,19] cannot find symbol
+[ERROR]   symbol:   class FormSectionRepository
+[ERROR]   location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[23,19] cannot find symbol
+[ERROR]   symbol:   class FormQuestionRepository
+[ERROR]   location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[27,28] cannot find symbol
+[ERROR]   symbol:   class DiagnosticFormRepository
+[ERROR]   location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[28,27] cannot find symbol
+[ERROR]   symbol:   class FormSectionRepository
+[ERROR]   location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[29,27] cannot find symbol
+[ERROR]   symbol:   class FormQuestionRepository
+[ERROR]   location: class com.familymed.common.DataInitializer
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/DataInitializer.java:[3,1] package com.familymed.form does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/appointment/dto/AppointmentStatusUpdateRequest.java:[3,33] cannot find symbol
+[ERROR]   symbol:   class Appointment
+[ERROR]   location: package com.familymed.appointment
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/appointment/dto/AppointmentStatusUpdateRequest.java:[11,24] package Appointment does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/repository/RefreshTokenRepository.java:[10,8] duplicate class: com.familymed.auth.refresh.RefreshTokenRepository
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/repository/RefreshTokenRepository.java:[10,63] cannot find symbol
+[ERROR]   symbol: class RefreshToken
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/repository/RefreshTokenRepository.java:[11,14] cannot find symbol
+[ERROR]   symbol:   class RefreshToken
+[ERROR]   location: interface com.familymed.auth.refresh.RefreshTokenRepository
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/auth/repository/RefreshTokenRepository.java:[13,10] cannot find symbol
+[ERROR]   symbol:   class RefreshToken
+[ERROR]   location: interface com.familymed.auth.refresh.RefreshTokenRepository
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanStatusUpdateRequest.java:[3,30] cannot find symbol
+[ERROR]   symbol:   class CarePlan
+[ERROR]   location: package com.familymed.careplan
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/careplan/dto/CarePlanStatusUpdateRequest.java:[11,21] package CarePlan does not exist
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/audit/dto/AuditLogResponse.java:[3,27] cannot find symbol
+[ERROR]   symbol:   class AuditLog
+[ERROR]   location: package com.familymed.audit
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/audit/dto/AuditLogResponse.java:[21,47] cannot find symbol
+[ERROR]   symbol:   class AuditLog
+[ERROR]   location: class com.familymed.audit.dto.AuditLogResponse
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/icd10/Icd10Service.java:[18,19] cannot find symbol
+[ERROR]   symbol:   class Icd10CodeRepository
+[ERROR]   location: class com.familymed.icd10.Icd10Service
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[30,29] cannot find symbol
+[ERROR]   symbol:   method setRoleCode(java.lang.String)
+[ERROR]   location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[31,29] cannot find symbol
+[ERROR]   symbol:   method setRoleName(java.lang.String)
+[ERROR]   location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[39,29] cannot find symbol
+[ERROR]   symbol:   method setRoleCode(java.lang.String)
+[ERROR]   location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[40,29] cannot find symbol
+[ERROR]   symbol:   method setRoleName(java.lang.String)
+[ERROR]   location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[48,29] cannot find symbol
+[ERROR]   symbol:   method setRoleCode(java.lang.String)
+[ERROR]   location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/common/UserInitializer.java:[49,29] cannot find symbol
+[ERROR]   symbol:   method setRoleName(java.lang.String)
+[ERROR]   location: variable role of type com.familymed.user.entity.Role
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[27,36] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.familymed.prescription.dto.PrescriptionResponse
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[28,33] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[29,40] cannot find symbol
+[ERROR]   symbol:   method getPatient()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[30,42] cannot find symbol
+[ERROR]   symbol:   method getDiagnosis()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[30,80] cannot find symbol
+[ERROR]   symbol:   method getDiagnosis()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[31,41] cannot find symbol
+[ERROR]   symbol:   method getCarePlan()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[31,78] cannot find symbol
+[ERROR]   symbol:   method getCarePlan()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[32,37] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[33,39] cannot find symbol
+[ERROR]   symbol:   method getIssuedAt()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[34,40] cannot find symbol
+[ERROR]   symbol:   method getCreatedAt()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[35,40] cannot find symbol
+[ERROR]   symbol:   method getCreatedBy()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[36,40] cannot find symbol
+[ERROR]   symbol:   method getUpdatedAt()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionResponse.java:[37,40] cannot find symbol
+[ERROR]   symbol:   method getUpdatedBy()
+[ERROR]   location: variable prescription of type com.familymed.prescription.entity.Prescription
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[27,40] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.familymed.prescription.dto.PrescriptionItemResponse
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[28,25] cannot find symbol
+[ERROR]   symbol:   method getId()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[29,37] cannot find symbol
+[ERROR]   symbol:   method getPrescription()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[30,31] cannot find symbol
+[ERROR]   symbol:   method getDrugName()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[31,29] cannot find symbol
+[ERROR]   symbol:   method getDosage()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[32,28] cannot find symbol
+[ERROR]   symbol:   method getRoute()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[33,32] cannot find symbol
+[ERROR]   symbol:   method getFrequency()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[34,31] cannot find symbol
+[ERROR]   symbol:   method getDuration()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[35,35] cannot find symbol
+[ERROR]   symbol:   method getInstructions()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[36,32] cannot find symbol
+[ERROR]   symbol:   method getCreatedAt()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[37,32] cannot find symbol
+[ERROR]   symbol:   method getCreatedBy()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[38,32] cannot find symbol
+[ERROR]   symbol:   method getUpdatedAt()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/prescription/dto/PrescriptionItemResponse.java:[39,32] cannot find symbol
+[ERROR]   symbol:   method getUpdatedBy()
+[ERROR]   location: variable item of type com.familymed.prescription.entity.PrescriptionItem
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/PatientController.java:[33,38] cannot find symbol
+[ERROR]   symbol:   method getUserId()
+[ERROR]   location: variable user of type com.familymed.user.entity.User
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/PatientController.java:[34,33] incompatible types: no instance(s) of type variable(s) X exist so that java.lang.Object conforms to java.util.UUID
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/PatientController.java:[62,38] cannot find symbol
+[ERROR]   symbol:   method getUserId()
+[ERROR]   location: variable user of type com.familymed.user.entity.User
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/PatientController.java:[63,33] incompatible types: no instance(s) of type variable(s) X exist so that java.lang.Object conforms to java.util.UUID
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[33,37] cannot find symbol
+[ERROR]   symbol:   method getPatientCode()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[46,16] cannot find symbol
+[ERROR]   symbol:   method setPatientId(java.util.UUID)
+[ERROR]   location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[47,16] cannot find symbol
+[ERROR]   symbol:   method setPatientCode(java.lang.String)
+[ERROR]   location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[48,36] cannot find symbol
+[ERROR]   symbol:   method getFullName()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[49,39] cannot find symbol
+[ERROR]   symbol:   method getDateOfBirth()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[52,61] cannot find symbol
+[ERROR]   symbol:   method getGender()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[54,20] cannot find symbol
+[ERROR]   symbol:   method setGender(com.familymed.patient.entity.Patient.Gender)
+[ERROR]   location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[57,39] cannot find symbol
+[ERROR]   symbol:   method getPhoneNumber()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[58,33] cannot find symbol
+[ERROR]   symbol:   method getEmail()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[59,35] cannot find symbol
+[ERROR]   symbol:   method getAddress()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[60,42] cannot find symbol
+[ERROR]   symbol:   method getMedicalHistory()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[61,46] cannot find symbol
+[ERROR]   symbol:   method getCurrentMedications()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[62,37] cannot find symbol
+[ERROR]   symbol:   method getAllergies()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[63,16] cannot find symbol
+[ERROR]   symbol:   method setDoctor(com.familymed.user.entity.User)
+[ERROR]   location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[64,33] cannot find symbol
+[ERROR]   symbol:   method getNotes()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[65,16] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.familymed.patient.entity.Patient.PatientStatus)
+[ERROR]   location: variable patient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[71,25] cannot find symbol
+[ERROR]   symbol:   method getPatientId()
+[ERROR]   location: variable savedPatient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[83,45] cannot find symbol
+[ERROR]   symbol:   method getPatientCode()
+[ERROR]   location: class com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[118,36] cannot find symbol
+[ERROR]   symbol:   method getFullName()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[119,39] cannot find symbol
+[ERROR]   symbol:   method getDateOfBirth()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[122,61] cannot find symbol
+[ERROR]   symbol:   method getGender()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[127,39] cannot find symbol
+[ERROR]   symbol:   method getPhoneNumber()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[128,33] cannot find symbol
+[ERROR]   symbol:   method getEmail()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[129,35] cannot find symbol
+[ERROR]   symbol:   method getAddress()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[130,42] cannot find symbol
+[ERROR]   symbol:   method getMedicalHistory()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[131,46] cannot find symbol
+[ERROR]   symbol:   method getCurrentMedications()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[132,37] cannot find symbol
+[ERROR]   symbol:   method getAllergies()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[133,33] cannot find symbol
+[ERROR]   symbol:   method getNotes()
+[ERROR]   location: variable request of type com.familymed.patient.dto.CreatePatientRequest
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[139,27] cannot find symbol
+[ERROR]   symbol:   method getPatientId()
+[ERROR]   location: variable updatedPatient of type com.familymed.patient.entity.Patient
+[ERROR] /H:/family_medicine/backend/src/main/java/com/familymed/patient/service/PatientService.java:[140,49] cannot find symbol
+[ERROR]   symbol:   method getUserId()
+[ERROR]   location: class com.familymed.user.entity.User
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

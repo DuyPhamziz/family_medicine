@@ -149,20 +149,30 @@ public class FormService {
         return DiagnosticFormDTO.fromForm(updated, updated.getSections());
     }
     
+    @Transactional
     public void deleteForm(UUID id) {
         DiagnosticForm form = formRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Form not found"));
         
-        form.setStatus(DiagnosticForm.FormStatus.INACTIVE);
-        formRepository.save(form);
+        // Check if form has been used in submissions
+        long submissionCount = submissionRepository.countByFormFormId(id);
+        if (submissionCount > 0) {
+            // Soft delete if form has been used
+            form.setStatus(DiagnosticForm.FormStatus.INACTIVE);
+            formRepository.save(form);
+        } else {
+            // Hard delete if form is unused
+            formRepository.delete(form);
+        }
     }
     
     @Transactional(readOnly = true)
     public List<DiagnosticFormDTO> getAllForms() {
         List<DiagnosticForm> forms = formRepository.findAll();
-        return forms.stream().map(form -> {
-            return DiagnosticFormDTO.fromForm(form, form.getSections());
-        }).toList();
+        return forms.stream()
+                .filter(form -> form.getStatus() != DiagnosticForm.FormStatus.INACTIVE) // Don't show inactive
+                .map(form -> DiagnosticFormDTO.fromForm(form, form.getSections()))
+                .toList();
     }
 
     // ===== ADMIN VERSIONING & DEFINITIONS =====

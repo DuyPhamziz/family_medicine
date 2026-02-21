@@ -19,10 +19,26 @@ const PatientList = () => {
 
   const loadPatients = async () => {
     try {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      
+      console.log('=== PatientList Debug ===');
+      console.log('Token exists:', !!token);
+      console.log('Token preview:', token ? token.substring(0, 50) + '...' : 'null');
+      console.log('User:', user ? JSON.parse(user) : 'null');
+      console.log('========================');
+      
       const response = await api.get("/api/patients/doctor/list");
       setPatients(response.data);
     } catch (error) {
       console.error("Error loading patients:", error);
+      console.error("Error response:", error.response);
+      
+      if (error.response?.status === 403) {
+        alert('Session expired or unauthorized. Please login again.');
+        // Optional: redirect to login
+        // navigate('/login');
+      }
     } finally {
       setLoading(false);
     }

@@ -12,5 +12,6 @@ public interface PatientFormSubmissionRepository extends JpaRepository<PatientFo
     List<PatientFormSubmission> findByPatientPatientId(UUID patientId);
     List<PatientFormSubmission> findByPatientPatientIdAndFormFormId(UUID patientId, UUID formId);
     List<PatientFormSubmission> findByDoctorUserId(UUID doctorId);
+    long countByFormFormId(UUID formId);
 }
 

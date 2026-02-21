@@ -28,6 +28,7 @@ import SummaryReport from "../app/system/report/SummaryReport";
 import Guidelines from "../app/system/guidelines/Guidelines";
 import CdssLogic from "../app/system/logic/CdssLogic";
 import AdminUserManagement from "../app/system/admin/AdminUserManagement";
+import AdminDebugPage from "../app/system/admin/AdminDebugPage";
 import { ROLES } from "../constants/roles";
 
 export const router = createBrowserRouter([
@@ -153,6 +154,18 @@ export const router = createBrowserRouter([
         <RoleGuard allowRoles={[ROLES.ADMIN]}>
           <AdminLayout>
             <AdminQuestionManagement />
+          </AdminLayout>
+        </RoleGuard>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/system/admin/debug",
+    element: (
+      <ProtectedRoute>
+        <RoleGuard allowRoles={[ROLES.ADMIN]}>
+          <AdminLayout>
+            <AdminDebugPage />
           </AdminLayout>
         </RoleGuard>
       </ProtectedRoute>

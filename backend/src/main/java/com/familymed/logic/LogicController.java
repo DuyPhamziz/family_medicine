@@ -30,7 +30,7 @@ public class LogicController {
     private final LogicFormulaRepository formulaRepository;
 
     @GetMapping("/variables")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_DOCTOR','ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','USER')")
     public ResponseEntity<ApiResponse<List<LogicVariableResponse>>> getVariables() {
         return ResponseEntity.ok(ApiResponse.success(variableRepository.findAll().stream()
                 .map(LogicVariableResponse::fromEntity)
@@ -38,7 +38,7 @@ public class LogicController {
     }
 
     @PostMapping("/variables")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<LogicVariableResponse>> createVariable(@Valid @RequestBody LogicVariableRequest request) {
         LogicVariable variable = new LogicVariable();
         variable.setVariableName(request.getVariableName());
@@ -48,8 +48,8 @@ public class LogicController {
     }
 
     @PutMapping("/variables/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<LogicVariableResponse> updateVariable(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<LogicVariableResponse>> updateVariable(
             @PathVariable UUID id,
             @Valid @RequestBody LogicVariableRequest request) {
         LogicVariable variable = variableRepository.findById(id)
@@ -57,7 +57,7 @@ public class LogicController {
         variable.setVariableName(request.getVariableName());
         variable.setVariableCode(request.getVariableCode());
         variable.setUnit(request.getUnit());
-        return ResponseEntity.ok(LogicVariableResponse.fromEntity(variableRepository.save(variable)));
+        return ResponseEntity.ok(ApiResponse.success(LogicVariableResponse.fromEntity(variableRepository.save(variable))));
     }
 
     @DeleteMapping("/variables/{id}")
@@ -68,7 +68,7 @@ public class LogicController {
     }
 
     @GetMapping("/formulas")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_DOCTOR','ROLE_USER')")
+    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','USER')")
     public ResponseEntity<ApiResponse<List<LogicFormulaResponse>>> getFormulas() {
         return ResponseEntity.ok(ApiResponse.success(formulaRepository.findAll().stream()
                 .map(LogicFormulaResponse::fromEntity)
@@ -76,18 +76,18 @@ public class LogicController {
     }
 
     @PostMapping("/formulas")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<LogicFormulaResponse> createFormula(@Valid @RequestBody LogicFormulaRequest request) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<LogicFormulaResponse>> createFormula(@Valid @RequestBody LogicFormulaRequest request) {
         LogicFormula formula = new LogicFormula();
         formula.setFormulaName(request.getFormulaName());
         formula.setFormulaCode(request.getFormulaCode());
         formula.setExpression(request.getExpression());
-        return ResponseEntity.ok(LogicFormulaResponse.fromEntity(formulaRepository.save(formula)));
+        return ResponseEntity.ok(ApiResponse.success(LogicFormulaResponse.fromEntity(formulaRepository.save(formula))));
     }
 
     @PutMapping("/formulas/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<LogicFormulaResponse> updateFormula(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<LogicFormulaResponse>> updateFormula(
             @PathVariable UUID id,
             @Valid @RequestBody LogicFormulaRequest request) {
         LogicFormula formula = formulaRepository.findById(id)
@@ -95,11 +95,11 @@ public class LogicController {
         formula.setFormulaName(request.getFormulaName());
         formula.setFormulaCode(request.getFormulaCode());
         formula.setExpression(request.getExpression());
-        return ResponseEntity.ok(LogicFormulaResponse.fromEntity(formulaRepository.save(formula)));
+        return ResponseEntity.ok(ApiResponse.success(LogicFormulaResponse.fromEntity(formulaRepository.save(formula))));
     }
 
     @DeleteMapping("/formulas/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteFormula(@PathVariable UUID id) {
         formulaRepository.deleteById(id);
         return ResponseEntity.noContent().build();

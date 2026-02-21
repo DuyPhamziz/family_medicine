@@ -222,7 +222,7 @@ const PatientDetail = () => {
                         type="button"
                         onClick={() =>
                           window.open(
-                            `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8081"}/api/submissions/${
+                            `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"}/api/submissions/${
                               sub.submissionId
                             }/export`,
                             "_blank"

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ public class SubmissionController {
     private final UserRepository userRepository;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<PatientFormSubmissionDTO> submitForm(
             @RequestBody SubmitFormRequest request,
             Authentication authentication) {
@@ -44,11 +46,13 @@ public class SubmissionController {
     }
 
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
     public ResponseEntity<List<PatientFormSubmissionDTO>> getPatientSubmissions(@PathVariable UUID patientId) {
         return ResponseEntity.ok(formService.getPatientSubmissions(patientId));
     }
 
     @GetMapping("/{id}/export")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public void exportSubmission(@PathVariable UUID id, HttpServletResponse response) throws IOException {
         // Mock export logic for now, implementing real structure requires parsing the JSON submissionData
         // and mapping it to the Excel structure.

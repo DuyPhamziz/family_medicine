@@ -51,7 +51,12 @@ export const logicAPI = {
   createVariable: (data) => apiClient.post('/logic/variables', data),
   getVariableById: (id) => apiClient.get(`/logic/variables/${id}`),
   getAllVariables: () => apiClient.get('/logic/variables'),
+  updateVariable: (id, data) => apiClient.put(`/logic/variables/${id}`, data),
+  deleteVariable: (id) => apiClient.delete(`/logic/variables/${id}`),
+  
   createFormula: (data) => apiClient.post('/logic/formulas', data),
   getFormulaById: (id) => apiClient.get(`/logic/formulas/${id}`),
   getAllFormulas: () => apiClient.get('/logic/formulas'),
+  updateFormula: (id, data) => apiClient.put(`/logic/formulas/${id}`, data),
+  deleteFormula: (id) => apiClient.delete(`/logic/formulas/${id}`),
 };

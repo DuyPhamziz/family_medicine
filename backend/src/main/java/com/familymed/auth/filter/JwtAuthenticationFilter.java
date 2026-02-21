@@ -31,15 +31,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            logger.debug("No Authorization header or invalid format for: " + request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
         
         String token = authHeader.substring(7);
+        logger.debug("Processing JWT token for: " + request.getRequestURI());
         
         try {
             // Validate token trước khi extract
             if (!jwtTokenProvider.validateToken(token)) {
+                logger.warn("Invalid or expired JWT token for: " + request.getRequestURI());
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -47,16 +50,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = jwtTokenProvider.extractUsername(token);
             String role = jwtTokenProvider.extractRole(token);
             String tokenType = jwtTokenProvider.extractTokenType(token);
+            
+            logger.debug("Token details - Username: " + username + ", Role: " + role + ", Type: " + tokenType);
+            
             if (tokenType == null || !"access".equals(tokenType)) {
+                logger.warn("Invalid token type: " + tokenType);
                 filterChain.doFilter(request, response);
                 return;
             }
             
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Xử lý trường hợp role null hoặc empty - dùng ADMIN làm default để tránh lỗi
-                String authority = (role != null && !role.isEmpty()) 
-                    ? "ROLE_" + role 
-                    : "ROLE_ADMIN"; // Default role nếu không có trong token
+                // Fix: Kiểm tra role đã có prefix ROLE_ chưa để tránh duplicate
+                String authority;
+                if (role != null && !role.isEmpty()) {
+                    // Nếu role đã có ROLE_ prefix thì giữ nguyên, không thì thêm vào
+                    authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                } else {
+                    // Default role nếu không có trong token
+                    authority = "ROLE_USER";
+                    logger.warn("No role found in token for user: " + username + ", using default: ROLE_USER");
+                }
                 
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         username,
@@ -66,6 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                logger.info("✓ Authentication set for user: " + username + " with authority: " + authority);
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             logger.warn("JWT token expired: " + e.getMessage());

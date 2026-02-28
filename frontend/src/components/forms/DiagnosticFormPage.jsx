@@ -126,6 +126,7 @@ const DiagnosticFormPage = () => {
                         value={answers[`question_${question.questionId}`]}
                         onChange={(value) => handleAnswerChange(question, value)}
                         error={errors[`question_${question.questionId}`]}
+                        readOnly={question.questionCode === 'V3' || question.questionCode === 'V4'}
                       />
                     ))
                   ) : (

@@ -14,84 +14,163 @@ const buildStorageKey = (patientId, formId) => `assessment_session_${patientId}_
 export const useAssessmentSession = ({ patientId, formId }) => {
   const [form, setForm] = useState(null);
   const [patient, setPatient] = useState(null);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState({}); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [errors, setErrors] = useState({});
   const [progress, setProgress] = useState(0);
   const [sessionId, setSessionId] = useState(null);
-  const [sessionStatus, setSessionStatus] = useState("IN_PROGRESS");
   const [completed, setCompleted] = useState(false);
-  const [submissionSaved, setSubmissionSaved] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [errors, setErrors] = useState({});
 
-  const parseAnswerValue = (answer) => {
-    if (!answer) return "";
-    switch (answer.answerType) {
-      case "NUMBER":
-        return answer.answerValue === null || answer.answerValue === "" ? "" : Number(answer.answerValue);
-      case "BOOLEAN":
-        return answer.answerValue === "true";
-      case "MULTIPLE_CHOICE":
-        try {
-          return answer.answerValue ? JSON.parse(answer.answerValue) : [];
-        } catch {
-          return answer.answerValue ? [answer.answerValue] : [];
+  // --- HÀM BỔ TRỢ ---
+const calculateAge = (dob) => {
+  if (!dob) return "";
+  const birthDate = new Date(dob);
+  const today = new Date();
+  
+  // Công thức này sẽ ra 26 tuổi (giống Header của bạn)
+  return today.getFullYear() - birthDate.getFullYear();
+};
+
+  const isEmpty = (val) => val === "" || val === null || val === undefined || (Array.isArray(val) && val.length === 0);
+
+  const parseValue = (val, type) => {
+    if (isEmpty(val)) return type === "MULTIPLE_CHOICE" ? [] : "";
+    if (type === "NUMBER") return isNaN(Number(val)) ? "" : Number(val);
+    if (type === "MULTIPLE_CHOICE") {
+      try { return typeof val === 'string' ? JSON.parse(val) : val; } catch { return [val]; }
+    }
+    return String(val);
+  };
+
+  // --- LOGIC ẨN HIỆN ---
+  const isQuestionVisible = (question, currentAnswers, allQuestions) => {
+    if (!question.displayCondition || question.displayCondition === "null" || question.displayCondition === "") return true;
+    if (!currentAnswers) return true;
+
+    try {
+      const conditions = JSON.parse(question.displayCondition);
+      const conditionList = Array.isArray(conditions) ? conditions : [conditions];
+
+      return conditionList.some(cond => {
+        const targetQ = allQuestions.find(q => 
+          (cond.questionCode && q.questionCode === cond.questionCode) || 
+          (cond.questionId && q.questionId === cond.questionId)
+        );
+        
+        if (!targetQ) return false;
+        const targetValue = currentAnswers[`question_${targetQ.questionId}`];
+        if (isEmpty(targetValue)) return false;
+
+        const normalize = (v) => {
+          const s = String(v).trim().toUpperCase();
+          if (s === "ĐÃ TIÊM" || s === "CÓ" || s === "YES" || s === "TRUE") return "YES";
+          if (s === "CHƯA TIÊM" || s === "KHÔNG" || s === "NO" || s === "FALSE") return "NO";
+          return s;
+        };
+
+        const valStr = normalize(targetValue);
+        const condVal = normalize(cond.value);
+
+        if (targetQ.questionType === "NUMBER") {
+          const valNum = parseFloat(targetValue);
+          const condNum = parseFloat(cond.value);
+          switch (cond.operator) {
+            case "lessThan": return valNum < condNum;
+            case "greaterThan": return valNum > condNum;
+            case "greaterThanOrEqual": return valNum >= condNum;
+            default: return valNum === condNum;
+          }
         }
-      default:
-        return answer.answerValue ?? "";
+
+        if (cond.operator === "in") {
+          const condArray = Array.isArray(cond.value) ? cond.value.map(normalize) : [condVal];
+          return condArray.includes(valStr);
+        }
+
+        return valStr === condVal;
+      });
+    } catch (e) { return true; }
+  };
+
+  // --- HÀM LƯU DỮ LIỆU CỐ ĐỊNH XUỐNG DB ---
+  const forceSaveDemographics = async (sid, formData, initialAnswers) => {
+    const questions = formData.sections?.flatMap(s => s.questions) || [];
+    for (const q of questions) {
+        const code = q.questionCode?.trim().toUpperCase();
+        if (code === "V3" || code === "V4") {
+            const val = initialAnswers[`question_${q.questionId}`];
+            if (!isEmpty(val)) {
+                try {
+                    await submitAssessmentAnswer({
+                        sessionId: sid,
+                        questionId: q.questionId,
+                        answerType: q.questionType,
+                        answerValue: String(val)
+                    });
+                    console.log(`Auto-saved fixed field: ${code} = ${val}`);
+                } catch (e) { console.error("Force save demographics failed", e); }
+            }
+        }
     }
   };
 
-  const normalizeInitialAnswers = (formData, sessionAnswers) => {
+  const normalizeInitialAnswers = (formData, currentSessionAnswers, patientProfile, history) => {
     const initial = {};
-    formData.sections?.forEach((section) => {
-      section.questions?.forEach((question) => {
-        const key = `question_${question.questionId}`;
-        initial[key] = question.questionType === "MULTIPLE_CHOICE" ? [] : "";
+    const historyMap = {};
+    if (history) { Object.keys(history).forEach(key => { historyMap[key.trim().toUpperCase()] = history[key]; }); }
+    
+    formData?.sections?.forEach((section) => {
+      section.questions?.forEach((q) => {
+        const key = `question_${q.questionId}`;
+        const code = q.questionCode?.trim().toUpperCase();
+
+        initial[key] = q.questionType === "MULTIPLE_CHOICE" ? [] : "";
+
+        if (code === "V3" && patientProfile?.dateOfBirth) {
+            initial[key] = calculateAge(patientProfile.dateOfBirth);
+        } else if (code === "V4") {
+            initial[key] = patientProfile?.gender === "MALE" ? "Nam" : "Nữ"; 
+        } else if (code && historyMap[code]) {
+          initial[key] = parseValue(historyMap[code], q.questionType);
+        }
       });
     });
 
-    sessionAnswers?.forEach((answer) => {
-      const key = `question_${answer.questionId}`;
-      initial[key] = parseAnswerValue(answer);
-    });
-
+    currentSessionAnswers?.forEach((ans) => {
+      if (ans && ans.questionId) initial[`question_${ans.questionId}`] = parseValue(ans.answerValue, ans.answerType);
+    });    
     return initial;
   };
 
-  const startOrResumeSession = async (formData) => {
+  // --- QUẢN LÝ PHIÊN ---
+  const startOrResumeSession = async (formData, patientProfile, history) => {
     const storageKey = buildStorageKey(patientId, formId);
     const cachedSessionId = localStorage.getItem(storageKey);
 
     if (cachedSessionId) {
       try {
-        const sessionRes = await getAssessmentSession(cachedSessionId);
-        const status = sessionRes.session?.status || "IN_PROGRESS";
-        if (status === "COMPLETED") {
-          localStorage.removeItem(storageKey);
-        } else {
+        const res = await getAssessmentSession(cachedSessionId);
+        if (res.session?.status === "IN_PROGRESS") {
           setSessionId(cachedSessionId);
-          setSessionStatus(status);
-          setNotes(sessionRes.session?.notes || "");
-          setAnswers(normalizeInitialAnswers(formData, sessionRes.answers));
+          setNotes(res.session?.notes || "");
+          setAnswers(normalizeInitialAnswers(formData, res.answers, patientProfile, history));
           return;
         }
-      } catch (err) {
-        console.warn("Failed to resume session, creating new", err);
-        localStorage.removeItem(storageKey);
-      }
+      } catch { localStorage.removeItem(storageKey); }
     }
 
     const startRes = await startAssessmentSession({ patientId, formId });
-    const newSessionId = startRes.sessionId;
-    localStorage.setItem(storageKey, newSessionId);
-    setSessionId(newSessionId);
-    setSessionStatus(startRes.status || "IN_PROGRESS");
-    setNotes(startRes.notes || "");
-    setAnswers(normalizeInitialAnswers(formData, []));
+    const sid = startRes.sessionId;
+    setSessionId(sid);
+    localStorage.setItem(storageKey, sid);
+    const initialData = normalizeInitialAnswers(formData, [], patientProfile, history);
+    setAnswers(initialData);
+    
+    // TỰ ĐỘNG LƯU TUỔI, GIỚI TÍNH VÀO DATABASE
+    await forceSaveDemographics(sid, formData, initialData);
   };
 
   useEffect(() => {
@@ -99,310 +178,72 @@ export const useAssessmentSession = ({ patientId, formId }) => {
       if (!patientId || !formId) return;
       setLoading(true);
       try {
-        const [formRes, patientRes] = await Promise.all([
+        const [formRes, patientRes, historyRes] = await Promise.all([
           fetchFormById(formId),
           fetchPatientById(patientId),
+          api.get(`/api/forms/latest-data/${patientId}`).catch(() => ({ data: {} }))
         ]);
-
         setForm(formRes);
         setPatient(patientRes);
-        await startOrResumeSession(formRes);
+        // GỌI HÀM WRAPPER ĐỂ KÍCH HOẠT AUTO-SAVE
+        await startOrResumeSession(formRes, patientRes, historyRes.data);
         setError(null);
-      } catch (err) {
-        console.error("Error loading form:", err);
-        const message = err.response?.data?.message || err.message || "Failed to load form";
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { setError("Lỗi tải biểu mẫu"); } 
+      finally { setLoading(false); }
     };
-
     loadData();
   }, [patientId, formId]);
 
-  const allQuestions = useMemo(() => {
-    if (!form?.sections) return [];
-    return form.sections.flatMap((section) => section.questions || []);
-  }, [form]);
-
-  const questionIndex = useMemo(() => {
-    const byId = new Map();
-    const byCode = new Map();
-    allQuestions.forEach((question) => {
-      byId.set(question.questionId, question);
-      if (question.questionCode) {
-        byCode.set(question.questionCode, question);
-      }
-    });
-    return { byId, byCode };
-  }, [allQuestions]);
-
-  const parseCondition = (conditionValue) => {
-    if (!conditionValue) return null;
-    try {
-      return JSON.parse(conditionValue);
-    } catch {
-      return null;
-    }
-  };
-
-  const isEmptyAnswer = (value, questionType) => {
-    if (questionType === "MULTIPLE_CHOICE") {
-      return !Array.isArray(value) || value.length === 0;
-    }
-    if (questionType === "BOOLEAN") {
-      return value !== true && value !== false;
-    }
-    return value === "" || value === null || value === undefined;
-  };
-
-  const normalizeExpectedValue = (actual, expected) => {
-    if (typeof actual === "boolean" && typeof expected === "string") {
-      return expected === "true";
-    }
-    if (typeof actual === "number" && typeof expected === "string" && expected !== "") {
-      const numberValue = Number(expected);
-      return Number.isNaN(numberValue) ? expected : numberValue;
-    }
-    return expected;
-  };
-
-  const compareValues = (actual, expected, operator) => {
-    const normalizedExpected = normalizeExpectedValue(actual, expected);
-    switch (operator) {
-      case "notEquals":
-        return actual !== normalizedExpected;
-      case "in":
-        return Array.isArray(normalizedExpected) && normalizedExpected.includes(actual);
-      case "contains":
-        return Array.isArray(actual) ? actual.includes(normalizedExpected) : false;
-      case "greaterThan":
-        return Number(actual) > Number(normalizedExpected);
-      case "lessThan":
-        return Number(actual) < Number(normalizedExpected);
-      case "exists":
-        return Boolean(actual) === Boolean(normalizedExpected);
-      default:
-        return actual === normalizedExpected;
-    }
-  };
-
-  const isQuestionVisible = (question) => {
-    const condition = parseCondition(question.displayCondition);
-    if (!condition) return true;
-
-    const dependsOn = condition.dependsOn || condition.questionId || condition.questionCode;
-    if (!dependsOn) return true;
-
-    const targetQuestion = questionIndex.byId.get(dependsOn) || questionIndex.byCode.get(dependsOn);
-    if (!targetQuestion) return true;
-
-    const targetValue = answers[`question_${targetQuestion.questionId}`];
-    const operator =
-      condition.operator ||
-      (condition.equals !== undefined ? "equals" : null) ||
-      (condition.notEquals !== undefined ? "notEquals" : null) ||
-      (condition.in !== undefined || condition.anyOf !== undefined ? "in" : null) ||
-      (condition.contains !== undefined ? "contains" : null) ||
-      (condition.greaterThan !== undefined ? "greaterThan" : null) ||
-      (condition.lessThan !== undefined ? "lessThan" : null) ||
-      (condition.exists !== undefined ? "exists" : "equals");
-
-    const expected =
-      condition.value ??
-      condition.equals ??
-      condition.notEquals ??
-      condition.in ??
-      condition.anyOf ??
-      condition.contains ??
-      condition.greaterThan ??
-      condition.lessThan ??
-      condition.exists ??
-      true;
-
-    return compareValues(targetValue, expected, operator);
-  };
-
-  const sortedSections = useMemo(() => {
-    if (!form?.sections) return [];
-    return [...form.sections].sort((a, b) => (a.sectionOrder || 0) - (b.sectionOrder || 0));
-  }, [form]);
+  const allQuestions = useMemo(() => form?.sections?.flatMap(s => s.questions) || [], [form]);
 
   const visibleSections = useMemo(() => {
-    return sortedSections.map((section) => {
-      const sortedQuestions = [...(section.questions || [])].sort(
-        (a, b) => (a.questionOrder || 0) - (b.questionOrder || 0)
-      );
-      const visibleQuestions = sortedQuestions.filter(isQuestionVisible);
-      return { ...section, questions: visibleQuestions };
-    });
-  }, [sortedSections, answers, questionIndex]);
+    if (!form?.sections || !answers) return [];
+    return [...form.sections].sort((a, b) => a.sectionOrder - b.sectionOrder).map(s => ({
+      ...s,
+      questions: (s.questions || []).sort((a, b) => a.questionOrder - b.questionOrder)
+        .filter(q => isQuestionVisible(q, answers, allQuestions))
+    }));
+  }, [form, answers, allQuestions]);
 
   useEffect(() => {
-    const visibleQuestions = visibleSections.flatMap((section) => section.questions || []);
-    if (visibleQuestions.length > 0) {
-      const totalQuestions = visibleQuestions.length;
-      const answeredQuestions = visibleQuestions.filter((question) => {
-        const value = answers[`question_${question.questionId}`];
-        return !isEmptyAnswer(value, question.questionType);
-      }).length;
-      const progressPercent = (answeredQuestions / totalQuestions) * 100;
-      setProgress(progressPercent);
+    const allVisible = visibleSections.flatMap(s => s.questions);
+    if (allVisible.length > 0) {
+      const answered = allVisible.filter(q => !isEmpty(answers[`question_${q.questionId}`])).length;
+      setProgress((answered / allVisible.length) * 100);
     }
   }, [answers, visibleSections]);
 
-  const validateAnswers = () => {
-    const newErrors = {};
-    const visibleQuestions = visibleSections.flatMap((section) => section.questions || []);
-    visibleQuestions.forEach((question) => {
-      const value = answers[`question_${question.questionId}`];
-      if (question.required && isEmptyAnswer(value, question.questionType)) {
-        newErrors[`question_${question.questionId}`] = "Please answer this question";
-      }
-    });
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const buildSubmissionPayload = () => {
-    const answersPayload = allQuestions
-      .map((question) => {
-        const key = `question_${question.questionId}`;
-        const value = answers[key];
-        if (isEmptyAnswer(value, question.questionType)) {
-          return null;
-        }
-
-        return {
-          questionId: question.questionId,
-          questionCode: question.questionCode || null,
-          questionText: question.questionText || null,
-          questionType: question.questionType,
-          answerValue:
-            question.questionType === "MULTIPLE_CHOICE"
-              ? value
-              : question.questionType === "BOOLEAN"
-              ? Boolean(value)
-              : value,
-        };
-      })
-      .filter(Boolean);
-
-    return {
-      patientId,
-      formId,
-      submissionData: JSON.stringify({
-        sessionId,
-        answers: answersPayload,
-      }),
-      notes: notes || "",
-    };
-  };
-
-  const submitPatientForm = async () => {
-    if (submissionSaved) return;
-    const payload = buildSubmissionPayload();
-    await api.post("/api/submissions", payload);
-    setSubmissionSaved(true);
-  };
-
-  const submitAnswer = async (question, value) => {
-    if (!sessionId) return;
-    if (isEmptyAnswer(value, question.questionType)) return;
-
-    const answerValue =
-      question.questionType === "MULTIPLE_CHOICE"
-        ? JSON.stringify(value)
-        : question.questionType === "BOOLEAN"
-        ? String(value)
-        : value === null || value === undefined
-        ? ""
-        : String(value);
-
-    await submitAssessmentAnswer({
-      sessionId,
-      questionId: question.questionId,
-      answerType: question.questionType,
-      answerValue,
-    });
-  };
-
   const handleAnswerChange = async (question, value) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [`question_${question.questionId}`]: value,
-    }));
-
-    try {
-      await submitAnswer(question, value);
-    } catch (err) {
-      console.error("Error saving answer:", err);
-    }
-  };
-
-  const handleSaveProgress = async (silent = false) => {
-    if (!sessionId) return;
-    setSaving(true);
-    try {
-      const visibleQuestions = visibleSections.flatMap((section) => section.questions || []);
-      const tasks = visibleQuestions
-        .map((question) => ({
-          question,
-          value: answers[`question_${question.questionId}`],
-        }))
-        .filter(({ value, question }) => !isEmptyAnswer(value, question.questionType))
-        .map(({ question, value }) => submitAnswer(question, value));
-      await Promise.all(tasks);
-      if (!silent) {
-        alert("Progress saved");
-      }
-    } catch (err) {
-      console.error("Error saving progress:", err);
-      if (!silent) {
-        alert("Failed to save progress");
-      }
-    } finally {
-      setSaving(false);
+    setAnswers(prev => ({ ...prev, [`question_${question.questionId}`]: value }));
+    if (sessionId) {
+      const valStr = question.questionType === "MULTIPLE_CHOICE" ? JSON.stringify(value) : String(value);
+      try {
+        await submitAssessmentAnswer({ sessionId, questionId: question.questionId, answerType: question.questionType, answerValue: valStr });
+      } catch (err) { console.error("Lưu tự động lỗi"); }
     }
   };
 
   const handleSubmit = async () => {
-    if (!validateAnswers()) return;
-
     setSubmitting(true);
     try {
-      await handleSaveProgress(true);
       await completeAssessmentSession({ sessionId, notes });
-      await submitPatientForm();
+      const payload = {
+        patientId, formId,
+        submissionData: JSON.stringify({
+          sessionId,
+          answers: allQuestions.filter(q => !isEmpty(answers[`question_${q.questionId}`])).map(q => ({
+            questionId: q.questionId, questionCode: q.questionCode,
+            answerValue: q.questionType === "MULTIPLE_CHOICE" ? JSON.stringify(answers[`question_${q.questionId}`]) : String(answers[`question_${q.questionId}`])
+          }))
+        }),
+        notes: notes || ""
+      };
+      await api.post("/api/submissions", payload);
       setCompleted(true);
-      setSessionStatus("COMPLETED");
       localStorage.removeItem(buildStorageKey(patientId, formId));
-    } catch (err) {
-      console.error("Error completing assessment:", err);
-      alert("Failed to submit form");
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err) { alert("Lỗi khi gửi biểu mẫu"); } 
+    finally { setSubmitting(false); }
   };
 
-  return {
-    form,
-    patient,
-    answers,
-    loading,
-    error,
-    submitting,
-    saving,
-    notes,
-    setNotes,
-    errors,
-    progress,
-    sessionId,
-    sessionStatus,
-    completed,
-    visibleSections,
-    handleAnswerChange,
-    handleSaveProgress,
-    handleSubmit,
-  };
+  return { form, patient, answers, loading, error, submitting, progress, completed, visibleSections, handleAnswerChange, handleSubmit, notes, setNotes, errors };
 };

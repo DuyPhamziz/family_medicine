@@ -57,6 +57,7 @@ public class AssessmentAnswer {
         BOOLEAN,
         SINGLE_CHOICE,
         MULTIPLE_CHOICE,
-        DATE
+        DATE,
+        IMAGE_UPLOAD    
     }
 }

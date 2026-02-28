@@ -1,0 +1,3432 @@
+2026-02-22 00:03:25.098 DEBUG [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms
+2026-02-22 00:03:25.098 DEBUG [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/patients/doctor/list
+2026-02-22 00:03:25.139 DEBUG [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:25.139 DEBUG [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:25.139 INFO  [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:25.139 INFO  [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:25.139 INFO  [http-nio-8080-exec-8] c.f.patient.PatientController - getDoctorPatients - Authentication: UsernamePasswordAuthenticationToken [Principal=admin@familymed.vn, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=null], Granted Authorities=[ROLE_ADMIN]]
+2026-02-22 00:03:25.141 INFO  [http-nio-8080-exec-8] c.f.patient.PatientController - getDoctorPatients - User email: admin@familymed.vn
+2026-02-22 00:03:25.141 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.is_active,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.password_hash,
+        u1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        roles r1_0 
+            on r1_0.role_id=u1_0.role_id 
+    where
+        u1_0.email=?
+2026-02-22 00:03:25.141 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.status=?
+2026-02-22 00:03:25.145 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.150 INFO  [http-nio-8080-exec-8] c.f.patient.PatientController - getDoctorPatients - Doctor ID: ee37005a-7ec1-4fb8-b0a6-934fe1bde69d
+2026-02-22 00:03:25.150 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:25.152 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        p1_0.doctor_id,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    where
+        d1_0.user_id=?
+2026-02-22 00:03:25.154 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.156 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.156 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.156 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.156 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.158 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.158 DEBUG [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/patients/doctor/list
+2026-02-22 00:03:25.158 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.158 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.158 DEBUG [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:25.160 INFO  [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:25.160 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.160 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.160 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.160 INFO  [http-nio-8080-exec-2] c.f.patient.PatientController - getDoctorPatients - Authentication: UsernamePasswordAuthenticationToken [Principal=admin@familymed.vn, Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=0:0:0:0:0:0:0:1, SessionId=null], Granted Authorities=[ROLE_ADMIN]]
+2026-02-22 00:03:25.160 INFO  [http-nio-8080-exec-2] c.f.patient.PatientController - getDoctorPatients - User email: admin@familymed.vn
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.is_active,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.password_hash,
+        u1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        roles r1_0 
+            on r1_0.role_id=u1_0.role_id 
+    where
+        u1_0.email=?
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 INFO  [http-nio-8080-exec-2] c.f.patient.PatientController - getDoctorPatients - Doctor ID: ee37005a-7ec1-4fb8-b0a6-934fe1bde69d
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.161 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.163 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.163 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        p1_0.doctor_id,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    where
+        d1_0.user_id=?
+2026-02-22 00:03:25.163 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.163 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.163 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.163 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.163 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.165 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.167 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.169 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.169 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.169 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.169 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.169 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:25.169 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.171 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.171 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.171 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.171 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:25.171 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.173 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.173 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.174 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.174 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.174 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.174 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.176 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:25.176 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.176 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.178 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.178 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.178 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.178 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.178 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.178 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.180 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.184 DEBUG [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms
+2026-02-22 00:03:25.186 DEBUG [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:25.186 INFO  [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:25.188 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.status=?
+2026-02-22 00:03:25.188 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.188 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:25.190 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.190 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.190 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.192 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.192 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.192 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.192 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.192 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.192 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.193 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.193 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.193 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.193 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.193 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.193 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.193 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.193 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.195 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.195 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.196 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.196 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.196 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.197 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.197 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.197 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.198 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.198 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.200 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.200 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.200 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.202 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.202 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.202 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.202 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:25.204 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.204 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.204 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.205 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.206 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:25.206 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.206 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.208 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.208 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.208 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.208 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.208 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:25.208 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:25.210 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.210 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.210 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.210 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.212 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.212 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.212 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.212 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:25.212 DEBUG [http-nio-8080-exec-10] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:29.234 DEBUG [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/submissions/patient/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:03:29.252 DEBUG [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:29.252 INFO  [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:29.255 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        pfs1_0.submission_id,
+        pfs1_0.created_at,
+        pfs1_0.diagnostic_result,
+        pfs1_0.doctor_id,
+        pfs1_0.form_id,
+        pfs1_0.notes,
+        pfs1_0.patient_id,
+        pfs1_0.risk_level,
+        pfs1_0.status,
+        pfs1_0.submission_data,
+        pfs1_0.total_score,
+        pfs1_0.updated_at 
+    from
+        patient_form_submissions pfs1_0 
+    left join
+        patients p1_0 
+            on p1_0.patient_id=pfs1_0.patient_id 
+    where
+        p1_0.patient_id=?
+2026-02-22 00:03:29.262 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.is_active,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.password_hash,
+        u1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    join
+        roles r1_0 
+            on r1_0.role_id=u1_0.role_id 
+    where
+        u1_0.user_id=?
+2026-02-22 00:03:29.265 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.form_id=?
+2026-02-22 00:03:29.265 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        d1_0.user_id,
+        d1_0.is_active,
+        d1_0.created_at,
+        d1_0.email,
+        d1_0.full_name,
+        d1_0.password_hash,
+        d1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        d1_0.updated_at,
+        d1_0.username,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    left join
+        roles r1_0 
+            on r1_0.role_id=d1_0.role_id 
+    where
+        p1_0.patient_id=?
+2026-02-22 00:03:29.265 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.form_id=?
+2026-02-22 00:03:30.496 DEBUG [http-nio-8080-exec-4] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/patients/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:03:30.497 DEBUG [http-nio-8080-exec-4] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:30.498 DEBUG [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms/latest-data/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:03:30.498 DEBUG [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms/f0000000-0000-0000-0000-000000000001
+2026-02-22 00:03:30.501 DEBUG [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:30.503 INFO  [http-nio-8080-exec-4] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:30.503 DEBUG [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:30.503 INFO  [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:30.503 INFO  [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:30.503 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.form_id=?
+2026-02-22 00:03:30.503 DEBUG [http-nio-8080-exec-4] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        d1_0.user_id,
+        d1_0.is_active,
+        d1_0.created_at,
+        d1_0.email,
+        d1_0.full_name,
+        d1_0.password_hash,
+        d1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        d1_0.updated_at,
+        d1_0.username,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    left join
+        roles r1_0 
+            on r1_0.role_id=d1_0.role_id 
+    where
+        p1_0.patient_id=?
+2026-02-22 00:03:30.507 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:30.509 DEBUG [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/patients/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:03:30.509 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:30.511 DEBUG [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:30.511 INFO  [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:30.511 DEBUG [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms/latest-data/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:03:30.511 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:30.513 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        d1_0.user_id,
+        d1_0.is_active,
+        d1_0.created_at,
+        d1_0.email,
+        d1_0.full_name,
+        d1_0.password_hash,
+        d1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        d1_0.updated_at,
+        d1_0.username,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    left join
+        roles r1_0 
+            on r1_0.role_id=d1_0.role_id 
+    where
+        p1_0.patient_id=?
+2026-02-22 00:03:30.513 DEBUG [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:30.513 INFO  [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:30.515 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:30.517 DEBUG [http-nio-8080-exec-8] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:30.522 DEBUG [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms/f0000000-0000-0000-0000-000000000001
+2026-02-22 00:03:30.523 DEBUG [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:30.523 INFO  [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:30.523 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.form_id=?
+2026-02-22 00:03:30.526 DEBUG [http-nio-8080-exec-5] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/start
+2026-02-22 00:03:30.526 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:03:30.526 DEBUG [http-nio-8080-exec-5] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:30.526 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:03:30.526 INFO  [http-nio-8080-exec-5] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:30.526 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:30.528 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:30.528 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:03:30.528 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.is_active,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.password_hash,
+        u1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        roles r1_0 
+            on r1_0.role_id=u1_0.role_id 
+    where
+        u1_0.email=? 
+        or u1_0.username=?
+2026-02-22 00:03:30.529 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        d1_0.user_id,
+        d1_0.is_active,
+        d1_0.created_at,
+        d1_0.email,
+        d1_0.full_name,
+        d1_0.password_hash,
+        d1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        d1_0.updated_at,
+        d1_0.username,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    left join
+        roles r1_0 
+            on r1_0.role_id=d1_0.role_id 
+    where
+        p1_0.patient_id=?
+2026-02-22 00:03:30.531 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.form_id=?
+2026-02-22 00:03:30.533 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        as1_0.session_id,
+        as1_0.completed_at,
+        as1_0.doctor_id,
+        as1_0.form_id,
+        as1_0.notes,
+        as1_0.patient_id,
+        as1_0.started_at,
+        as1_0.status,
+        as1_0.updated_at 
+    from
+        assessment_sessions as1_0 
+    where
+        as1_0.session_id=?
+2026-02-22 00:03:30.534 DEBUG [http-nio-8080-exec-9] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/start
+2026-02-22 00:03:30.536 DEBUG [http-nio-8080-exec-9] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:03:30.536 INFO  [http-nio-8080-exec-9] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:03:30.537 DEBUG [http-nio-8080-exec-9] org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.is_active,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.password_hash,
+        u1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        roles r1_0 
+            on r1_0.role_id=u1_0.role_id 
+    where
+        u1_0.email=? 
+        or u1_0.username=?
+2026-02-22 00:03:30.537 DEBUG [http-nio-8080-exec-9] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        d1_0.user_id,
+        d1_0.is_active,
+        d1_0.created_at,
+        d1_0.email,
+        d1_0.full_name,
+        d1_0.password_hash,
+        d1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        d1_0.updated_at,
+        d1_0.username,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    left join
+        roles r1_0 
+            on r1_0.role_id=d1_0.role_id 
+    where
+        p1_0.patient_id=?
+2026-02-22 00:03:30.537 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        al1_0.id,
+        al1_0.action_type,
+        al1_0.entity_id,
+        al1_0.entity_type,
+        al1_0.ip_address,
+        al1_0.timestamp,
+        al1_0.user_id 
+    from
+        audit_log al1_0 
+    where
+        al1_0.id=?
+2026-02-22 00:03:30.540 DEBUG [http-nio-8080-exec-9] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.form_id=?
+2026-02-22 00:03:30.542 DEBUG [http-nio-8080-exec-9] org.hibernate.SQL - 
+    select
+        as1_0.session_id,
+        as1_0.completed_at,
+        as1_0.doctor_id,
+        as1_0.form_id,
+        as1_0.notes,
+        as1_0.patient_id,
+        as1_0.started_at,
+        as1_0.status,
+        as1_0.updated_at 
+    from
+        assessment_sessions as1_0 
+    where
+        as1_0.session_id=?
+2026-02-22 00:03:30.544 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    insert 
+    into
+        audit_log
+        (action_type, entity_id, entity_type, ip_address, timestamp, user_id, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2026-02-22 00:03:30.546 DEBUG [http-nio-8080-exec-9] org.hibernate.SQL - 
+    select
+        al1_0.id,
+        al1_0.action_type,
+        al1_0.entity_id,
+        al1_0.entity_type,
+        al1_0.ip_address,
+        al1_0.timestamp,
+        al1_0.user_id 
+    from
+        audit_log al1_0 
+    where
+        al1_0.id=?
+2026-02-22 00:03:30.546 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    insert 
+    into
+        assessment_sessions
+        (completed_at, doctor_id, form_id, notes, patient_id, started_at, status, updated_at, session_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-02-22 00:03:30.550 DEBUG [http-nio-8080-exec-9] org.hibernate.SQL - 
+    insert 
+    into
+        audit_log
+        (action_type, entity_id, entity_type, ip_address, timestamp, user_id, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2026-02-22 00:03:30.554 DEBUG [http-nio-8080-exec-9] org.hibernate.SQL - 
+    insert 
+    into
+        assessment_sessions
+        (completed_at, doctor_id, form_id, notes, patient_id, started_at, status, updated_at, session_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-02-22 00:09:24.655 DEBUG [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms/f0000000-0000-0000-0000-000000000001
+2026-02-22 00:09:24.657 DEBUG [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/patients/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:09:24.657 DEBUG [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms/latest-data/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:09:24.661 DEBUG [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:24.661 DEBUG [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:24.661 DEBUG [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:24.661 INFO  [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:24.661 INFO  [http-nio-8080-exec-10] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:24.661 INFO  [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:24.669 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        d1_0.user_id,
+        d1_0.is_active,
+        d1_0.created_at,
+        d1_0.email,
+        d1_0.full_name,
+        d1_0.password_hash,
+        d1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        d1_0.updated_at,
+        d1_0.username,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    left join
+        roles r1_0 
+            on r1_0.role_id=d1_0.role_id 
+    where
+        p1_0.patient_id=?
+2026-02-22 00:09:24.669 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.form_id=?
+2026-02-22 00:09:24.673 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:09:24.675 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:09:24.677 DEBUG [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms/latest-data/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:09:24.679 DEBUG [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:24.677 DEBUG [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/patients/fb91fd5a-e15a-42ee-a4c0-0dbad73c418e
+2026-02-22 00:09:24.679 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.681 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.679 INFO  [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:24.684 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.684 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.684 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.682 DEBUG [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:24.684 INFO  [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:24.684 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.686 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.686 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.686 DEBUG [http-nio-8080-exec-1] org.hibernate.SQL - 
+    select
+        p1_0.patient_id,
+        p1_0.address,
+        p1_0.allergies,
+        p1_0.current_medications,
+        p1_0.date_of_birth,
+        d1_0.user_id,
+        d1_0.is_active,
+        d1_0.created_at,
+        d1_0.email,
+        d1_0.full_name,
+        d1_0.password_hash,
+        d1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        d1_0.updated_at,
+        d1_0.username,
+        p1_0.email,
+        p1_0.full_name,
+        p1_0.gender,
+        p1_0.medical_history,
+        p1_0.notes,
+        p1_0.patient_code,
+        p1_0.phone_number,
+        p1_0.status 
+    from
+        patients p1_0 
+    left join
+        users d1_0 
+            on d1_0.user_id=p1_0.doctor_id 
+    left join
+        roles r1_0 
+            on r1_0.role_id=d1_0.role_id 
+    where
+        p1_0.patient_id=?
+2026-02-22 00:09:24.687 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.687 DEBUG [http-nio-8080-exec-2] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.691 DEBUG [http-nio-8080-exec-5] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/forms/f0000000-0000-0000-0000-000000000001
+2026-02-22 00:09:24.693 DEBUG [http-nio-8080-exec-5] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:24.693 INFO  [http-nio-8080-exec-5] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:24.693 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        df1_0.form_id,
+        df1_0.category,
+        df1_0.created_at,
+        df1_0.description,
+        df1_0.form_name,
+        df1_0.scoring_rules,
+        df1_0.status,
+        df1_0.updated_at,
+        df1_0.version 
+    from
+        diagnostic_forms df1_0 
+    where
+        df1_0.form_id=?
+2026-02-22 00:09:24.695 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        s1_0.form_id,
+        s1_0.section_id,
+        s1_0.created_at,
+        s1_0.section_name,
+        s1_0.section_order,
+        s1_0.updated_at 
+    from
+        form_sections s1_0 
+    where
+        s1_0.form_id=? 
+    order by
+        s1_0.section_order
+2026-02-22 00:09:24.697 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        q1_0.section_id,
+        q1_0.question_id,
+        q1_0.created_at,
+        q1_0.display_condition,
+        q1_0.help_text,
+        q1_0.max_value,
+        q1_0.min_value,
+        q1_0.options,
+        q1_0.points,
+        q1_0.question_code,
+        q1_0.question_order,
+        q1_0.question_text,
+        q1_0.question_type,
+        q1_0.required,
+        q1_0.unit,
+        q1_0.updated_at 
+    from
+        form_questions q1_0 
+    where
+        q1_0.section_id=? 
+    order by
+        q1_0.question_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.699 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.703 DEBUG [http-nio-8080-exec-5] org.hibernate.SQL - 
+    select
+        oi1_0.question_id,
+        oi1_0.option_id,
+        oi1_0.created_at,
+        oi1_0.option_order,
+        oi1_0.option_text,
+        oi1_0.option_value,
+        oi1_0.points,
+        oi1_0.updated_at 
+    from
+        form_question_options oi1_0 
+    where
+        oi1_0.question_id=? 
+    order by
+        oi1_0.option_order
+2026-02-22 00:09:24.832 DEBUG [http-nio-8080-exec-3] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a
+2026-02-22 00:09:24.834 DEBUG [http-nio-8080-exec-3] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:24.835 INFO  [http-nio-8080-exec-3] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:24.835 DEBUG [http-nio-8080-exec-3] org.hibernate.SQL - 
+    select
+        as1_0.session_id,
+        as1_0.completed_at,
+        as1_0.doctor_id,
+        as1_0.form_id,
+        as1_0.notes,
+        as1_0.patient_id,
+        as1_0.started_at,
+        as1_0.status,
+        as1_0.updated_at 
+    from
+        assessment_sessions as1_0 
+    where
+        as1_0.session_id=?
+2026-02-22 00:09:24.839 DEBUG [http-nio-8080-exec-3] org.hibernate.SQL - 
+    select
+        aa1_0.answer_id,
+        aa1_0.answer_type,
+        aa1_0.answer_value,
+        aa1_0.answered_at,
+        aa1_0.question_code,
+        aa1_0.question_id,
+        aa1_0.question_text,
+        aa1_0.session_id 
+    from
+        assessment_answers aa1_0 
+    left join
+        assessment_sessions s1_0 
+            on s1_0.session_id=aa1_0.session_id 
+    where
+        s1_0.session_id=? 
+    order by
+        aa1_0.answered_at desc
+2026-02-22 00:09:24.845 DEBUG [http-nio-8080-exec-4] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a
+2026-02-22 00:09:24.849 DEBUG [http-nio-8080-exec-4] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:24.849 INFO  [http-nio-8080-exec-4] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:24.849 DEBUG [http-nio-8080-exec-4] org.hibernate.SQL - 
+    select
+        as1_0.session_id,
+        as1_0.completed_at,
+        as1_0.doctor_id,
+        as1_0.form_id,
+        as1_0.notes,
+        as1_0.patient_id,
+        as1_0.started_at,
+        as1_0.status,
+        as1_0.updated_at 
+    from
+        assessment_sessions as1_0 
+    where
+        as1_0.session_id=?
+2026-02-22 00:09:24.851 DEBUG [http-nio-8080-exec-4] org.hibernate.SQL - 
+    select
+        aa1_0.answer_id,
+        aa1_0.answer_type,
+        aa1_0.answer_value,
+        aa1_0.answered_at,
+        aa1_0.question_code,
+        aa1_0.question_id,
+        aa1_0.question_text,
+        aa1_0.session_id 
+    from
+        assessment_answers aa1_0 
+    left join
+        assessment_sessions s1_0 
+            on s1_0.session_id=aa1_0.session_id 
+    where
+        s1_0.session_id=? 
+    order by
+        aa1_0.answered_at desc
+2026-02-22 00:09:51.718 DEBUG [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:09:51.718 DEBUG [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - Token details - Username: admin@familymed.vn, Role: ROLE_ADMIN, Type: access
+2026-02-22 00:09:51.718 INFO  [http-nio-8080-exec-6] c.f.a.filter.JwtAuthenticationFilter - ? Authentication set for user: admin@familymed.vn with authority: ROLE_ADMIN
+2026-02-22 00:09:51.722 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        as1_0.session_id,
+        as1_0.completed_at,
+        as1_0.doctor_id,
+        as1_0.form_id,
+        as1_0.notes,
+        as1_0.patient_id,
+        as1_0.started_at,
+        as1_0.status,
+        as1_0.updated_at 
+    from
+        assessment_sessions as1_0 
+    where
+        as1_0.session_id=?
+2026-02-22 00:09:51.722 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        fq1_0.question_id,
+        fq1_0.created_at,
+        fq1_0.display_condition,
+        fq1_0.help_text,
+        fq1_0.max_value,
+        fq1_0.min_value,
+        fq1_0.options,
+        fq1_0.points,
+        fq1_0.question_code,
+        fq1_0.question_order,
+        fq1_0.question_text,
+        fq1_0.question_type,
+        fq1_0.required,
+        fq1_0.section_id,
+        fq1_0.unit,
+        fq1_0.updated_at 
+    from
+        form_questions fq1_0 
+    where
+        fq1_0.question_id=?
+2026-02-22 00:09:51.723 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        fs1_0.section_id,
+        fs1_0.created_at,
+        fs1_0.form_id,
+        fs1_0.section_name,
+        fs1_0.section_order,
+        fs1_0.updated_at 
+    from
+        form_sections fs1_0 
+    where
+        fs1_0.section_id=?
+2026-02-22 00:09:51.724 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        aa1_0.answer_id,
+        aa1_0.answer_type,
+        aa1_0.answer_value,
+        aa1_0.answered_at,
+        aa1_0.question_code,
+        aa1_0.question_id,
+        aa1_0.question_text,
+        aa1_0.session_id 
+    from
+        assessment_answers aa1_0 
+    where
+        aa1_0.answer_id=?
+2026-02-22 00:09:51.724 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.is_active,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.full_name,
+        u1_0.password_hash,
+        u1_0.role_id,
+        r1_0.role_id,
+        r1_0.created_at,
+        r1_0.role_code,
+        r1_0.role_name,
+        r1_0.updated_at,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        roles r1_0 
+            on r1_0.role_id=u1_0.role_id 
+    where
+        u1_0.email=?
+2026-02-22 00:09:51.724 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    select
+        al1_0.id,
+        al1_0.action_type,
+        al1_0.entity_id,
+        al1_0.entity_type,
+        al1_0.ip_address,
+        al1_0.timestamp,
+        al1_0.user_id 
+    from
+        audit_log al1_0 
+    where
+        al1_0.id=?
+2026-02-22 00:09:51.730 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    insert 
+    into
+        audit_log
+        (action_type, entity_id, entity_type, ip_address, timestamp, user_id, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+2026-02-22 00:09:51.730 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    insert 
+    into
+        assessment_answers
+        (answer_type, answer_value, answered_at, question_code, question_id, question_text, session_id, answer_id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?)
+2026-02-22 00:09:51.730 DEBUG [http-nio-8080-exec-6] org.hibernate.SQL - 
+    update
+        assessment_sessions 
+    set
+        completed_at=?,
+        doctor_id=?,
+        form_id=?,
+        notes=?,
+        patient_id=?,
+        started_at=?,
+        status=?,
+        updated_at=? 
+    where
+        session_id=?
+2026-02-22 00:10:16.704 DEBUG [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:16.715 WARN  [http-nio-8080-exec-2] c.f.a.filter.JwtAuthenticationFilter - Invalid or expired JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:17.947 DEBUG [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:17.947 WARN  [http-nio-8080-exec-1] c.f.a.filter.JwtAuthenticationFilter - Invalid or expired JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:20.182 DEBUG [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:20.183 WARN  [http-nio-8080-exec-8] c.f.a.filter.JwtAuthenticationFilter - Invalid or expired JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:20.374 DEBUG [http-nio-8080-exec-5] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:20.375 WARN  [http-nio-8080-exec-5] c.f.a.filter.JwtAuthenticationFilter - Invalid or expired JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:20.841 DEBUG [http-nio-8080-exec-9] c.f.a.filter.JwtAuthenticationFilter - Processing JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 00:10:20.841 WARN  [http-nio-8080-exec-9] c.f.a.filter.JwtAuthenticationFilter - Invalid or expired JWT token for: /api/assessments/61fd9258-24ff-4fe7-9108-77e86fe5456a/answers
+2026-02-22 18:45:03.072 WARN  [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=18h34m17s610ms656탎500ns).
+2026-02-22 21:34:47.413 WARN  [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=2h14m13s724ms877탎).
+2026-02-22 23:32:13.004 WARN  [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=37m54s356ms489탎300ns).
+2026-02-22 23:33:51.473 WARN  [HikariPool-1 housekeeper] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1m38s470ms3탎500ns).

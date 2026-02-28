@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import api from "../../../service/api";
 import MessageDialog from "../../../components/common/MessageDialog";
 import Pagination from "../../../components/common/Pagination";
@@ -20,6 +20,9 @@ const AdminUserManagement = () => {
     description: "",
   });
   const pageSize = 8;
+  
+  // Track previous filter state to detect changes
+  const prevFilterRef = useRef();
 
   const loadUsers = async () => {
     setLoading(true);
@@ -53,15 +56,14 @@ const AdminUserManagement = () => {
     });
   }, [users, query, roleFilter, statusFilter]);
 
-  // Memoize filter state to create stable reset signal
-  const filterStateKey = useMemo(
-    () => `${query}|${roleFilter}|${statusFilter}|${users.length}`,
-    [query, roleFilter, statusFilter, users.length]
-  );
-
+  // Reset page when filters change, detected via ref
   useEffect(() => {
-    setPage(1);
-  }, [filterStateKey]);
+    const currentFilter = `${query}|${roleFilter}|${statusFilter}|${users.length}`;
+    if (prevFilterRef.current && prevFilterRef.current !== currentFilter) {
+      setPage(1);
+    }
+    prevFilterRef.current = currentFilter;
+  }, [query, roleFilter, statusFilter, users.length]);
 
   const pagedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
 

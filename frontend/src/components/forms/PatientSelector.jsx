@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Pagination from "../common/Pagination";
 
 const PatientSelector = ({ patients, selectedPatientId, onSelect, onAddPatient }) => {
@@ -7,6 +7,9 @@ const PatientSelector = ({ patients, selectedPatientId, onSelect, onAddPatient }
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 6;
+  
+  // Track previous filter state to detect changes
+  const prevFilterRef = useRef();
 
   const filteredPatients = useMemo(() => {
     return patients.filter((patient) => {
@@ -23,15 +26,14 @@ const PatientSelector = ({ patients, selectedPatientId, onSelect, onAddPatient }
     });
   }, [patients, query, genderFilter, statusFilter]);
 
-  // Memoize filter state to create stable reset signal
-  const filterStateKey = useMemo(
-    () => `${query}|${genderFilter}|${statusFilter}|${patients.length}`,
-    [query, genderFilter, statusFilter, patients.length]
-  );
-
+  // Reset page when filters change, detected via ref
   useEffect(() => {
-    setPage(1);
-  }, [filterStateKey]);
+    const currentFilter = `${query}|${genderFilter}|${statusFilter}|${patients.length}`;
+    if (prevFilterRef.current && prevFilterRef.current !== currentFilter) {
+      setPage(1);
+    }
+    prevFilterRef.current = currentFilter;
+  }, [query, genderFilter, statusFilter, patients.length]);
 
   const pagedPatients = filteredPatients.slice((page - 1) * pageSize, page * pageSize);
 

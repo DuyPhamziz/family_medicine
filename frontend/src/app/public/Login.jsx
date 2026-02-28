@@ -125,7 +125,7 @@ const Login = () => {
               )}
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">
+                <label htmlFor="login-email" className="block text-sm font-bold text-slate-700 mb-2">
                   Email hoặc Mã nhân viên
                 </label>
                 <div className="relative">
@@ -133,6 +133,7 @@ const Login = () => {
                     <Icons.Patients />
                   </span>
                   <input
+                    id="login-email"
                     type="text"
                     className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
                     placeholder="doctor@familymed.vn hoặc NV001"
@@ -147,7 +148,7 @@ const Login = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">
+                <label htmlFor="login-password" className="block text-sm font-bold text-slate-700 mb-2">
                   Mật khẩu
                 </label>
                 <div className="relative">
@@ -155,6 +156,7 @@ const Login = () => {
                     <Icons.Form />
                   </span>
                   <input
+                    id="login-password"
                     type="password"
                     className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
                     placeholder="••••••••"

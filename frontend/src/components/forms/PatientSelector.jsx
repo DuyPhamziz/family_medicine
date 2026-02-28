@@ -23,9 +23,15 @@ const PatientSelector = ({ patients, selectedPatientId, onSelect, onAddPatient }
     });
   }, [patients, query, genderFilter, statusFilter]);
 
+  // Memoize filter state to create stable reset signal
+  const filterStateKey = useMemo(
+    () => `${query}|${genderFilter}|${statusFilter}|${patients.length}`,
+    [query, genderFilter, statusFilter, patients.length]
+  );
+
   useEffect(() => {
     setPage(1);
-  }, [query, genderFilter, statusFilter, patients.length]);
+  }, [filterStateKey]);
 
   const pagedPatients = filteredPatients.slice((page - 1) * pageSize, page * pageSize);
 

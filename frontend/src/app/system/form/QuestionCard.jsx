@@ -1,7 +1,31 @@
 import React, { useState } from "react";
+import api from "../../../service/api";
 
 const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => {
   const [focused, setFocused] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setIsUploading(true);
+    try {
+      const response = await api.post("/api/files/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
+      onChange(response.data); 
+      alert("Đã tải ảnh lên thành công!");
+    } catch (error) {
+      alert("Lỗi khi tải ảnh lên!");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const renderInput = () => {
     // CSS dùng chung cho các ô nhập bị khóa
@@ -124,26 +148,6 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
           </div>
         );
       }
-      // Thêm vào switch (question.questionType) trong QuestionCard.jsx
-      case "IMAGE_UPLOAD":
-        return (
-          <div className="space-y-2">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (file) {
-                  // Logic này sẽ tùy thuộc vào API upload của bạn, 
-                  // tạm thời lưu tên file hoặc base64
-                  onChange(file.name); 
-                }
-              }}
-              className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            {value && <p className="text-xs text-green-600 font-medium">✅ Đã chọn ảnh: {value}</p>}
-          </div>
-        );
       case "MULTIPLE_CHOICE": {
         let multiOptions = [];
         try {
@@ -168,7 +172,7 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
               >
                 <input
                   type="checkbox"
-                  disabled={readOnly} // Khóa không cho tích
+                  disabled={readOnly}
                   checked={selectedMulti.includes(option)}
                   onChange={(e) => {
                     if (e.target.checked) {
@@ -185,71 +189,39 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
           </div>
         );
       }
-      // Thêm state loading để đợi upload ảnh
-const [isUploading, setIsUploading] = useState(false);
-
-const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    setIsUploading(true);
-    try {
-        // Gọi API upload đã tạo ở Bước 1
-        const response = await api.post("/api/files/upload", formData, {
-            headers: { "Content-Type": "multipart/form-data" }
-        });
-        
-        // Lưu TÊN FILE (chuỗi) vào câu trả lời thay vì file gốc
-        onChange(response.data); 
-        alert("Đã tải ảnh lên thành công!");
-    } catch (error) {
-        alert("Lỗi khi tải ảnh lên!");
-    } finally {
-        setIsUploading(false);
-    }
-};
-
-// Trong renderInput(), cập nhật trường hợp IMAGE_UPLOAD (hoặc TEXT nếu bạn đã đổi sang TEXT)
-case "IMAGE_UPLOAD":
-case "TEXT": // Dùng TEXT để tránh lỗi Enum nếu bạn chưa sửa Java Enum
-  if (question.questionCode?.includes("IMG") || question.questionText?.includes("ảnh")) {
-      return (
-        <div className="space-y-3 p-4 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-          <input
-            type="file"
-            accept="image/*"
-            disabled={readOnly || isUploading}
-            onChange={handleFileUpload}
-            className="hidden"
-            id={`file-${question.questionId}`}
-          />
-          <label 
-            htmlFor={`file-${question.questionId}`}
-            className={`flex flex-col items-center justify-center cursor-pointer ${readOnly ? 'hidden' : ''}`}
-          >
-            <span className="text-4xl mb-2">📸</span>
-            <span className="text-blue-600 font-semibold">
+      case "IMAGE_UPLOAD":
+        return (
+          <div className="space-y-3 p-4 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+            <input
+              type="file"
+              accept="image/*"
+              disabled={readOnly || isUploading}
+              onChange={handleFileUpload}
+              className="hidden"
+              id={`file-${question.questionId}`}
+            />
+            <label 
+              htmlFor={`file-${question.questionId}`}
+              className={`flex flex-col items-center justify-center cursor-pointer ${readOnly ? 'hidden' : ''}`}
+            >
+              <span className="text-4xl mb-2">📸</span>
+              <span className="text-blue-600 font-semibold">
                 {isUploading ? "Đang tải lên..." : "Bấm để chọn ảnh kết quả / toa thuốc"}
-            </span>
-          </label>
+              </span>
+            </label>
 
-          {value && (
-            <div className="mt-2 text-center">
-              <p className="text-xs text-green-600 font-medium mb-2">✅ Đã lưu file: {value}</p>
-              {/* Hiển thị ảnh xem trước từ server */}
-              <img 
-                src={`http://localhost:8081/api/files/view/${value}`} 
-                alt="Preview" 
-                className="w-32 h-32 object-cover rounded-lg shadow-md mx-auto border-2 border-white"
-              />
-            </div>
-          )}
-        </div>
-      );
-  }
+            {value && (
+              <div className="mt-2 text-center">
+                <p className="text-xs text-green-600 font-medium mb-2">✅ Đã lưu file: {value}</p>
+                <img 
+                  src={`http://localhost:8081/api/files/view/${value}`} 
+                  alt="Preview" 
+                  className="w-32 h-32 object-cover rounded-lg shadow-md mx-auto border-2 border-white"
+                />
+              </div>
+            )}
+          </div>
+        );
       case "BOOLEAN": {
         const selectedValue = value === true ? "true" : value === false ? "false" : "";
         return (

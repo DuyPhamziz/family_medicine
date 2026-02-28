@@ -53,9 +53,15 @@ const AdminUserManagement = () => {
     });
   }, [users, query, roleFilter, statusFilter]);
 
+  // Memoize filter state to create stable reset signal
+  const filterStateKey = useMemo(
+    () => `${query}|${roleFilter}|${statusFilter}|${users.length}`,
+    [query, roleFilter, statusFilter, users.length]
+  );
+
   useEffect(() => {
     setPage(1);
-  }, [query, roleFilter, statusFilter, users.length]);
+  }, [filterStateKey]);
 
   const pagedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
 

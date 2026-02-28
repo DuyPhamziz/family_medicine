@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/forms")
@@ -68,5 +69,9 @@ public class FormController {
         }
 
         return ResponseEntity.ok(formService.getDoctorSubmissions(doctorId));
+    }
+    @GetMapping("/latest-data/{patientId}")
+    public ResponseEntity<Map<String, Object>> getLatestData(@PathVariable UUID patientId) {
+        return ResponseEntity.ok(formService.getLatestPatientData(patientId));
     }
 }

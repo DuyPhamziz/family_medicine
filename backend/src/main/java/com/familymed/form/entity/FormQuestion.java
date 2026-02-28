@@ -67,7 +67,8 @@ public class FormQuestion extends BaseEntity {
         TEXT,
         NUMBER,
         DATE,
-        BOOLEAN
+        BOOLEAN,
+        IMAGE_UPLOAD    
     }
 }
 

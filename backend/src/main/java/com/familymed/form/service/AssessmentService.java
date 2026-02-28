@@ -129,6 +129,8 @@ public class AssessmentService {
         answer.setAnswerType(answerType);
         answer.setAnswerValue(request.getAnswerValue());
         answer.setAnsweredAt(LocalDateTime.now());
+        answer.setQuestionCode(question.getQuestionCode()); // THÊM DÒNG NÀY ĐỂ LƯU MÃ V3, V53...
+        answer.setQuestionText(question.getQuestionText()); 
 
         AssessmentAnswer saved = answerRepository.save(answer);
 
@@ -184,6 +186,9 @@ public class AssessmentService {
             throw new RuntimeException("Invalid answer type for question");
         }
         if (questionType == FormQuestion.QuestionType.MULTIPLE_CHOICE && answerType != AssessmentAnswer.AnswerType.MULTIPLE_CHOICE) {
+            throw new RuntimeException("Invalid answer type for question");
+        }
+        if (questionType == FormQuestion.QuestionType.IMAGE_UPLOAD && answerType != AssessmentAnswer.AnswerType.IMAGE_UPLOAD) {
             throw new RuntimeException("Invalid answer type for question");
         }
     }

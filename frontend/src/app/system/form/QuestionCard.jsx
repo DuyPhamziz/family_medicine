@@ -1,26 +1,32 @@
 import React, { useState } from "react";
 
-const QuestionCard = ({ question, index, value, onChange, error }) => {
+const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => {
   const [focused, setFocused] = useState(false);
 
   const renderInput = () => {
+    // CSS dùng chung cho các ô nhập bị khóa
+    const readOnlyStyles = readOnly 
+      ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 shadow-none" 
+      : "";
+
     switch (question.questionType) {
       case "TEXT":
         return (
           <input
             type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onFocus={() => setFocused(true)}
+            value={value || ""}
+            readOnly={readOnly} // Khóa ô nhập
+            onChange={(e) => !readOnly && onChange(e.target.value)}
+            onFocus={() => !readOnly && setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="Nhập câu trả lời..."
+            placeholder={readOnly ? "" : "Nhập câu trả lời..."}
             className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-all ${
               error
-                ? "border-red-500 focus:ring-2 focus:ring-red-500"
+                ? "border-red-500"
                 : focused
                 ? "border-blue-500 focus:ring-2 focus:ring-blue-500"
                 : "border-gray-300"
-            }`}
+            } ${readOnlyStyles}`}
           />
         );
 
@@ -29,23 +35,24 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
           <div className="flex gap-2">
             <input
               type="number"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              onFocus={() => setFocused(true)}
+              value={value || ""}
+              readOnly={readOnly} // Khóa ô nhập
+              onChange={(e) => !readOnly && onChange(e.target.value)}
+              onFocus={() => !readOnly && setFocused(true)}
               onBlur={() => setFocused(false)}
               min={question.minValue}
               max={question.maxValue}
-              placeholder="Nhập số..."
+              placeholder={readOnly ? "" : "Nhập số..."}
               className={`flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none transition-all ${
                 error
-                  ? "border-red-500 focus:ring-2 focus:ring-red-500"
+                  ? "border-red-500"
                   : focused
                   ? "border-blue-500 focus:ring-2 focus:ring-blue-500"
                   : "border-gray-300"
-              }`}
+              } ${readOnlyStyles}`}
             />
             {question.unit && (
-              <span className="px-4 py-3 bg-gray-100 rounded-lg border-2 border-gray-300 flex items-center font-medium text-gray-600">
+              <span className={`px-4 py-3 bg-gray-100 rounded-lg border-2 border-gray-300 flex items-center font-medium text-gray-600 ${readOnly ? 'opacity-50' : ''}`}>
                 {question.unit}
               </span>
             )}
@@ -56,28 +63,40 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
         return (
           <input
             type="date"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none transition-all ${
-              error
-                ? "border-red-500 focus:ring-2 focus:ring-red-500"
-                : focused
-                ? "border-blue-500 focus:ring-2 focus:ring-blue-500"
-                : "border-gray-300"
-            }`}
+            value={value || ""}
+            readOnly={readOnly}
+            onChange={(e) => !readOnly && onChange(e.target.value)}
+            className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none ${
+              error ? "border-red-500" : "border-gray-300"
+            } ${readOnlyStyles}`}
           />
         );
 
       case "SINGLE_CHOICE": {
-        let options = [];
+                let options = [];
         try {
           options = JSON.parse(question.options || "[]");
         } catch {
           options = question.options ? question.options.split(",") : [];
         }
 
+        // --- GIAO DIỆN KHI BỊ KHÓA (READ ONLY) ---
+        if (readOnly) {
+          return (
+            <div className="mt-2">
+              <div className="inline-flex items-center px-5 py-2.5 rounded-xl bg-blue-50 text-blue-700 border-2 border-blue-200 shadow-sm">
+                <span className="mr-2 text-xl">
+                  {value === "Nam" ? "♂️" : value === "Nữ" ? "♀️" : "👤"}
+                </span>
+                <span className="font-bold text-lg uppercase tracking-wide">
+                  {value || "Chưa xác định"}
+                </span>
+              </div>
+            </div>
+          );
+        }
+
+        // --- GIAO DIỆN KHI ĐƯỢC PHÉP CHỌN (BÌNH THƯỜNG) ---
         return (
           <div className="space-y-2">
             {options.map((option) => (
@@ -105,7 +124,26 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
           </div>
         );
       }
-
+      // Thêm vào switch (question.questionType) trong QuestionCard.jsx
+      case "IMAGE_UPLOAD":
+        return (
+          <div className="space-y-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  // Logic này sẽ tùy thuộc vào API upload của bạn, 
+                  // tạm thời lưu tên file hoặc base64
+                  onChange(file.name); 
+                }
+              }}
+              className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {value && <p className="text-xs text-green-600 font-medium">✅ Đã chọn ảnh: {value}</p>}
+          </div>
+        );
       case "MULTIPLE_CHOICE": {
         let multiOptions = [];
         try {
@@ -113,24 +151,24 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
         } catch {
           multiOptions = question.options ? question.options.split(",") : [];
         }
-
         const selectedMulti = Array.isArray(value) ? value : [];
 
         return (
-          <div className="space-y-2">
+          <div className={`space-y-2 ${readOnly ? "pointer-events-none" : ""}`}>
             {multiOptions.map((option) => (
               <label
                 key={option}
-                className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`flex items-center p-3 border-2 rounded-lg transition-all ${
                   selectedMulti.includes(option)
                     ? "border-blue-500 bg-blue-50"
-                    : error
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-300 hover:border-gray-400"
+                    : readOnly
+                    ? "border-slate-100 bg-slate-50 opacity-60"
+                    : "border-gray-300 hover:border-gray-400 cursor-pointer"
                 }`}
               >
                 <input
                   type="checkbox"
+                  disabled={readOnly} // Khóa không cho tích
                   checked={selectedMulti.includes(option)}
                   onChange={(e) => {
                     if (e.target.checked) {
@@ -147,27 +185,90 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
           </div>
         );
       }
+      // Thêm state loading để đợi upload ảnh
+const [isUploading, setIsUploading] = useState(false);
 
+const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setIsUploading(true);
+    try {
+        // Gọi API upload đã tạo ở Bước 1
+        const response = await api.post("/api/files/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+        
+        // Lưu TÊN FILE (chuỗi) vào câu trả lời thay vì file gốc
+        onChange(response.data); 
+        alert("Đã tải ảnh lên thành công!");
+    } catch (error) {
+        alert("Lỗi khi tải ảnh lên!");
+    } finally {
+        setIsUploading(false);
+    }
+};
+
+// Trong renderInput(), cập nhật trường hợp IMAGE_UPLOAD (hoặc TEXT nếu bạn đã đổi sang TEXT)
+case "IMAGE_UPLOAD":
+case "TEXT": // Dùng TEXT để tránh lỗi Enum nếu bạn chưa sửa Java Enum
+  if (question.questionCode?.includes("IMG") || question.questionText?.includes("ảnh")) {
+      return (
+        <div className="space-y-3 p-4 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+          <input
+            type="file"
+            accept="image/*"
+            disabled={readOnly || isUploading}
+            onChange={handleFileUpload}
+            className="hidden"
+            id={`file-${question.questionId}`}
+          />
+          <label 
+            htmlFor={`file-${question.questionId}`}
+            className={`flex flex-col items-center justify-center cursor-pointer ${readOnly ? 'hidden' : ''}`}
+          >
+            <span className="text-4xl mb-2">📸</span>
+            <span className="text-blue-600 font-semibold">
+                {isUploading ? "Đang tải lên..." : "Bấm để chọn ảnh kết quả / toa thuốc"}
+            </span>
+          </label>
+
+          {value && (
+            <div className="mt-2 text-center">
+              <p className="text-xs text-green-600 font-medium mb-2">✅ Đã lưu file: {value}</p>
+              {/* Hiển thị ảnh xem trước từ server */}
+              <img 
+                src={`http://localhost:8081/api/files/view/${value}`} 
+                alt="Preview" 
+                className="w-32 h-32 object-cover rounded-lg shadow-md mx-auto border-2 border-white"
+              />
+            </div>
+          )}
+        </div>
+      );
+  }
       case "BOOLEAN": {
         const selectedValue = value === true ? "true" : value === false ? "false" : "";
         return (
-          <div className="flex gap-3">
+          <div className={`flex gap-3 ${readOnly ? "pointer-events-none opacity-60" : ""}`}>
             {[
               { label: "Có", value: "true" },
               { label: "Không", value: "false" },
             ].map((option) => (
               <label
                 key={option.value}
-                className={`flex items-center gap-2 px-4 py-3 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`flex items-center gap-2 px-4 py-3 border-2 rounded-lg transition-all ${
                   selectedValue === option.value
                     ? "border-blue-500 bg-blue-50"
-                    : error
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-300 hover:border-gray-400"
+                    : "border-gray-300 hover:border-gray-400 cursor-pointer"
                 }`}
               >
                 <input
                   type="radio"
+                  disabled={readOnly}
                   name={`question_${question.questionId}`}
                   value={option.value}
                   checked={selectedValue === option.value}
@@ -188,30 +289,26 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-md p-6 border-l-4 transition-all hover:shadow-lg ${
+      className={`bg-white rounded-lg shadow-md p-6 border-l-4 transition-all ${
+        readOnly ? "opacity-90 grayscale-[0.2]" : "hover:shadow-lg"
+      } ${
         error ? "border-red-500" : "border-blue-500"
       }`}
     >
       <div className="flex items-start gap-4">
-        {/* Question number badge */}
         <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm ${
-          error
-            ? "bg-red-500"
-            : value
-            ? "bg-green-500"
-            : "bg-blue-500"
+          error ? "bg-red-500" : (value || readOnly) ? "bg-green-500" : "bg-blue-500"
         }`}>
-          {index + 1}
+          {readOnly ? "🔒" : index + 1}
         </div>
 
         <div className="flex-1 min-w-0">
           <label className="block font-bold text-gray-800 mb-1 text-lg">
             {question.questionText}
-            {question.required && (
-              <span className="text-red-500 ml-1" title="Bắt buộc">
-                *
-              </span>
+            {question.required && !readOnly && (
+              <span className="text-red-500 ml-1" title="Bắt buộc">*</span>
             )}
+            {readOnly && <span className="ml-2 text-xs font-normal text-slate-400 italic">(Thông tin cố định)</span>}
           </label>
 
           {question.helpText && (
@@ -221,18 +318,7 @@ const QuestionCard = ({ question, index, value, onChange, error }) => {
           )}
 
           <div className="mt-4">{renderInput()}</div>
-
-          {error && (
-            <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-              ⚠️ {error}
-            </p>
-          )}
-
-          {question.minValue !== null && question.maxValue !== null && question.questionType === "NUMBER" && (
-            <p className="text-xs text-gray-500 mt-2">
-              Phạm vi: {question.minValue} - {question.maxValue} {question.unit}
-            </p>
-          )}
+          {error && <p className="text-sm text-red-600 mt-2 flex items-center gap-1">⚠️ {error}</p>}
         </div>
       </div>
     </div>

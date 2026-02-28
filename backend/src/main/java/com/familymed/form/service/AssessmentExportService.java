@@ -171,7 +171,8 @@ public class AssessmentExportService {
         return switch (answer.getAnswerType()) {
             case BOOLEAN -> "true".equalsIgnoreCase(answer.getAnswerValue()) ? "Yes" : "No";
             case MULTIPLE_CHOICE -> formatMultiChoice(answer.getAnswerValue());
-            case NUMBER, TEXT, SINGLE_CHOICE, DATE -> safeString(answer.getAnswerValue());
+            case NUMBER, TEXT, SINGLE_CHOICE, DATE , IMAGE_UPLOAD -> safeString(answer.getAnswerValue());
+            
         };
     }
 

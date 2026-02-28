@@ -17,4 +17,12 @@ public interface AssessmentAnswerRepository extends JpaRepository<AssessmentAnsw
 
     @Query("select a from AssessmentAnswer a join fetch a.session s where s.sessionId in :sessionIds")
     List<AssessmentAnswer> findBySessionIdsWithSession(@Param("sessionIds") List<UUID> sessionIds);
+    @Query(value = "SELECT DISTINCT ON (aa.question_code) aa.* " +
+                   "FROM assessment_answers aa " +
+                   "JOIN assessment_sessions s ON aa.session_id = s.session_id " +
+                   "WHERE s.patient_id = :patientId " +
+                   "AND aa.question_code IS NOT NULL " +
+                   "ORDER BY aa.question_code, aa.answered_at DESC", nativeQuery = true)
+    List<AssessmentAnswer> findLatestAnswersByPatientId(@Param("patientId") UUID patientId);
 }
+

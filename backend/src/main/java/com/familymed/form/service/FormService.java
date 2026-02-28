@@ -10,6 +10,7 @@ import com.familymed.form.repository.FormQuestionRepository;
 import com.familymed.form.repository.FormQuestionOptionRepository;
 import com.familymed.form.repository.FormSectionRepository;
 import com.familymed.form.repository.PatientFormSubmissionRepository;
+import com.familymed.form.assessment.entity.AssessmentAnswer;
 import com.familymed.form.dto.CreateFormVersionRequest;
 import com.familymed.form.dto.CreateQuestionOptionRequest;
 import com.familymed.form.dto.CreateQuestionRequest;
@@ -31,11 +32,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.familymed.form.assessment.repository.AssessmentAnswerRepository;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Collections;
+import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +53,8 @@ public class FormService {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final RiskCalculationService riskCalculationService;
+    private final AssessmentAnswerRepository answerRepository; 
+
     
     @Transactional(readOnly = true)
     public DiagnosticFormDTO getFormWithQuestions(UUID formId) {
@@ -425,5 +430,22 @@ public class FormService {
             return requestedCode;
         }
         return "Q" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+    }
+    public Map<String, Object> getLatestPatientData(UUID patientId) {
+        // Lấy danh sách câu trả lời mới nhất
+        List<AssessmentAnswer> latestAnswers = answerRepository.findLatestAnswersByPatientId(patientId);
+        
+        Map<String, Object> profile = new HashMap<>();
+        for (AssessmentAnswer ans : latestAnswers) {
+            if (ans.getQuestionCode() != null && ans.getAnswerValue() != null) {
+                // Chuẩn hóa: Viết hoa mã Code và bỏ khoảng trắng thừa
+                String code = ans.getQuestionCode().trim().toUpperCase();
+                String value = ans.getAnswerValue().trim();
+                profile.put(code, value);
+            }
+        }
+        // In ra màn hình đen (Console) để bạn xem Backend thực sự trả về gì
+        System.out.println("DEBUG - Dữ liệu trả về cho Frontend: " + profile);
+        return profile;
     }
 }

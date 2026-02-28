@@ -8,6 +8,9 @@ target/
 *.class
 .active
 .project
+* text=auto
+backend/logs/
+*.log
 
 # IDE
 .vscode/

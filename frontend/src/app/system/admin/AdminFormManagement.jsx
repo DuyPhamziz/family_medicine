@@ -407,14 +407,6 @@ const AdminFormManagement = () => {
     });
   };
 
-  if (state.loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
-
   const filteredForms = useMemo(() => {
     return state.forms.filter((form) => {
       const matchesSearch = form.formName
@@ -480,6 +472,14 @@ const AdminFormManagement = () => {
       </div>
     ),
   }));
+
+  if (state.loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

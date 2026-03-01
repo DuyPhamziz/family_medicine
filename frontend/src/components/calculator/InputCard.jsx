@@ -23,8 +23,11 @@ const InputCard = ({ fields, inputs, onChange, onSubmit, submitLabel = 'Tính to
       <Card.Content>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {fields?.map((field) => (
-              <div key={field.code}>
+            {fields?.map((field, idx) => {
+              const fieldKey = field.code || field.name || `${field.label || 'field'}-${idx}`;
+
+              return (
+              <div key={fieldKey}>
                 {field.type === 'boolean' ? (
                   <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 transition-colors">
                     <input
@@ -46,11 +49,16 @@ const InputCard = ({ fields, inputs, onChange, onSubmit, submitLabel = 'Tính to
                       className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                     >
                       <option value="">{field.placeholder || 'Chọn...'}</option>
-                      {field.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
+                      {field.options?.map((opt, optIdx) => {
+                        const optionValue = typeof opt === 'string' ? opt : opt.value;
+                        const optionLabel = typeof opt === 'string' ? opt : opt.label;
+
+                        return (
+                        <option key={`${optionValue}-${optIdx}`} value={optionValue}>
+                          {optionLabel}
                         </option>
-                      ))}
+                        );
+                      })}
                     </select>
                   </div>
                 ) : (
@@ -67,7 +75,8 @@ const InputCard = ({ fields, inputs, onChange, onSubmit, submitLabel = 'Tính to
                   />
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="pt-4">

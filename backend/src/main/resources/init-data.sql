@@ -3,9 +3,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Insert roles with fixed IDs
 INSERT INTO roles (role_id, role_code, role_name) VALUES
-('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0001'::uuid, 'ADMIN', 'Administrator'),
-('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0002'::uuid, 'DOCTOR', 'Doctor'),
-('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0003'::uuid, 'NURSE', 'Nurse')
+('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0001'::uuid, 'ROLE_ADMIN', 'Administrator'),
+('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0002'::uuid, 'ROLE_DOCTOR', 'Doctor'),
+('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0003'::uuid, 'ROLE_NURSE', 'Nurse')
 ON CONFLICT (role_code) DO NOTHING;
 
 -- Insert users (password: 123456)

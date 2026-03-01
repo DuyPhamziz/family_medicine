@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDoctorSubmissions, useDoctorSubmission, useRespondToSubmission } from "../../../hooks/data/useDoctorData";
 
 const STATUS_OPTIONS = ["ALL", "PENDING", "REVIEWED", "RESPONDED"];
@@ -7,7 +7,6 @@ const RISK_LEVEL_OPTIONS = ["ALL", "VERY_HIGH", "HIGH", "MEDIUM", "LOW"];
 const RiskAnalysis = () => {
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [riskLevelFilter, setRiskLevelFilter] = useState("ALL");
-  const [filteredSubmissions, setFilteredSubmissions] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [responseMessage, setResponseMessage] = useState("");
   const [responseMethod, setResponseMethod] = useState("NONE");
@@ -18,16 +17,15 @@ const RiskAnalysis = () => {
   const { data: selected, isLoading: detailLoading } = useDoctorSubmission(selectedId);
   const respondMutation = useRespondToSubmission();
 
-  // Filter submissions by risk level (client-side)
-  useEffect(() => {
+  const filteredSubmissions = useMemo(() => {
     if (riskLevelFilter === "ALL") {
-      setFilteredSubmissions(submissions);
-    } else {
-      const filtered = submissions.filter(
-        (s) => s.riskLevel && s.riskLevel.toUpperCase() === riskLevelFilter
-      );
-      setFilteredSubmissions(filtered);
+      return submissions;
     }
+
+    return submissions.filter(
+      (submission) =>
+        submission.riskLevel && submission.riskLevel.toUpperCase() === riskLevelFilter
+    );
   }, [submissions, riskLevelFilter]);
 
   // Update response form when detail loads

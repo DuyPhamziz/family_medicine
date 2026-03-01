@@ -25,11 +25,16 @@ const StatusFilter = ({
                    focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent
                    appearance-none cursor-pointer transition-all"
       >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
+        {options.map((opt, idx) => {
+          const optionValue = typeof opt === 'string' ? opt : opt.value;
+          const optionLabel = typeof opt === 'string' ? opt : opt.label;
+
+          return (
+          <option key={`${optionValue}-${idx}`} value={optionValue}>
+            {optionLabel}
           </option>
-        ))}
+          );
+        })}
       </select>
       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 
                              text-slate-400 pointer-events-none" />

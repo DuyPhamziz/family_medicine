@@ -116,11 +116,11 @@ export const DynamicFormRenderer = ({
         {formSchema.description && <p className="form-description">{formSchema.description}</p>}
       </div>
       
-      {formSchema.sections.map(section => (
-        <section key={section.sectionId} className="form-section">
+      {formSchema.sections.map((section, sectionIdx) => (
+        <section key={section.sectionId || section.sectionCode || `section-${sectionIdx}`} className="form-section">
           <h2 className="section-title">{section.sectionName}</h2>
           
-          {section.questions?.map(question => {
+          {section.questions?.map((question, questionIdx) => {
             const state = conditionalState[question.questionId];
             const isVisible = state ? state.visible : true;
             const isRequired = state ? state.required : question.required;
@@ -129,7 +129,10 @@ export const DynamicFormRenderer = ({
             if (!isVisible) return null;
             
             return (
-              <div key={question.questionId} className="form-question">
+              <div
+                key={question.questionId || question.questionCode || `question-${sectionIdx}-${questionIdx}`}
+                className="form-question"
+              >
                 <label htmlFor={question.questionCode} className="question-label">
                   {question.questionText}
                   {isRequired && <span className="required-indicator">*</span>}

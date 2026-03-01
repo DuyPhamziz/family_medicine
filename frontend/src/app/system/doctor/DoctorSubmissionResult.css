@@ -1,0 +1,433 @@
+.submission-result {
+  padding: 24px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.submission-result.error-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 18px;
+  text-align: center;
+  padding: 16px;
+  background-color: #ffebee;
+  border-radius: 8px;
+  max-width: 500px;
+}
+
+/* Header */
+.result-header {
+  margin-bottom: 24px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.header-main {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.header-main h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  color: #333;
+}
+
+.form-version {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Patient Info Card */
+.patient-info-card {
+  margin-bottom: 24px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 12px;
+}
+
+.patient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.patient-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.patient-field label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.patient-field p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Scoring Summary */
+.scoring-summary-card {
+  margin-bottom: 24px;
+}
+
+.scoring-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.score-box {
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  background: linear-gradient(135deg, #f5f5f5, #ffffff);
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.score-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.score-main {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  border: none;
+}
+
+.score-main .score-value {
+  font-size: 40px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.score-main .score-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+/* Risk Level Box */
+.risk-box {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  border: none;
+}
+
+.risk-box.low-risk {
+  background: linear-gradient(135deg, #27ae60, #229954);
+}
+
+.risk-box.medium-risk {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.risk-box.high-risk {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.risk-box.neutral {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+}
+
+.risk-level {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.risk-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+/* Submit Date Box */
+.submit-date-box {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  border: none;
+  color: white;
+}
+
+.submit-date {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.submit-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+/* Calculated Fields */
+.calculated-fields-card {
+  margin-bottom: 24px;
+}
+
+.calculated-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.calculated-field {
+  padding: 16px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  border-left: 4px solid #4a90e2;
+}
+
+.field-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.unit {
+  font-size: 12px;
+  color: #999;
+  margin-left: 4px;
+}
+
+.field-interpretation {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Sections Container */
+.sections-container {
+  display: grid;
+  gap: 24px;
+}
+
+.section-result-card {
+  min-height: auto;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 12px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.section-score {
+  font-size: 16px;
+  color: #666;
+  font-weight: 600;
+}
+
+.section-score span {
+  color: #4a90e2;
+  font-size: 20px;
+  margin-left: 8px;
+}
+
+/* Questions List */
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.question-result {
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  border-left: 3px solid #ddd;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.question-result:hover {
+  background-color: #f0f5ff;
+  border-left-color: #4a90e2;
+}
+
+.question-info {
+  flex: 1;
+}
+
+.question-code {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.question-text {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.question-answer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.answer-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a90e2;
+  padding: 4px 8px;
+  background-color: rgba(74, 144, 226, 0.1);
+  border-radius: 4px;
+}
+
+.answer-unit {
+  font-size: 12px;
+  color: #999;
+}
+
+.question-points {
+  min-width: 100px;
+  text-align: right;
+  font-weight: 600;
+  color: #27ae60;
+  padding: 4px 8px;
+  background-color: rgba(39, 174, 96, 0.1);
+  border-radius: 4px;
+}
+
+.calculated-values {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+}
+
+.calc-value {
+  font-size: 11px;
+  color: #666;
+}
+
+/* Print Styles */
+@media print {
+  .submission-result {
+    background-color: white;
+  }
+
+  .result-header,
+  .header-top {
+    margin-bottom: 16px;
+  }
+
+  .header-actions {
+    display: none;
+  }
+
+  .score-box:hover {
+    transform: none;
+  }
+
+  .question-result:hover {
+    background-color: #f9f9f9;
+    border-left-color: #ddd;
+  }
+
+  /* Print pagination */
+  .section-result-card {
+    page-break-inside: avoid;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .submission-result {
+    padding: 16px;
+  }
+
+  .header-top {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .patient-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scoring-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .question-result {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .question-answer,
+  .question-points,
+  .calculated-values {
+    width: 100%;
+  }
+}

@@ -27,6 +27,11 @@ const Sidebar = ({ collapsed, setCollapsed, onLogout }) => {
       items: [
         { id: "/system/forms", label: "Nhập liệu", icon: <Icons.Form /> },
         { id: "/system/analysis", label: "Kết quả", icon: <Icons.Risk /> },
+        { 
+          id: "/system/doctor/public-submissions", 
+          label: "Form công khai", 
+          icon: <Icons.Form /> 
+        },
       ],
     },
   ] : [

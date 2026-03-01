@@ -32,6 +32,9 @@ import Guidelines from "../app/system/guidelines/Guidelines";
 import CdssLogic from "../app/system/logic/CdssLogic";
 import AdminUserManagement from "../app/system/admin/AdminUserManagement";
 import AdminDebugPage from "../app/system/admin/AdminDebugPage";
+import DoctorSubmissionResult from "../app/system/doctor/DoctorSubmissionResult";
+import DoctorPublicSubmissions from "../app/system/doctor/DoctorPublicSubmissions";
+import DoctorSubmissionResponse from "../app/system/doctor/DoctorSubmissionResponse";
 import { ROLES } from "../constants/roles";
 
 export const router = createBrowserRouter([
@@ -130,7 +133,33 @@ export const router = createBrowserRouter([
         path: "summary",
         element: <PatientSummary />,
       },
-    ],
+      {
+        path: "submissions/:submissionId/results",
+        element: <DoctorSubmissionResult />,
+      },      {
+        path: "/system/doctor/public-submissions",
+        element: (
+          <RoleGuard allowRoles={[ROLES.DOCTOR]}>
+            <DoctorPublicSubmissions />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "/system/public-submissions/:submissionId",
+        element: (
+          <RoleGuard allowRoles={[ROLES.DOCTOR]}>
+            <DoctorSubmissionResult />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: "/system/public-submissions/:submissionId/respond",
+        element: (
+          <RoleGuard allowRoles={[ROLES.DOCTOR]}>
+            <DoctorSubmissionResponse />
+          </RoleGuard>
+        ),
+      },    ],
   },
 
   // Admin only routes

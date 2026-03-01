@@ -1,0 +1,88 @@
+.quick-actions {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  padding: 16px;
+  color: white;
+}
+
+.actions-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+.action-btn span {
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Specific action colors (subtle tint) */
+.action-btn.preview:hover {
+  background: rgba(52, 152, 219, 0.3);
+}
+
+.action-btn.duplicate:hover {
+  background: rgba(46, 204, 113, 0.3);
+}
+
+.action-btn.export:hover {
+  background: rgba(241, 196, 15, 0.3);
+}
+
+.action-btn.autofill:hover {
+  background: rgba(155, 89, 182, 0.3);
+}
+
+.action-btn.test:hover {
+  background: rgba(231, 76, 60, 0.3);
+}
+
+.action-btn.refresh:hover {
+  background: rgba(52, 152, 219, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

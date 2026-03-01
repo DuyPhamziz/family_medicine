@@ -1,0 +1,211 @@
+.scoring-rules-editor {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.editor-header {
+  margin-bottom: 16px;
+}
+
+.editor-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Risk Levels Section */
+.risk-levels-section {
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.risk-levels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.risk-level-item {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.level-fields {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field label {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.form-control-color {
+  width: 60px;
+  height: 38px;
+  padding: 2px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  color: #dc3545;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-end;
+}
+
+.btn-remove:hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+/* Risk Preview */
+.risk-preview {
+  padding: 16px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  margin-bottom: 16px;
+}
+
+.risk-preview h5 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preview-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preview-badge {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: white;
+  text-align: center;
+  min-width: 120px;
+}
+
+.level-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.level-range {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+/* JSON Preview */
+.json-preview {
+  padding: 12px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.json-preview summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  user-select: none;
+  padding: 4px 0;
+}
+
+.json-preview summary:hover {
+  color: #4a90e2;
+}
+
+.json-preview pre {
+  margin: 12px 0 0 0;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 12px;
+  overflow-x: auto;
+  color: #333;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .level-fields {
+    grid-template-columns: 1fr;
+  }
+  
+  .risk-level-item {
+    flex-direction: column;
+  }
+  
+  .btn-remove {
+    align-self: stretch;
+  }
+}

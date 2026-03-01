@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../../../service/api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import MessageDialog from "../../../components/common/MessageDialog";
+import ConditionalRuleBuilder from "../../../components/form/ConditionalRuleBuilder";
+import ScoringRulesEditor from "../../../components/form/ScoringRulesEditor";
 import {
   DndContext,
   closestCenter,
@@ -334,6 +336,12 @@ const AdminQuestionManagement = () => {
     helpText: "",
     displayCondition: "",
   });
+  
+  // State cho conditional rules (parsed từ displayCondition JSON)
+  const [conditionalRules, setConditionalRules] = useState([]);
+  
+  // State cho scoring rules của question
+  const [scoringRules, setScoringRules] = useState("");
 
   // Drag and Drop sensors
   const sensors = useSensors(
@@ -417,6 +425,8 @@ const AdminQuestionManagement = () => {
       helpText: "",
       displayCondition: "",
     });
+    setConditionalRules([]);
+    setScoringRules("");
     setEditingQuestion(null);
     setActiveSectionId("");
   };
@@ -560,6 +570,23 @@ const AdminQuestionManagement = () => {
   const handleEditQuestion = (sectionId, question) => {
     setEditingQuestion(question);
     setActiveSectionId(sectionId);
+    
+    // Parse displayCondition JSON to array
+    let parsedRules = [];
+    if (question.displayCondition) {
+      try {
+        parsedRules = JSON.parse(question.displayCondition);
+        if (!Array.isArray(parsedRules)) parsedRules = [];
+      } catch (e) {
+        console.warn("Could not parse displayCondition JSON:", e);
+        parsedRules = [];
+      }
+    }
+    setConditionalRules(parsedRules);
+    
+    // TODO: Parse scoring rules if stored in metadata
+    setScoringRules("");
+    
     setQuestionData({
       questionCode: question.questionCode || "",
       questionText: question.questionText,
@@ -1066,18 +1093,30 @@ const AdminQuestionManagement = () => {
               />
             </div>
 
-            <div>
-              <label htmlFor="displayCondition" className="block text-sm font-semibold text-slate-700 mb-2">
-                Điều kiện hiển thị (tùy chọn)
-              </label>
-              <input
-                id="displayCondition"
-                type="text"
-                name="displayCondition"
-                value={questionData.displayCondition}
-                onChange={handleQuestionChange}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                placeholder="Ví dụ: Q1 == 'Có'"
+            {/* Conditional Rules Builder */}
+            <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <ConditionalRuleBuilder
+                questions={sections.flatMap(s => s.questions || [])}
+                value={conditionalRules}
+                onChange={(rules) => {
+                  setConditionalRules(rules);
+                  // Update questionData.displayCondition with JSON string
+                  setQuestionData(prev => ({
+                    ...prev,
+                    displayCondition: rules.length > 0 ? JSON.stringify(rules) : ""
+                  }));
+                }}
+              />
+            </div>
+            
+            {/* Scoring Rules for this question */}
+            <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <ScoringRulesEditor
+                value={scoringRules}
+                onChange={(rules) => {
+                  setScoringRules(rules);
+                  // TODO: Save to question metadata or separate field
+                }}
               />
             </div>
 

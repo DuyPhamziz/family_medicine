@@ -4,8 +4,10 @@ import com.familymed.form.dto.doctor.DoctorRespondRequest;
 import com.familymed.form.dto.doctor.DoctorSubmissionDetailDTO;
 import com.familymed.form.dto.doctor.DoctorSubmissionListItemDTO;
 import com.familymed.form.dto.doctor.DoctorSubmissionStatsDTO;
+import com.familymed.form.dto.doctor.DoctorSubmissionResultDTO;
 import com.familymed.form.entity.PatientFormSubmission;
 import com.familymed.form.service.DoctorSubmissionService;
+import com.familymed.form.service.FormSubmissionResultService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +24,7 @@ import java.util.UUID;
 public class DoctorSubmissionController {
 
     private final DoctorSubmissionService doctorSubmissionService;
+    private final FormSubmissionResultService formSubmissionResultService;
 
     @GetMapping
     public ResponseEntity<List<DoctorSubmissionListItemDTO>> getSubmissions(
@@ -38,6 +41,15 @@ public class DoctorSubmissionController {
     @GetMapping("/{id}")
     public ResponseEntity<DoctorSubmissionDetailDTO> getDetail(@PathVariable UUID id) {
         return ResponseEntity.ok(doctorSubmissionService.getSubmissionDetail(id));
+    }
+
+    /**
+     * Lấy kết quả phân tích hoàn chỉnh của một submission
+     * Bao gồm: điểm số, risk level, các giá trị tính toán tự động, vv
+     */
+    @GetMapping("/{id}/results")
+    public ResponseEntity<DoctorSubmissionResultDTO> getSubmissionResults(@PathVariable UUID id) {
+        return ResponseEntity.ok(formSubmissionResultService.getSubmissionResult(id));
     }
 
     @PostMapping("/{id}/respond")

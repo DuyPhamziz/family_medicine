@@ -43,8 +43,9 @@ const FormModal = ({ open, onClose, onSubmit, initialData }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700">Form name</label>
+            <label htmlFor="formName" className="text-sm font-medium text-slate-700">Form name</label>
             <input
+              id="formName"
               type="text"
               name="formName"
               value={formData.formName}
@@ -56,8 +57,9 @@ const FormModal = ({ open, onClose, onSubmit, initialData }) => {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Description</label>
+            <label htmlFor="description" className="text-sm font-medium text-slate-700">Description</label>
             <textarea
+              id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
@@ -68,8 +70,9 @@ const FormModal = ({ open, onClose, onSubmit, initialData }) => {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Category</label>
+            <label htmlFor="category" className="text-sm font-medium text-slate-700">Category</label>
             <input
+              id="category"
               type="text"
               name="category"
               value={formData.category}

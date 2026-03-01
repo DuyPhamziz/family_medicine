@@ -127,8 +127,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
 
         <form onSubmit={handleSubmit} className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Section</label>
+            <label htmlFor="sectionId" className="text-sm font-medium text-slate-700">Section</label>
             <select
+              id="sectionId"
               name="sectionId"
               value={activeSectionId || ""}
               className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
@@ -143,8 +144,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Question code</label>
+            <label htmlFor="questionCode" className="text-sm font-medium text-slate-700">Question code</label>
             <input
+              id="questionCode"
               type="text"
               name="questionCode"
               value={questionData.questionCode}
@@ -153,8 +155,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Order</label>
+            <label htmlFor="questionOrder" className="text-sm font-medium text-slate-700">Order</label>
             <input
+              id="questionOrder"
               type="number"
               name="questionOrder"
               value={questionData.questionOrder}
@@ -165,8 +168,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Question text</label>
+            <label htmlFor="questionText" className="text-sm font-medium text-slate-700">Question text</label>
             <textarea
+              id="questionText"
               name="questionText"
               value={questionData.questionText}
               onChange={handleChange}
@@ -177,8 +181,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Type</label>
+            <label htmlFor="questionType" className="text-sm font-medium text-slate-700">Type</label>
             <select
+              id="questionType"
               name="questionType"
               value={questionData.questionType}
               onChange={handleChange}
@@ -193,8 +198,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Points</label>
+            <label htmlFor="points" className="text-sm font-medium text-slate-700">Points</label>
             <input
+              id="points"
               type="number"
               name="points"
               value={questionData.points}
@@ -204,8 +210,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-700">Unit</label>
+            <label htmlFor="unit" className="text-sm font-medium text-slate-700">Unit</label>
             <input
+              id="unit"
               type="text"
               name="unit"
               value={questionData.unit}
@@ -214,8 +221,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Min value</label>
+            <label htmlFor="minValue" className="text-sm font-medium text-slate-700">Min value</label>
             <input
+              id="minValue"
               type="number"
               name="minValue"
               value={questionData.minValue}
@@ -224,8 +232,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Max value</label>
+            <label htmlFor="maxValue" className="text-sm font-medium text-slate-700">Max value</label>
             <input
+              id="maxValue"
               type="number"
               name="maxValue"
               value={questionData.maxValue}
@@ -235,8 +244,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">Help text</label>
+            <label htmlFor="helpText" className="text-sm font-medium text-slate-700">Help text</label>
             <textarea
+              id="helpText"
               name="helpText"
               value={questionData.helpText}
               onChange={handleChange}

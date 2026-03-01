@@ -1,28 +1,28 @@
 -- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Insert roles
+-- Insert roles with fixed IDs
 INSERT INTO roles (role_id, role_code, role_name) VALUES
-(gen_random_uuid(), 'ADMIN', 'Administrator'),
-(gen_random_uuid(), 'DOCTOR', 'Doctor'),
-(gen_random_uuid(), 'NURSE', 'Nurse')
+('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0001'::uuid, 'ADMIN', 'Administrator'),
+('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0002'::uuid, 'DOCTOR', 'Doctor'),
+('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0003'::uuid, 'NURSE', 'Nurse')
 ON CONFLICT (role_code) DO NOTHING;
 
 -- Insert users (password: 123456)
 INSERT INTO users (user_id, username, password_hash, full_name, email, role_id, is_active, created_at)
-SELECT gen_random_uuid(), 'ADMIN001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator', 'admin@familymed.vn', r.role_id, true, NOW()
-FROM roles r WHERE r.role_code = 'ADMIN'
-ON CONFLICT (email) DO NOTHING;
+VALUES ('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d1001'::uuid, 'ADMIN001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator', 'admin@familymed.vn', '2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0001'::uuid, true, NOW())
+ON CONFLICT (email) DO UPDATE
+SET role_id = '2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0001'::uuid, is_active = true;
 
 INSERT INTO users (user_id, username, password_hash, full_name, email, role_id, is_active, created_at)
-SELECT gen_random_uuid(), 'DOCTOR001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Dr Nguyen Van A', 'doctor@familymed.vn', r.role_id, true, NOW()
-FROM roles r WHERE r.role_code = 'DOCTOR'
-ON CONFLICT (email) DO NOTHING;
+VALUES ('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d1002'::uuid, 'DOCTOR001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Dr Nguyen Van A', 'doctor@familymed.vn', '2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0002'::uuid, true, NOW())
+ON CONFLICT (email) DO UPDATE
+SET role_id = '2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0002'::uuid, is_active = true;
 
 INSERT INTO users (user_id, username, password_hash, full_name, email, role_id, is_active, created_at)
-SELECT gen_random_uuid(), 'NURSE001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Nurse Tran Thi B', 'nurse@familymed.vn', r.role_id, true, NOW()
-FROM roles r WHERE r.role_code = 'NURSE'
-ON CONFLICT (email) DO NOTHING;
+VALUES ('2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d1003'::uuid, 'NURSE001', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Nurse Tran Thi B', 'nurse@familymed.vn', '2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0003'::uuid, true, NOW())
+ON CONFLICT (email) DO UPDATE
+SET role_id = '2f4b7b3c-3d3c-4d3d-8d3d-3d3d3d3d0003'::uuid, is_active = true;
 
 -- Insert patients (assign to doctor)
 INSERT INTO patients (patient_id, patient_code, full_name, date_of_birth, gender, phone_number, email, address, doctor_id, status)

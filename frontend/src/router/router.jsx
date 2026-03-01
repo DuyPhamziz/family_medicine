@@ -1,10 +1,12 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import Home from "../app/public/Home";
+import Scoring from "../app/public/Scoring";
 import About from "../app/public/About";
 import Guideline from "../app/public/Guideline";
 import RiskTools from "../app/public/RiskTools";
 import Login from "../app/public/Login";
+import { PublicFormPage } from "../components/form/PublicFormPage";
 import AppLayout from "../components/layout/AppLayout";
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGuard from "../components/guards/RoleGuard";
@@ -23,6 +25,7 @@ import AdminLayout from "../components/layout/admin/AdminLayout";
 import FormList from "../app/system/form/FormList";
 import DiagnosticForm from "../app/system/form/DiagnosticForm";
 import AdminFormManagement from "../app/system/admin/AdminFormManagement";
+import AdminGuidelineManagement from "../app/system/admin/AdminGuidelineManagement";
 import AdminQuestionManagement from "../app/system/admin/AdminQuestionManagement";
 import SummaryReport from "../app/system/report/SummaryReport";
 import Guidelines from "../app/system/guidelines/Guidelines";
@@ -43,7 +46,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/risk-tools",
-    element: <RiskTools />,
+    element: <Scoring />,
+  },
+  {
+    path: "/scoring",
+    element: <Navigate to="/risk-tools" replace />,
   },
   {
     path: "/guideline",
@@ -52,6 +59,10 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/form/:token",
+    element: <PublicFormPage />,
   },
   
   // Protected routes - Yêu cầu đăng nhập
@@ -154,6 +165,18 @@ export const router = createBrowserRouter([
         <RoleGuard allowRoles={[ROLES.ADMIN]}>
           <AdminLayout>
             <AdminQuestionManagement />
+          </AdminLayout>
+        </RoleGuard>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/system/admin/guidelines",
+    element: (
+      <ProtectedRoute>
+        <RoleGuard allowRoles={[ROLES.ADMIN]}>
+          <AdminLayout>
+            <AdminGuidelineManagement />
           </AdminLayout>
         </RoleGuard>
       </ProtectedRoute>

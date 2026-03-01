@@ -61,14 +61,21 @@ public class FormQuestion extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String displayCondition; // JSON logic for conditional display
     
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<QuestionCondition> conditions; // Conditional display/require rules
+    
     public enum QuestionType {
-        SINGLE_CHOICE,
-        MULTIPLE_CHOICE,
-        TEXT,
-        NUMBER,
-        DATE,
-        BOOLEAN,
-        IMAGE_UPLOAD    
+        SHORT_TEXT,        // Single line text input
+        LONG_TEXT,         // Multi-line textarea
+        NUMBER,            // Numeric input
+        SINGLE_CHOICE,     // Radio buttons
+        MULTIPLE_CHOICE,   // Checkboxes
+        SELECT_DROPDOWN,   // Dropdown select
+        DATE,              // Date picker
+        BOOLEAN,           // Yes/No toggle
+        IMAGE_UPLOAD,      // Image file upload
+        FILE_UPLOAD,       // Generic file upload
+        TEXT               // Legacy compatibility
     }
 }
 

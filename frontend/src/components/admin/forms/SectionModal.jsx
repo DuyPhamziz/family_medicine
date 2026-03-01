@@ -40,8 +40,9 @@ const SectionModal = ({ open, onClose, onSubmit, initialData }) => {
         </h2>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700">Section name</label>
+            <label htmlFor="sectionName" className="text-sm font-medium text-slate-700">Section name</label>
             <input
+              id="sectionName"
               type="text"
               name="sectionName"
               value={sectionData.sectionName}
@@ -51,8 +52,9 @@ const SectionModal = ({ open, onClose, onSubmit, initialData }) => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Order</label>
+            <label htmlFor="sectionOrder" className="text-sm font-medium text-slate-700">Order</label>
             <input
+              id="sectionOrder"
               type="number"
               name="sectionOrder"
               value={sectionData.sectionOrder}

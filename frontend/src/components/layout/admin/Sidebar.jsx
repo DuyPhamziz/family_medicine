@@ -72,6 +72,11 @@ const Sidebar = ({ collapsed, setCollapsed, onLogout }) => {
           icon: <Icons.Form />,
         },
         {
+          id: "/system/admin/guidelines",
+          label: "Hướng dẫn Lâm sàng",
+          icon: <Icons.Risk />,
+        },
+        {
           id: "/system/admin/users",
           label: "Quản lý Người dùng",
           icon: <Icons.Patients />,

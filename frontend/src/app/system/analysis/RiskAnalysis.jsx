@@ -1,149 +1,237 @@
-import React, { useState, useEffect } from "react";
-import api from "../../../service/api";
+import React, { useEffect, useState } from "react";
+import { useDoctorSubmissions, useDoctorSubmission, useRespondToSubmission } from "../../../hooks/data/useDoctorData";
+
+const STATUS_OPTIONS = ["ALL", "PENDING", "REVIEWED", "RESPONDED"];
+const RISK_LEVEL_OPTIONS = ["ALL", "VERY_HIGH", "HIGH", "MEDIUM", "LOW"];
 
 const RiskAnalysis = () => {
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("PENDING");
+  const [riskLevelFilter, setRiskLevelFilter] = useState("ALL");
+  const [filteredSubmissions, setFilteredSubmissions] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [responseMessage, setResponseMessage] = useState("");
+  const [responseMethod, setResponseMethod] = useState("NONE");
 
+  // Use React Query hooks
+  const statusParam = statusFilter === "ALL" ? null : statusFilter;
+  const { data: submissions = [], isLoading } = useDoctorSubmissions(statusParam);
+  const { data: selected, isLoading: detailLoading } = useDoctorSubmission(selectedId);
+  const respondMutation = useRespondToSubmission();
+
+  // Filter submissions by risk level (client-side)
   useEffect(() => {
-    const loadSubmissions = async () => {
-      try {
-        const response = await api.get("/api/forms/doctor/submissions");
-        setSubmissions(response.data || []);
-      } catch (error) {
-        console.error("Error loading submissions:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSubmissions();
-  }, []);
-
-  const getRiskColor = (riskLevel) => {
-    switch (riskLevel?.toUpperCase()) {
-      case "HIGH":
-        return "bg-red-100 text-red-800 border-red-300";
-      case "MEDIUM":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300";
-      case "LOW":
-        return "bg-green-100 text-green-800 border-green-300";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-300";
+    if (riskLevelFilter === "ALL") {
+      setFilteredSubmissions(submissions);
+    } else {
+      const filtered = submissions.filter(
+        (s) => s.riskLevel && s.riskLevel.toUpperCase() === riskLevelFilter
+      );
+      setFilteredSubmissions(filtered);
     }
+  }, [submissions, riskLevelFilter]);
+
+  // Update response form when detail loads
+  useEffect(() => {
+    if (selected) {
+      setResponseMessage(selected.doctorResponse || "");
+      setResponseMethod(selected.responseMethod || "NONE");
+    }
+  }, [selected]);
+
+  const openDetail = (submissionId) => {
+    setSelectedId(submissionId);
   };
 
-  const getRiskLabel = (riskLevel) => {
-    const labels = {
-      HIGH: "🔴 Cao",
-      MEDIUM: "🟡 Trung bình",
-      LOW: "🟢 Thấp",
-    };
-    return labels[riskLevel?.toUpperCase()] || riskLevel;
+  const submitResponse = () => {
+    if (!selected?.submissionId || !responseMessage.trim()) return;
+
+    respondMutation.mutate({
+      id: selected.submissionId,
+      response: {
+        responseMessage,
+        responseMethod,
+      },
+    });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
-      </div>
-    );
-  }
+  const getRiskBadgeColor = (riskLevel) => {
+    if (!riskLevel) return "bg-gray-100 text-gray-600";
+    const level = riskLevel.toUpperCase();
+    if (level === "VERY_HIGH") return "bg-red-600 text-white";
+    if (level === "HIGH") return "bg-orange-500 text-white";
+    if (level === "MEDIUM") return "bg-yellow-500 text-white";
+    if (level === "LOW") return "bg-green-500 text-white";
+    return "bg-gray-100 text-gray-600";
+  };
+
+  const getStatusBadgeColor = (status) => {
+    if (status === "PENDING") return "bg-orange-100 text-orange-700";
+    if (status === "RESPONDED") return "bg-green-100 text-green-700";
+    if (status === "REVIEWED") return "bg-blue-100 text-blue-700";
+    return "bg-gray-100 text-gray-700";
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800">Kết quả chuẩn đoán</h1>
-        <p className="text-gray-600 mt-2">
-          Danh sách kết quả phân tầng nguy cơ bệnh của bệnh nhân
-        </p>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Submissions từ Form Public</h1>
+          <p className="text-gray-600 mt-2">
+            Phân loại theo trạng thái và mức độ nguy cơ • {filteredSubmissions.length} kết quả
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 font-medium">Trạng thái:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border border-slate-300 rounded-lg px-3 py-2 bg-white"
+            >
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 font-medium">Nguy cơ:</label>
+            <select
+              value={riskLevelFilter}
+              onChange={(e) => setRiskLevelFilter(e.target.value)}
+              className="border border-slate-300 rounded-lg px-3 py-2 bg-white"
+            >
+              {RISK_LEVEL_OPTIONS.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
-      {submissions.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <p className="text-gray-500 text-lg mb-4">📊 Chưa có kết quả nào</p>
-          <p className="text-gray-400">Hãy hoàn thành một biểu mẫu để xem kết quả phân tích</p>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600" />
+        </div>
+      ) : filteredSubmissions.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-md p-12 text-center text-gray-500">
+          Không có submission phù hợp với bộ lọc: <strong>{statusFilter}</strong>
+          {riskLevelFilter !== "ALL" && <> • <strong>{riskLevelFilter}</strong></>}
         </div>
       ) : (
-        <div className="grid gap-6">
-          {submissions.map((submission) => (
-            <div
-              key={submission.submissionId}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-                {/* Thông tin bệnh nhân */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            {filteredSubmissions.map((submission) => (
+              <button
+                key={submission.submissionId}
+                onClick={() => openDetail(submission.submissionId)}
+                className="w-full text-left bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md hover:border-teal-300 transition"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <p className="font-bold text-slate-800">{submission.patientName || "N/A"}</p>
+                    <p className="text-sm text-slate-500 mt-1">{submission.formTitle || "Unknown form"}</p>
+                  </div>
+                  <div className="flex flex-col gap-1 items-end">
+                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${getStatusBadgeColor(submission.status)}`}>
+                      {submission.status}
+                    </span>
+                    {submission.riskLevel && (
+                      <span className={`text-xs px-2 py-1 rounded-full font-semibold ${getRiskBadgeColor(submission.riskLevel)}`}>
+                        {submission.riskLevel}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 mt-3 text-xs text-slate-400">
+                  <span>📧 {submission.email || "-"}</span>
+                  <span>📞 {submission.phone || "-"}</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-2">
+                  {submission.createdAt ? new Date(submission.createdAt).toLocaleString("vi-VN") : "-"}
+                </p>
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 p-5 min-h-[400px]">
+            {detailLoading ? (
+              <div className="text-slate-500">Đang tải chi tiết...</div>
+            ) : !selected ? (
+              <div className="text-slate-500">Chọn một submission để xem chi tiết</div>
+            ) : (
+              <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Bệnh nhân</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    {submission.patientName || "N/A"}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Mã: {submission.patientCode || "N/A"}
-                  </p>
+                  <h3 className="text-xl font-bold text-slate-800">{selected.patientName || "N/A"}</h3>
+                  <p className="text-sm text-slate-500">{selected.phone || "-"} • {selected.email || "-"}</p>
                 </div>
 
-                {/* Thông tin biểu mẫu */}
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Biểu mẫu</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    {submission.formName || "N/A"}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Loại: {submission.category || "N/A"}
-                  </p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="bg-slate-50 p-3 rounded">
+                    <span className="text-slate-500">Form:</span> <span className="font-semibold">{selected.formTitle || "-"}</span>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded">
+                    <span className="text-slate-500">Version:</span> <span className="font-semibold">{selected.formVersion || "-"}</span>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded flex items-center gap-2">
+                    <span className="text-slate-500">Risk:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getRiskBadgeColor(selected.riskLevel)}`}>
+                      {selected.riskLevel || "N/A"}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded">
+                    <span className="text-slate-500">Score:</span> <span className="font-semibold">{selected.totalScore ?? "-"}</span>
+                  </div>
                 </div>
 
-                {/* Kết quả nguy cơ */}
-                <div className="flex items-center justify-end">
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500 mb-2">Mức độ nguy cơ</p>
-                    <span
-                      className={`inline-block px-4 py-2 rounded-lg font-bold border-2 ${getRiskColor(
-                        submission.riskLevel
-                      )}`}
+                <div>
+                  <p className="font-semibold text-slate-700 mb-2">Answers</p>
+                  <div className="max-h-40 overflow-y-auto border rounded-lg">
+                    {(selected.answers || []).map((a, idx) => (
+                      <div key={`${a.questionCode}-${idx}`} className="px-3 py-2 border-b last:border-b-0 text-sm">
+                        <span className="font-semibold text-slate-700">{a.questionCode}</span>: {a.value}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="font-semibold text-slate-700">Doctor response</p>
+                  <textarea
+                    value={responseMessage}
+                    onChange={(e) => setResponseMessage(e.target.value)}
+                    className="w-full border rounded-lg p-3 min-h-24"
+                    placeholder="Nhập phản hồi cho bệnh nhân..."
+                  />
+
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={responseMethod}
+                      onChange={(e) => setResponseMethod(e.target.value)}
+                      className="border rounded-lg px-3 py-2"
                     >
-                      {getRiskLabel(submission.riskLevel)}
-                    </span>
+                      <option value="NONE">NONE</option>
+                      <option value="EMAIL">EMAIL</option>
+                      <option value="ZALO">ZALO</option>
+                    </select>
+
+                    <button
+                      onClick={submitResponse}
+                      disabled={respondMutation.isPending || !responseMessage.trim()}
+                      className="px-4 py-2 rounded-lg bg-emerald-600 text-white disabled:opacity-50"
+                    >
+                      {respondMutation.isPending ? "Đang gửi..." : "Gửi phản hồi"}
+                    </button>
                   </div>
                 </div>
               </div>
-
-              {/* Chi tiết kết quả */}
-              <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Điểm số:</span>
-                    <span className="ml-2 font-bold text-gray-800">
-                      {submission.totalScore?.toFixed(2) || "N/A"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Ngày phân tích:</span>
-                    <span className="ml-2 font-bold text-gray-800">
-                      {new Date(submission.createdAt).toLocaleDateString("vi-VN")}
-                    </span>
-                  </div>
-                </div>
-
-                {submission.diagnosticResult && (
-                  <div className="mt-4 p-3 bg-white rounded border border-gray-300">
-                    <p className="text-xs text-gray-600 mb-1">💡 Kết quả chẩn đoán:</p>
-                    <p className="text-sm text-gray-800">
-                      {submission.diagnosticResult}
-                    </p>
-                  </div>
-                )}
-
-                {submission.notes && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
-                    <p className="text-xs text-blue-600 mb-1">📝 Ghi chú:</p>
-                    <p className="text-sm text-blue-800">{submission.notes}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
       )}
     </div>

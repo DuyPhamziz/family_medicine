@@ -1,34 +1,21 @@
 import React from "react";
 import { useAuth } from "../../../hooks/auth/useAuth";
+import { useDoctorStats } from "../../../hooks/data/useDoctorData";
 import { ROLES } from "../../../constants/roles";
 import StatCard from "../../../components/common/StatCard";
 
 const Dashboard = () => {
   const { user } = useAuth();
   
-  // Compute stats based on user role (no setState in effect)
-  let stats = {
-    totalPatients: 0,
-    formsToday: 0,
-    highRisk: 0,
-    pending: 0,
+  // Use React Query hook for stats
+  const { data: statsData, isLoading } = useDoctorStats();
+
+  const stats = {
+    totalPatients: statsData?.uniquePatients || 0,
+    formsToday: statsData?.submissionsToday || 0,
+    highRisk: statsData?.highRiskSubmissions || 0,
+    pending: statsData?.pendingSubmissions || 0,
   };
-  
-  if (user?.role === ROLES.DOCTOR) {
-    stats = {
-      totalPatients: 24,
-      formsToday: 5,
-      highRisk: 3,
-      pending: 2,
-    };
-  } else if (user?.role === ROLES.ADMIN) {
-    stats = {
-      totalPatients: 248,
-      formsToday: 45,
-      highRisk: 12,
-      pending: 8,
-    };
-  }
 
   return (
     <div className="space-y-8">
@@ -44,32 +31,38 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard
-          title="Tổng bệnh nhân / Total patients"
-          value={stats.totalPatients.toString()}
-          color="text-blue-600"
-          icon="👥"
-        />
-        <StatCard
-          title="Biểu mẫu hôm nay / Forms today"
-          value={stats.formsToday.toString()}
-          color="text-green-600"
-          icon="📋"
-        />
-        <StatCard
-          title="Nguy cơ cao / High risk"
-          value={stats.highRisk.toString()}
-          color="text-red-600"
-          icon="⚠️"
-        />
-        <StatCard
-          title="Chờ xử lý / Pending"
-          value={stats.pending.toString()}
-          color="text-orange-500"
-          icon="🔔"
-        />
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <StatCard
+            title="Tổng bệnh nhân / Total patients"
+            value={stats.totalPatients.toString()}
+            color="text-blue-600"
+            icon="👥"
+          />
+          <StatCard
+            title="Biểu mẫu hôm nay / Forms today"
+            value={stats.formsToday.toString()}
+            color="text-green-600"
+            icon="📋"
+          />
+          <StatCard
+            title="Nguy cơ cao / High risk"
+            value={stats.highRisk.toString()}
+            color="text-red-600"
+            icon="⚠️"
+          />
+          <StatCard
+            title="Chờ xử lý / Pending"
+            value={stats.pending.toString()}
+            color="text-orange-500"
+            icon="🔔"
+          />
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

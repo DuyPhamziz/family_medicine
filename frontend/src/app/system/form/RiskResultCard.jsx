@@ -187,8 +187,8 @@ const RiskResultCard = ({
               💡 Khuyến nghị
             </h3>
             <ul className="space-y-3 text-gray-700">
-              {result.recommendations.map((rec, idx) => (
-                <li key={idx} className="flex gap-3">
+              {result.recommendations.map((rec) => (
+                <li key={String(rec)} className="flex gap-3">
                   <span className="text-blue-600 font-bold">✓</span>
                   <span>{rec}</span>
                 </li>

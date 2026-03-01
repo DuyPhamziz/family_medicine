@@ -31,6 +31,17 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('role');
       window.location.href = '/login';
     }
+    
+    // Handle 403 for admin endpoints - token có thể có role cũ
+    if (error.response?.status === 403 && error.config?.url?.includes('/admin/')) {
+      console.warn('Access forbidden: Role không hợp lệ. Vui lòng đăng nhập lại.');
+      // Tự động logout nếu 403 từ admin endpoint
+      if (confirm('Phiên đăng nhập không hợp lệ. Bạn cần đăng nhập lại để tiếp tục. Đăng nhập lại ngay?')) {
+        localStorage.clear();
+        window.location.href = '/login';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

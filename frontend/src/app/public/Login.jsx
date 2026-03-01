@@ -52,7 +52,7 @@ const Login = () => {
     }
   };
 
-  // Test credentials in development
+  // Test credentials - Always available for easy access
   const fillTestCredentials = (role = "admin") => {
     const credentials = {
       admin: { email: "admin@familymed.vn", password: "Admin@123456" },
@@ -179,9 +179,12 @@ const Login = () => {
                   />
                   <span className="text-slate-600 font-medium">Ghi nhớ</span>
                 </label>
-                <a href="#" className="text-teal-600 font-bold hover:underline">
+                <button
+                  type="button"
+                  className="text-teal-600 font-bold hover:underline"
+                >
                   Quên mật khẩu?
-                </a>
+                </button>
               </div>
 
               <button
@@ -209,30 +212,32 @@ const Login = () => {
               </p>
             </div>
 
-            {/* Development Mode: Quick Test Credentials */}
-            {import.meta.env.MODE === "development" && (
-              <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <p className="text-xs font-bold text-blue-900 mb-3">
-                  🧪 Thông tin đăng nhập trong chế độ phát triển:
-                </p>
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => fillTestCredentials("admin")}
-                    className="block w-full text-left px-2 py-1 text-xs text-blue-700 hover:bg-blue-100 rounded"
-                  >
-                    <span className="font-semibold">Admin:</span> admin@familymed.vn / Admin@123456
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillTestCredentials("doctor")}
-                    className="block w-full text-left px-2 py-1 text-xs text-blue-700 hover:bg-blue-100 rounded"
-                  >
-                    <span className="font-semibold">Doctor:</span> doctor@familymed.vn / Doctor@123456
-                  </button>
-                </div>
+            {/* Quick Login Credentials - Always visible for convenience */}
+            <div className="mt-8 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+              <p className="text-xs font-bold text-blue-900 mb-3 flex items-center gap-2">
+                <span className="text-base">🔐</span>
+                Tài khoản mặc định (Click để điền tự động)
+              </p>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => fillTestCredentials("admin")}
+                  className="block w-full text-left px-3 py-2 text-xs text-blue-700 hover:bg-blue-100 rounded-lg transition-colors font-medium bg-white/50"
+                >
+                  <span className="font-bold text-blue-900">👨‍💼 Admin:</span> admin@familymed.vn / Admin@123456
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillTestCredentials("doctor")}
+                  className="block w-full text-left px-3 py-2 text-xs text-blue-700 hover:bg-blue-100 rounded-lg transition-colors font-medium bg-white/50"
+                >
+                  <span className="font-bold text-blue-900">👨‍⚕️ Doctor:</span> doctor@familymed.vn / Doctor@123456
+                </button>
               </div>
-            )}
+              <p className="mt-3 text-[10px] text-blue-600 italic">
+                💡 Sau khi đăng nhập, Admin có thể tạo thêm tài khoản mới tại <span className="font-bold">Quản lý Users</span>
+              </p>
+            </div>
           </div>
         </div>
       </div>

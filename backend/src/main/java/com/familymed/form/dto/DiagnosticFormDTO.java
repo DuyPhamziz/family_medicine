@@ -21,7 +21,11 @@ public class DiagnosticFormDTO {
     private String formName;
     private String description;
     private String category;
+    private Integer estimatedTime;
+    private String iconColor;
     private String status;
+    private Boolean isPublic;
+    private UUID publicToken;
     private Integer version;
     private List<FormSectionDTO> sections;
     
@@ -31,7 +35,11 @@ public class DiagnosticFormDTO {
                 .formName(form.getFormName())
                 .description(form.getDescription())
                 .category(form.getCategory())
+                .estimatedTime(form.getEstimatedTime())
+                .iconColor(form.getIconColor())
                 .status(form.getStatus().name())
+                .isPublic(form.getIsPublic())
+                .publicToken(form.getPublicToken())
                 .version(form.getVersion())
                 .sections(sections != null ? 
                         sections.stream()

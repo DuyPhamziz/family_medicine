@@ -137,8 +137,9 @@ const DiagnosticFormPage = () => {
             ))}
 
             <div className="bg-white rounded-lg shadow-md p-6">
-              <label className="block font-semibold text-gray-800 mb-2">Ghi chú (tùy chọn)</label>
+              <label htmlFor="notesTextarea" className="block font-semibold text-gray-800 mb-2">Ghi chú (tùy chọn)</label>
               <textarea
+                id="notesTextarea"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Thêm ghi chú..."

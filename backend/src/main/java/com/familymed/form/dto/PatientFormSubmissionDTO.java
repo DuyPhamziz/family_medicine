@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -24,6 +26,11 @@ public class PatientFormSubmissionDTO {
     private String diagnosticResult;
     private String notes;
     private String status;
+    private Integer formVersion;
+    private String doctorResponse;
+    private String responseMethod;
+    private LocalDateTime createdAt;
+    private LocalDateTime respondedAt;
     
     public static PatientFormSubmissionDTO fromSubmission(PatientFormSubmission submission) {
         var patient = submission.getPatient();
@@ -42,6 +49,11 @@ public class PatientFormSubmissionDTO {
                 .diagnosticResult(submission.getDiagnosticResult())
                 .notes(submission.getNotes())
             .status(status != null ? status.name() : null)
+                .formVersion(submission.getFormVersionNumber())
+                .doctorResponse(submission.getDoctorResponse())
+                .responseMethod(submission.getResponseMethod() != null ? submission.getResponseMethod().name() : null)
+                .createdAt(submission.getCreatedAt())
+                .respondedAt(submission.getRespondedAt())
                 .build();
     }
 }

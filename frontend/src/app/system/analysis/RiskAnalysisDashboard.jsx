@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import React, { Suspense } from 'react';
 import { Activity, TrendingUp, Users, AlertCircle } from 'lucide-react';
 
-const RiskAnalysisDashboard = ({ data }) => {
-  const [selectedRisk, setSelectedRisk] = useState('all');
+const RiskAnalysisCharts = React.lazy(() => import('./RiskAnalysisCharts'));
 
+const RiskAnalysisDashboard = ({ data }) => {
   const riskDistribution = [
     { name: 'Low', value: 45, color: '#10b981' },
     { name: 'Medium', value: 30, color: '#f59e0b' },
@@ -65,46 +64,16 @@ const RiskAnalysisDashboard = ({ data }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Risk Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={riskDistribution}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, value }) => `${name}: ${value}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {riskDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Risk Trend (Last 5 Months)</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="low" fill="#10b981" />
-              <Bar dataKey="medium" fill="#f59e0b" />
-              <Bar dataKey="high" fill="#ef4444" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-gray-50 p-4 rounded-lg h-[340px] animate-pulse" />
+            <div className="bg-gray-50 p-4 rounded-lg h-[340px] animate-pulse" />
+          </div>
+        }
+      >
+        <RiskAnalysisCharts riskDistribution={riskDistribution} trendData={trendData} />
+      </Suspense>
     </div>
   );
 };

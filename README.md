@@ -1,7 +1,91 @@
-# Family Medicine EMR
+# 🏥 Family Medicine CDSS
+
+Hệ thống hỗ trợ ra quyết định lâm sàng (Clinical Decision Support System) cho phòng khám gia đình.
+
+---
+
+## 🚀 Quick Start - Đăng nhập ngay
+
+### 🔐 Tài khoản mặc định
+
+**👨‍💼 Admin (Quản trị viên)**
+```
+Email: admin@familymed.vn
+Password: Admin@123456
+Quyền: Quản lý toàn bộ hệ thống
+```
+
+**👨‍⚕️ Doctor (Bác sĩ)**  
+```
+Email: doctor@familymed.vn
+Password: Doctor@123456
+Quyền: Quản lý bệnh nhân, xem báo cáo
+```
+
+> 💡 **Tip**: Trang login (`http://localhost:5173/login`) có nút "Click để điền tự động" credentials!
+
+> 📖 **Chi tiết đầy đủ**: Xem file [CREDENTIALS.md](./CREDENTIALS.md) để biết thêm về đăng ký, reset password, tạo user mới.
+
+---
+
+## 🏃‍♂️ Khởi động nhanh
+
+### 1️⃣ Backend (Spring Boot)
+```bash
+cd backend
+mvn spring-boot:run
+```
+✅ Backend chạy tại: `http://localhost:8080`
+
+### 2️⃣ Frontend (React + Vite)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+✅ Frontend chạy tại: `http://localhost:5173`
+
+### 3️⃣ Truy cập hệ thống
+- **Homepage**: `http://localhost:5173` (Public forms)
+- **Login**: `http://localhost:5173/login`
+- **Admin**: `http://localhost:5173/system/admin` (sau khi login Admin)
+- **Dashboard**: `http://localhost:5173/system/dashboard` (sau khi login Doctor)
+
+---
 
 ## Overview
 Production-ready monorepo with Spring Boot backend and Vite/React frontend.
+
+---
+
+## 📋 Tính năng chính
+
+### Admin Dashboard
+- ✅ Quản lý Users (tạo tài khoản Doctor/Nurse)
+- ✅ Quản lý Forms (biểu mẫu chẩn đoán động)
+- ✅ Quản lý Questions (ngân hàng câu hỏi)
+- ✅ Publish Forms public (đưa lên homepage)
+
+### Doctor Dashboard
+- ✅ Quản lý bệnh nhân
+- ✅ Xem Form Submissions
+- ✅ Phân tích nguy cơ (Risk Analysis)
+- ✅ Phản hồi kết quả qua Email/Zalo
+
+### Public Homepage
+- ✅ Danh sách biểu mẫu công khai
+- ✅ Điền form không cần đăng nhập
+- ✅ Nhận feedback từ bác sĩ
+
+---
+
+## 📂 Tech Stack
+
+**Backend**: Spring Boot 3.2 + PostgreSQL + JWT  
+**Frontend**: React 18 + Vite + Tailwind CSS  
+**Docker**: Multi-stage builds với health checks
+
+---
 
 ## Local Development
 

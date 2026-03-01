@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -29,6 +30,14 @@ public class GuidelineController {
     @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE')")
     public ResponseEntity<List<GuidelineResponse>> getAll() {
         return ResponseEntity.ok(guidelineService.getAll());
+    }
+
+    @GetMapping("/form/{formId}")
+    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE')")
+    public ResponseEntity<GuidelineResponse> getByFormId(@PathVariable UUID formId) {
+        return guidelineService.getByFormId(formId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping

@@ -64,6 +64,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private boolean isPublicPath(String path) {
         return path.startsWith("/api/auth/")
+                || path.startsWith("/api/public/forms")
+                || path.startsWith("/api/form/public")
+                || path.startsWith("/api/forms/public")
+                || path.startsWith("/form/public")
+                || path.startsWith("/forms/public")
+                || path.startsWith("/api/scoring")
+                || path.startsWith("/api/public/scoring")
+                || path.startsWith("/scoring")
                 || path.startsWith("/api-docs")
                 || path.startsWith("/swagger-ui");
     }

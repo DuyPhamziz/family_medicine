@@ -1,16 +1,7 @@
 package com.familymed.form.controller;
 
-import com.familymed.form.dto.CreateFormVersionRequest;
-import com.familymed.form.dto.CreateQuestionOptionRequest;
-import com.familymed.form.dto.CreateQuestionRequest;
-import com.familymed.form.dto.CreateSectionRequest;
-import com.familymed.form.dto.DiagnosticFormDTO;
-import com.familymed.form.dto.FormQuestionDTO;
-import com.familymed.form.dto.FormQuestionOptionDTO;
-import com.familymed.form.dto.FormSectionDTO;
-import com.familymed.form.dto.UpdateQuestionOptionRequest;
-import com.familymed.form.dto.UpdateQuestionRequest;
-import com.familymed.form.dto.UpdateSectionRequest;
+import com.familymed.form.dto.*;
+import com.familymed.form.entity.FormVersion;
 import com.familymed.form.service.FormService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -119,5 +111,58 @@ public class AdminFormController {
     public ResponseEntity<Void> deleteOption(@PathVariable UUID optionId) {
         formService.deleteOption(optionId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * PUT /api/forms/admin/questions/reorder
+     * Reorder questions within a section (for drag & drop)
+     */
+    @PutMapping("/questions/reorder")
+    public ResponseEntity<Void> reorderQuestions(@RequestBody ReorderQuestionsRequest request) {
+        formService.reorderQuestions(request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT /api/forms/admin/sections/reorder
+     * Reorder sections within a form
+     */
+    @PutMapping("/sections/reorder")
+    public ResponseEntity<Void> reorderSections(@RequestBody ReorderSectionsRequest request) {
+        formService.reorderSections(request);
+        return ResponseEntity.ok().build();
+    }
+    
+    // ===== NEW: VERSIONING ENDPOINTS =====
+    
+    /**
+     * GET /api/forms/admin/{formId}/versions
+     * Get all versions of a form
+     */
+    @GetMapping("/{formId}/versions")
+    public ResponseEntity<List<FormVersion>> getFormVersions(@PathVariable UUID formId) {
+        return ResponseEntity.ok(formService.getFormVersionHistory(formId));
+    }
+    
+    /**
+     * POST /api/forms/admin/{formId}/versions/publish/{versionId}
+     * Publish a draft version to make it live
+     */
+    @PostMapping("/{formId}/versions/publish/{versionId}")
+    public ResponseEntity<FormVersion> publishVersion(@PathVariable UUID versionId) {
+        try {
+            return ResponseEntity.ok(formService.publishVersion(versionId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * GET /api/forms/admin/{formId}/versions/published
+     * Get currently published version
+     */
+    @GetMapping("/{formId}/versions/published")
+    public ResponseEntity<FormVersion> getPublishedVersion(@PathVariable UUID formId) {
+        return ResponseEntity.ok(formService.getPublishedVersion(formId).orElse(null));
     }
 }

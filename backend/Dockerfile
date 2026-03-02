@@ -6,9 +6,10 @@ RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-ENV JAVA_OPTS="-XX:+UseContainerSupport"
+ENV JAVA_OPTS="-XX:+UseContainerSupport -Xmx512m"
 COPY --from=build /app/target/*.jar /app/app.jar
-EXPOSE 8081
+EXPOSE 8080
+# Health check mỗi 30 giây, timeout 5s, chổ lối 30s trước khi check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -fsS http://localhost:8081/actuator/health/liveness || exit 1
+  CMD curl -fsS http://localhost:8080/actuator/health/liveness || exit 1
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

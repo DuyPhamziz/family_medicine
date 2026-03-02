@@ -80,6 +80,12 @@ public class PatientFormSubmission extends BaseEntity {
 
     @Column(name = "responded_at")
     private LocalDateTime respondedAt;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -96,7 +102,8 @@ public class PatientFormSubmission extends BaseEntity {
         COMPLETED,
         PENDING,
         REVIEWED,
-        RESPONDED
+        RESPONDED,
+        ARCHIVED
     }
 
     public enum ResponseMethod {

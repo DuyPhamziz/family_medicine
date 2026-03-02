@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Printer } from 'lucide-react';
+import { ArrowLeft, Download, Printer, FileText, MessageSquare, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import api from '../../../service/api';
+import exportApi from '../../../api/exportApi';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import LoadingOverlay from '../../../components/admin/LoadingOverlay';
-import { showError } from '../../../utils/toastNotifications';
+import { showError, showSuccess } from '../../../utils/toastNotifications';
 import './DoctorSubmissionResult.css';
 
 /**
- * Trang kết quả phân tích form dành cho bác sĩ
- * Hiển thị:
- * - Thông tin bệnh nhân
- * - Điểm số và mức độ rủi ro
- * - Kết quả chi tiết theo từng section
- * - Các giá trị được tính toán tự động (tuổi, BMI, vv)
+ * Doctor Submission Result Page (UPGRADED)
+ * Features:
+ * - Doctor notes for each field
+ * - Quick assessment buttons (Good/Bad/Warning)
+ * - Color-coded severity indicators
+ * - Smart calculation suggestions
+ * - Professional medical interface
  */
 export const DoctorSubmissionResult = () => {
   const { submissionId } = useParams();
@@ -23,6 +25,10 @@ export const DoctorSubmissionResult = () => {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [doctorNotes, setDoctorNotes] = useState({});
+  const [assessments, setAssessments] = useState({});
+  const [expandedSections, setExpandedSections] = useState({});
   
   useEffect(() => {
     loadSubmissionResult();
@@ -38,6 +44,106 @@ export const DoctorSubmissionResult = () => {
       showError('Lỗi tải kết quả');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleExportExcel = async () => {
+    if (!result) {
+      showError('No result data available');
+      return;
+    }
+    
+    try {
+      setExporting(true);
+      await exportApi.exportAndDownload({
+        submissionId: submissionId,
+      });
+      showSuccess('Excel report exported successfully');
+    } catch (err) {
+      console.error('Export error:', err);
+      showError('Failed to export Excel report');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleAddNote = (fieldCode, note) => {
+    setDoctorNotes(prev => ({
+      ...prev,
+      [fieldCode]: note
+    }));
+  };
+
+  const handleAssessment = (fieldCode, assessment) => {
+    setAssessments(prev => ({
+      ...prev,
+      [fieldCode]: assessment
+    }));
+  };
+
+  const toggleSection = (sectionCode) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionCode]: !prev[sectionCode]
+    }));
+  };
+
+  const formatAnswer = (answer) => {
+    if (!answer) return 'N/A';
+    
+    // Nếu là string, thử parse JSON
+    let parsedAnswer = answer;
+    if (typeof answer === 'string') {
+      try {
+        // Kiểm tra nếu là JSON array hoặc object
+        if (answer.trim().startsWith('[') || answer.trim().startsWith('{')) {
+          parsedAnswer = JSON.parse(answer);
+        }
+      } catch (e) {
+        // Không phải JSON hợp lệ, giữ nguyên string
+        return answer;
+      }
+    }
+    
+    // Nếu là array
+    if (Array.isArray(parsedAnswer)) {
+      if (parsedAnswer.length === 0) return 'Không có';
+      // Join các giá trị, format đẹp hơn
+      return parsedAnswer
+        .map(item => {
+          // Chuyển từ UPPERCASE sang Title Case
+          if (typeof item === 'string') {
+            return item.charAt(0).toUpperCase() + item.slice(1).toLowerCase();
+          }
+          return item;
+        })
+        .join(', ');
+    }
+    
+    // Nếu là object
+    if (typeof parsedAnswer === 'object' && parsedAnswer !== null) {
+      return JSON.stringify(parsedAnswer, null, 2);
+    }
+    
+    // String bình thường
+    return parsedAnswer;
+  };
+
+  const getAssessmentClass = (assessment) => {
+    switch(assessment) {
+      case 'GOOD': return 'assessment-good';
+      case 'BAD': return 'assessment-bad';
+      case 'WARNING': return 'assessment-warning';
+      default: return '';
+    }
+  };
+
+  const getAssessmentIcon = (assessment) => {
+    switch(assessment) {
+      case 'GOOD': return <CheckCircle size={16} />;
+      case 'BAD': return <AlertCircle size={16} />;
+      case 'WARNING': return <AlertTriangle size={16} />;
+      default: return null;
     }
   };
   
@@ -68,8 +174,9 @@ export const DoctorSubmissionResult = () => {
             <Button onClick={() => window.print()} variant="secondary">
               <Printer size={18} /> In
             </Button>
-            <Button onClick={downloadResult} variant="secondary">
-              <Download size={18} /> Xuất PDF
+            <Button onClick={handleExportExcel} variant="secondary" disabled={exporting}>
+              <FileText size={18} /> 
+              {exporting ? ' Đang xuất...' : ' Xuất Excel'}
             </Button>
           </div>
         </div>
@@ -80,36 +187,36 @@ export const DoctorSubmissionResult = () => {
         </div>
       </div>
       
-      {/* Patient Info */}
+      {/* Patient Info Card */}
       <Card className="patient-info-card">
-        <div className="card-title">Thông tin bệnh nhân</div>
+        <div className="card-title">👤 Thông tin bệnh nhân</div>
         <div className="patient-grid">
           <div className="patient-field">
             <label>Tên bệnh nhân</label>
-            <p>{result.patientName}</p>
+            <p className="patient-value">{result.patientName}</p>
           </div>
           <div className="patient-field">
             <label>Mã bệnh nhân</label>
-            <p>{result.patientCode || 'N/A'}</p>
+            <p className="patient-value">{result.patientCode || 'N/A'}</p>
           </div>
           <div className="patient-field">
             <label>Email</label>
-            <p>{result.patientEmail}</p>
+            <p className="patient-value">{result.patientEmail}</p>
           </div>
           <div className="patient-field">
             <label>Điện thoại</label>
-            <p>{result.patientPhone}</p>
+            <p className="patient-value">{result.patientPhone}</p>
           </div>
           {result.patientAge && (
             <div className="patient-field">
               <label>Tuổi</label>
-              <p>{result.patientAge} tuổi</p>
+              <p className="patient-value">{result.patientAge} tuổi</p>
             </div>
           )}
           {result.patientGender && (
             <div className="patient-field">
               <label>Giới tính</label>
-              <p>{result.patientGender}</p>
+              <p className="patient-value">{result.patientGender}</p>
             </div>
           )}
         </div>
@@ -117,14 +224,14 @@ export const DoctorSubmissionResult = () => {
       
       {/* Scoring Summary */}
       <Card className="scoring-summary-card">
-        <div className="card-title">Kết quả phân tích</div>
+        <div className="card-title">📊 Kết quả phân tích</div>
         <div className="scoring-grid">
           <div className={`score-box score-main ${getRiskLevelClass(result.riskLevel)}`}>
             <div className="score-value">{result.totalScore}</div>
             <div className="score-label">Tổng điểm</div>
           </div>
           <div className={`score-box risk-box ${getRiskLevelClass(result.riskLevel)}`}>
-            <div className="risk-level">{result.riskLevel}</div>
+            <div className="risk-level">{formatRiskLevel(result.riskLevel)}</div>
             <div className="risk-label">Mức độ rủi ro</div>
           </div>
           <div className="score-box submit-date-box">
@@ -137,10 +244,10 @@ export const DoctorSubmissionResult = () => {
       {/* Calculated Fields */}
       {result.calculatedFields && result.calculatedFields.length > 0 && (
         <Card className="calculated-fields-card">
-          <div className="card-title">Các chỉ số được tính toán</div>
+          <div className="card-title">⚙️ Các chỉ số được tính toán</div>
           <div className="calculated-grid">
             {result.calculatedFields.map((field, idx) => (
-              <div key={idx} className="calculated-field">
+              <div key={idx} className="calculated-field-item">
                 <div className="field-label">{field.fieldLabel}</div>
                 <div className="field-value">
                   {field.value} {field.unit && <span className="unit">{field.unit}</span>}
@@ -154,46 +261,109 @@ export const DoctorSubmissionResult = () => {
         </Card>
       )}
       
-      {/* Section Results */}
+      {/* Section Results with Doctor Interface */}
       <div className="sections-container">
         {result.sectionResults && Object.entries(result.sectionResults).map(([sectionCode, section]) => (
           <Card key={sectionCode} className="section-result-card">
-            <div className="section-header">
-              <h3>{section.sectionName}</h3>
-              <div className="section-score">
-                Điểm: <span>{section.sectionScore}</span>
+            <div 
+              className="section-header-doctor"
+              onClick={() => toggleSection(sectionCode)}
+            >
+              <div className="section-info">
+                <h3>{section.sectionName}</h3>
+                <div className="section-meta">
+                  Điểm: <span className="section-score-badge">{section.sectionScore}</span>
+                </div>
+              </div>
+              <div className="section-toggle">
+                {expandedSections[sectionCode] ? '▼' : '▶'}
               </div>
             </div>
             
-            <div className="questions-list">
-              {section.questions.map((q, idx) => (
-                <div key={idx} className="question-result">
-                  <div className="question-info">
-                    <div className="question-code">{q.questionCode}</div>
-                    <div className="question-text">{q.questionText}</div>
-                  </div>
-                  <div className="question-answer">
-                    <span className="answer-value">{q.answer}</span>
-                    {q.unit && <span className="answer-unit">{q.unit}</span>}
-                  </div>
-                  {q.points > 0 && (
-                    <div className="question-points">+{q.points} điểm</div>
-                  )}
-                  {q.calculatedValues && Object.keys(q.calculatedValues).length > 0 && (
-                    <div className="calculated-values">
-                      {Object.entries(q.calculatedValues).map(([key, value]) => (
-                        <span key={key} className="calc-value">
-                          {key}: {value}
-                        </span>
-                      ))}
+            {expandedSections[sectionCode] !== false && (
+              <div className="questions-list-doctor">
+                {section.questions.map((q, idx) => (
+                  <div key={idx} className="question-result-doctor">
+                    <div className="question-header">
+                      <div className="question-code">{q.questionCode}</div>
+                      <div className="question-text">{q.questionText}</div>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    
+                    <div className="question-answer-section">
+                      <div className="answer-display">
+                        <span className="answer-value">{formatAnswer(q.answer)}</span>
+                        {q.unit && <span className="answer-unit">{q.unit}</span>}
+                        {q.points > 0 && <span className="answer-points">+{q.points} pts</span>}
+                      </div>
+                    </div>
+
+                    {/* Assessment Buttons */}
+                    <div className="assessment-buttons">
+                      <button
+                        className={`assessment-btn ${assessments[q.questionCode] === 'GOOD' ? 'assessment-good' : ''}`}
+                        onClick={() => handleAssessment(q.questionCode, 'GOOD')}
+                        title="Bình thường"
+                      >
+                        <CheckCircle size={14} /> Tốt
+                      </button>
+                      <button
+                        className={`assessment-btn ${assessments[q.questionCode] === 'WARNING' ? 'assessment-warning' : ''}`}
+                        onClick={() => handleAssessment(q.questionCode, 'WARNING')}
+                        title="Cảnh báo"
+                      >
+                        <AlertTriangle size={14} /> Cảnh báo
+                      </button>
+                      <button
+                        className={`assessment-btn ${assessments[q.questionCode] === 'BAD' ? 'assessment-bad' : ''}`}
+                        onClick={() => handleAssessment(q.questionCode, 'BAD')}
+                        title="Xấu / Nguy hiểm"
+                      >
+                        <AlertCircle size={14} /> Xấu
+                      </button>
+                    </div>
+                    
+                    {/* Doctor Notes */}
+                    <div className="doctor-notes-section">
+                      <div className="notes-label">
+                        <MessageSquare size={14} /> Ghi chú
+                      </div>
+                      <textarea
+                        className="doctor-notes-input"
+                        placeholder="Thêm ghi chú cho câu hỏi này..."
+                        value={doctorNotes[q.questionCode] || ''}
+                        onChange={(e) => handleAddNote(q.questionCode, e.target.value)}
+                        rows="2"
+                      />
+                    </div>
+
+                    {q.calculatedValues && Object.keys(q.calculatedValues).length > 0 && (
+                      <div className="calculated-values">
+                        {Object.entries(q.calculatedValues).map(([key, value]) => (
+                          <span key={key} className="calc-value">
+                            {key}: {value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         ))}
       </div>
+
+      {/* General Doctor Notes */}
+      <Card className="general-notes-card">
+        <div className="card-title">📝 Nhận xét tổng thể</div>
+        <textarea
+          className="general-notes-input"
+          placeholder="Ghi chú tổng thể của bác sĩ về bệnh nhân..."
+          rows="4"
+          defaultValue={doctorNotes['_general'] || ''}
+          onChange={(e) => handleAddNote('_general', e.target.value)}
+        />
+      </Card>
     </div>
   );
 };
@@ -207,6 +377,15 @@ function getRiskLevelClass(level) {
   return 'neutral';
 }
 
+function formatRiskLevel(level) {
+  if (!level) return 'N/A';
+  const lower = level.toLowerCase();
+  if (lower.includes('cao') || lower.includes('high')) return '⚠️ CAO';
+  if (lower.includes('vừa') || lower.includes('medium')) return '⚡ VỪA';
+  if (lower.includes('thấp') || lower.includes('low')) return '✅ THẤP';
+  return level;
+}
+
 function formatDate(dateTime) {
   if (!dateTime) return 'N/A';
   const date = new Date(dateTime);
@@ -217,11 +396,6 @@ function formatDate(dateTime) {
     hour: '2-digit',
     minute: '2-digit'
   });
-}
-
-function downloadResult() {
-  // TODO: Implement PDF export
-  console.log('Exporting to PDF...');
 }
 
 export default DoctorSubmissionResult;

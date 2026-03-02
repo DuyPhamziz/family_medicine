@@ -60,6 +60,9 @@ public class FormQuestion extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String displayCondition; // JSON logic for conditional display
+
+    @Column(name = "formula_expression", columnDefinition = "TEXT")
+    private String formulaExpression; // Dynamic formula expression (SpEL)
     
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<QuestionCondition> conditions; // Conditional display/require rules

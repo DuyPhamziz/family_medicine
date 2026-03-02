@@ -35,8 +35,8 @@ public class DoctorSubmissionService {
     @Transactional(readOnly = true)
     public List<DoctorSubmissionListItemDTO> getSubmissions(PatientFormSubmission.SubmissionStatus status) {
         List<PatientFormSubmission> submissions = status == null
-                ? submissionRepository.findAll()
-                : submissionRepository.findByStatus(status);
+                ? submissionRepository.findAll().stream().filter(s -> s.getDeletedAt() == null).toList()
+                : submissionRepository.findByStatusAndDeletedAtIsNull(status);
 
         return submissions.stream().map(this::toListItem).toList();
     }
@@ -106,13 +106,13 @@ public class DoctorSubmissionService {
         long total = submissionRepository.count();
 
         // Số submissions PENDING
-        long pending = submissionRepository.findByStatus(PatientFormSubmission.SubmissionStatus.PENDING).size();
+        long pending = submissionRepository.findByStatusAndDeletedAtIsNull(PatientFormSubmission.SubmissionStatus.PENDING).size();
 
         // Số submissions RESPONDED
-        long responded = submissionRepository.findByStatus(PatientFormSubmission.SubmissionStatus.RESPONDED).size();
+        long responded = submissionRepository.findByStatusAndDeletedAtIsNull(PatientFormSubmission.SubmissionStatus.RESPONDED).size();
 
         // Số submissions hôm nay
-        List<PatientFormSubmission> all = submissionRepository.findAll();
+        List<PatientFormSubmission> all = submissionRepository.findAll().stream().filter(s -> s.getDeletedAt() == null).toList();
         long submissionsToday = all.stream()
                 .filter(s -> s.getCreatedAt() != null 
                         && !s.getCreatedAt().isBefore(startOfDay) 

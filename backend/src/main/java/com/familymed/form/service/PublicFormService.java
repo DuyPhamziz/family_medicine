@@ -26,6 +26,7 @@ public class PublicFormService {
     private final FormQuestionRepository questionRepository;
     private final PatientFormSubmissionRepository submissionRepository;
     private final SubmissionAnswerRepository submissionAnswerRepository;
+    private final FormulaEvaluationService formulaEvaluationService;
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
@@ -70,7 +71,14 @@ public class PublicFormService {
     public Map<String, Object> submitPublicForm(UUID publicToken, PublicFormSubmitRequest request) {
         DiagnosticForm form = findPublishedPublicForm(publicToken);
 
-        Map<String, Object> answers = request.getAnswers() == null ? Map.of() : request.getAnswers();
+        Map<String, Object> answers = new LinkedHashMap<>();
+        if (request.getAnswers() != null) {
+            answers.putAll(request.getAnswers());
+        }
+
+        List<FormQuestion> allQuestions = questionRepository.findBySection_Form_FormId(form.getFormId());
+        applyFormulaValues(allQuestions, answers);
+
         String answersJson = toJson(answers);
 
         PatientFormSubmission submission = new PatientFormSubmission();
@@ -136,6 +144,7 @@ public class PublicFormService {
                 .questionCode(question.getQuestionCode())
                 .questionText(question.getQuestionText())
                 .questionType(question.getQuestionType() != null ? question.getQuestionType().name() : null)
+                .formulaExpression(question.getFormulaExpression())
                 .required(Boolean.TRUE.equals(question.getRequired()))
                 .helpText(question.getHelpText())
                 .minValue(question.getMinValue())
@@ -143,6 +152,41 @@ public class PublicFormService {
                 .unit(question.getUnit())
                 .options(options)
                 .build();
+    }
+
+    private void applyFormulaValues(List<FormQuestion> questions, Map<String, Object> answers) {
+        if (questions == null || questions.isEmpty()) {
+            return;
+        }
+
+        // Evaluate formulas in multiple passes to support dependency chains
+        for (int pass = 0; pass < 3; pass++) {
+            boolean changed = false;
+
+            for (FormQuestion question : questions) {
+                if (question.getFormulaExpression() == null || question.getFormulaExpression().isBlank()) {
+                    continue;
+                }
+                if (question.getQuestionCode() == null || question.getQuestionCode().isBlank()) {
+                    continue;
+                }
+
+                Object result = formulaEvaluationService.evaluate(question.getFormulaExpression(), answers);
+                if (result == null) {
+                    continue;
+                }
+
+                Object currentValue = answers.get(question.getQuestionCode());
+                if (currentValue == null || !String.valueOf(currentValue).equals(String.valueOf(result))) {
+                    answers.put(question.getQuestionCode(), result);
+                    changed = true;
+                }
+            }
+
+            if (!changed) {
+                break;
+            }
+        }
     }
 
     private void saveAnswerRows(PatientFormSubmission submission, DiagnosticForm form, Map<String, Object> answers) {

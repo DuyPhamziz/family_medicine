@@ -217,6 +217,33 @@
   color: #27ae60;
 }
 
+.delete-btn {
+  color: #e74c3c;
+}
+
+.delete-btn:hover {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.export-btn {
+  color: #1d4ed8;
+}
+
+.export-btn:hover {
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+}
+
+.archive-btn {
+  color: #6b7280;
+}
+
+.archive-btn:hover {
+  border-color: #6b7280;
+  color: #6b7280;
+}
+
 /* Loading & Empty */
 .loading {
   text-align: center;

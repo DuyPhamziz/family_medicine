@@ -48,6 +48,34 @@ export const DynamicFormRenderer = ({
     const state = evaluateConditions(formSchema, answers);
     setConditionalState(state);
   }, [answers, formSchema, evaluateConditions]);
+
+  useEffect(() => {
+    if (!formSchema?.sections) return;
+
+    const formulaQuestions = formSchema.sections
+      .flatMap(section => section.questions || [])
+      .filter(question => question.formulaExpression && question.questionCode);
+
+    if (formulaQuestions.length === 0) return;
+
+    const updates = {};
+
+    formulaQuestions.forEach((question) => {
+      const computedValue = evaluateFormulaExpression(question.formulaExpression, answers);
+      if (computedValue !== null && computedValue !== undefined && computedValue !== '') {
+        const normalized = Number.isFinite(computedValue)
+          ? Number(computedValue.toFixed(4)).toString()
+          : String(computedValue);
+        if ((answers[question.questionCode] ?? '') !== normalized) {
+          updates[question.questionCode] = normalized;
+        }
+      }
+    });
+
+    if (Object.keys(updates).length > 0) {
+      setAnswers(prev => ({ ...prev, ...updates }));
+    }
+  }, [answers, formSchema]);
   
   const handleAnswerChange = (questionCode, value) => {
     setAnswers(prev => ({
@@ -81,6 +109,9 @@ export const DynamicFormRenderer = ({
         
         // Check required
         const isRequired = state ? state.required : question.required;
+        if (question.formulaExpression) {
+          return;
+        }
         if (isRequired && (!answers[question.questionCode] || answers[question.questionCode] === '')) {
           newErrors[question.questionCode] = `${question.questionText} is required`;
         }
@@ -144,7 +175,7 @@ export const DynamicFormRenderer = ({
                   question,
                   answers[question.questionCode],
                   (value) => handleAnswerChange(question.questionCode, value),
-                  isDisabled,
+                  isDisabled || Boolean(question.formulaExpression),
                   readOnly
                 )}
                 
@@ -305,5 +336,25 @@ function renderQuestionInput(question, value, onChange, disabled, readOnly) {
           className="form-input"
         />
       );
+  }
+}
+
+function evaluateFormulaExpression(expression, answers) {
+  if (!expression || typeof expression !== 'string') return null;
+  try {
+    const jsExpression = expression
+      .replace(/#([a-zA-Z0-9_]+)/g, (_, key) => {
+        const raw = answers[key];
+        if (raw === undefined || raw === null || raw === '') return '0';
+        const parsed = Number(raw);
+        return Number.isNaN(parsed) ? '0' : String(parsed);
+      })
+      .replace(/\^/g, '**');
+
+    const result = new Function(`return (${jsExpression});`)();
+    if (result === null || result === undefined || Number.isNaN(result)) return null;
+    return result;
+  } catch {
+    return null;
   }
 }

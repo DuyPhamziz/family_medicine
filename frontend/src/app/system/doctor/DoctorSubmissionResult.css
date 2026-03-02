@@ -431,3 +431,372 @@
     width: 100%;
   }
 }
+
+/* ===== NEW DOCTOR-FRIENDLY FEATURES ===== */
+
+.patient-value {
+  margin: 0;
+  font-size: 15px;
+  color: #1a1a1a;
+  font-weight: 600;
+  padding: 8px 12px;
+  background-color: #f0f7ff;
+  border-radius: 4px;
+}
+
+/* Section Header - Doctor Version (Collapsible) */
+.section-header-doctor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 4px solid #4a90e2;
+}
+
+.section-header-doctor:hover {
+  background: linear-gradient(135deg, #e9ecef, #dee2e6);
+  transform: translateX(2px);
+}
+
+.section-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.section-info h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.section-meta {
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.section-score-badge {
+  background-color: #4a90e2;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.section-toggle {
+  font-size: 18px;
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+/* Questions List - Doctor Version */
+.questions-list-doctor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.question-result-doctor {
+  padding: 16px;
+  background-color: #fafbfc;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.question-result-doctor:hover {
+  background-color: #f5f8ff;
+  border-color: #4a90e2;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
+}
+
+.question-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.question-code {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  min-width: 50px;
+  padding: 4px 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+
+.question-text {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 500;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.question-answer-section {
+  margin-bottom: 12px;
+  padding: 10px;
+  background-color: white;
+  border-radius: 6px;
+  border-left: 3px solid #4a90e2;
+}
+
+.answer-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.answer-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2c3e50;
+  padding: 6px 12px;
+  background-color: #e3f2fd;
+  border-radius: 6px;
+}
+
+.answer-unit {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.answer-points {
+  font-size: 12px;
+  color: #27ae60;
+  font-weight: 700;
+  padding: 4px 8px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+}
+
+/* Assessment Buttons */
+.assessment-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.assessment-btn {
+  padding: 6px 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  color: #666;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+}
+
+.assessment-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.assessment-btn.assessment-good {
+  background-color: #e8f5e9;
+  color: #27ae60;
+  border-color: #27ae60;
+}
+
+.assessment-btn.assessment-warning {
+  background-color: #fff3e0;
+  color: #f39c12;
+  border-color: #f39c12;
+}
+
+.assessment-btn.assessment-bad {
+  background-color: #ffebee;
+  color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+/* Doctor Notes Section */
+.doctor-notes-section {
+  padding: 12px;
+  background-color: #fffbea;
+  border-radius: 6px;
+  border-left: 3px solid #f39c12;
+  margin-top: 12px;
+}
+
+.notes-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.doctor-notes-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #333;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.doctor-notes-input:focus {
+  outline: none;
+  border-color: #f39c12;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
+}
+
+.doctor-notes-input::placeholder {
+  color: #999;
+}
+
+/* Calculated Fields Card - Updated */
+.calculated-fields-card {
+  margin-bottom: 24px;
+}
+
+.calculated-field-item {
+  padding: 14px;
+  background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+  border-radius: 6px;
+  border-left: 4px solid #4a90e2;
+  transition: all 0.3s ease;
+}
+
+.calculated-field-item:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 6px rgba(74, 144, 226, 0.15);
+}
+
+/* General Notes Card */
+.general-notes-card {
+  margin-bottom: 24px;
+  background-color: #fef9e7;
+}
+
+.general-notes-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #f39c12;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #333;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.general-notes-input:focus {
+  outline: none;
+  border-color: #e67e22;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+}
+
+.general-notes-input::placeholder {
+  color: #999;
+}
+
+/* Print Styles - Updated */
+@media print {
+  .submission-result {
+    background-color: white;
+    padding: 0;
+  }
+
+  .result-header,
+  .header-top {
+    margin-bottom: 16px;
+  }
+
+  .header-actions {
+    display: none;
+  }
+
+  .score-box:hover {
+    transform: none;
+  }
+
+  .question-result:hover {
+    background-color: #f9f9f9;
+    border-left-color: #ddd;
+  }
+
+  .section-result-card {
+    page-break-inside: avoid;
+  }
+
+  .assessment-buttons,
+  .doctor-notes-section,
+  .general-notes-input {
+    display: none;
+  }
+}
+
+/* Responsive - Updated */
+@media (max-width: 768px) {
+  .submission-result {
+    padding: 12px;
+  }
+
+  .card-title {
+    font-size: 14px;
+  }
+
+  .section-header-doctor {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-info {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .assessment-buttons {
+    width: 100%;
+  }
+
+  .assessment-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .question-result-doctor {
+    padding: 12px;
+  }
+
+  .answer-display {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

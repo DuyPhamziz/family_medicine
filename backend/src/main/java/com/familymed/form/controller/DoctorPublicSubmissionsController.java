@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/doctor/public-submissions")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
 public class DoctorPublicSubmissionsController {
     
     @Autowired
@@ -64,7 +66,7 @@ public class DoctorPublicSubmissionsController {
             response.put("totalElements", submissions.getTotalElements());
             response.put("currentPage", page);
             response.put("pageSize", size);
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(
@@ -104,7 +106,7 @@ public class DoctorPublicSubmissionsController {
             UUID id = UUID.fromString(submissionId);
             
             PatientFormSubmission submission = submissionRepository
-                    .findById(id)
+                    .findBySubmissionIdAndDeletedAtIsNull(id)
                     .orElseThrow(() -> new RuntimeException("Submission not found"));
             
             // Get doctor info from authentication
@@ -166,6 +168,7 @@ public class DoctorPublicSubmissionsController {
             case REVIEWED -> "Đã xem";
             case RESPONDED -> "Đã trả lời";
             case DRAFT -> "Bản nháp";
+            case ARCHIVED -> "Lưu trữ";
         };
     }
 }

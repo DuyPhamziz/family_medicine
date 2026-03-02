@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface SubmissionAnswerRepository extends JpaRepository<SubmissionAnswer, UUID> {
     List<SubmissionAnswer> findBySubmissionSubmissionId(UUID submissionId);
+    void deleteBySubmissionSubmissionId(UUID submissionId);
 }

@@ -6,6 +6,8 @@ import About from "../app/public/About";
 import Guideline from "../app/public/Guideline";
 import RiskTools from "../app/public/RiskTools";
 import Login from "../app/public/Login";
+import ThankYou from "../app/public/ThankYou";
+import CheckResult from "../app/public/CheckResult";
 import { PublicFormPage } from "../components/form/PublicFormPage";
 import AppLayout from "../components/layout/AppLayout";
 import ProtectedRoute from "../components/guards/ProtectedRoute";
@@ -66,6 +68,14 @@ export const router = createBrowserRouter([
   {
     path: "/form/:token",
     element: <PublicFormPage />,
+  },
+  {
+    path: "/thank-you",
+    element: <ThankYou />,
+  },
+  {
+    path: "/check-result",
+    element: <CheckResult />,
   },
   
   // Protected routes - Yêu cầu đăng nhập

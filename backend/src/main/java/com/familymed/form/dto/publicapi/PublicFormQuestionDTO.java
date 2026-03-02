@@ -15,6 +15,7 @@ public class PublicFormQuestionDTO {
     private String questionCode;
     private String questionText;
     private String questionType;
+    private String formulaExpression;
     private Boolean required;
     private String helpText;
     private Double minValue;

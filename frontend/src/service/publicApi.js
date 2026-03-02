@@ -28,4 +28,33 @@ publicApi.interceptors.response.use(
   }
 );
 
+/**
+ * Check submission result by phone and submission ID
+ * @param {string} phone - Patient phone number
+ * @param {string} submissionId - Submission ID
+ * @returns {Promise} API response with submission details
+ */
+export const checkSubmissionResult = async (phone, submissionId) => {
+  try {
+    const response = await publicApi.get('/api/public/check-result', {
+      params: {
+        phone,
+        submissionId,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      // Server responded with error status
+      throw new Error(error.response.data.message || 'Không tìm thấy kết quả');
+    } else if (error.request) {
+      // Request made but no response
+      throw new Error('Không thể kết nối đến máy chủ');
+    } else {
+      // Other errors
+      throw new Error('Đã xảy ra lỗi khi tra cứu');
+    }
+  }
+};
+
 export default publicApi;

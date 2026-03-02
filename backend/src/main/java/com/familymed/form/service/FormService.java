@@ -131,12 +131,12 @@ public class FormService {
     }
     
     public List<PatientFormSubmissionDTO> getPatientSubmissions(UUID patientId) {
-        List<PatientFormSubmission> submissions = submissionRepository.findByPatientPatientId(patientId);
+        List<PatientFormSubmission> submissions = submissionRepository.findByPatientPatientIdAndDeletedAtIsNull(patientId);
         return submissions.stream().map(PatientFormSubmissionDTO::fromSubmission).toList();
     }
     
     public List<PatientFormSubmissionDTO> getDoctorSubmissions(UUID doctorId) {
-        List<PatientFormSubmission> submissions = submissionRepository.findByDoctorUserId(doctorId);
+        List<PatientFormSubmission> submissions = submissionRepository.findByDoctorUserIdAndDeletedAtIsNull(doctorId);
         return submissions.stream().map(PatientFormSubmissionDTO::fromSubmission).toList();
     }
     

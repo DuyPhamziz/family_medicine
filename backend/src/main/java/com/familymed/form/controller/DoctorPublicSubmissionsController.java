@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/doctor/public-submissions")
-@CrossOrigin(origins = "*")
 @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
 public class DoctorPublicSubmissionsController {
     

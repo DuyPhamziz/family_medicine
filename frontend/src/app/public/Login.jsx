@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Icons } from "../../constants";
 import { useAuth } from "../../hooks/auth/useAuth";
 
@@ -203,13 +203,24 @@ const Login = () => {
               </button>
             </form>
 
-            <div className="mt-12 text-center">
+            <div className="mt-12 text-center space-y-3">
               <p className="text-slate-500 text-sm">
                 Bạn chưa có tài khoản? <br />
                 <button className="text-teal-600 font-bold hover:underline mt-1">
                   Yêu cầu cấp quyền truy cập
                 </button>
               </p>
+              <div className="pt-3 border-t border-slate-200">
+                <Link 
+                  to="/" 
+                  className="inline-flex items-center gap-2 text-slate-600 hover:text-teal-600 font-medium text-sm transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Quay về trang chủ
+                </Link>
+              </div>
             </div>
 
             {/* Quick Login Credentials - Always visible for convenience */}

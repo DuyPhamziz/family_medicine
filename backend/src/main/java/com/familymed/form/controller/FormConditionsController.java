@@ -15,7 +15,6 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/api/forms/conditions")
-@CrossOrigin(origins = "*")
 public class FormConditionsController {
     
     @Autowired

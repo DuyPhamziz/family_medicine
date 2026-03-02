@@ -341,7 +341,16 @@ const DoctorPublicSubmissions = () => {
                     )}
                   </td>
                   <td className="date">
-                    <small>{new Date(submission.submittedAt).toLocaleDateString('vi-VN')}</small>
+                    <small>
+                      {submission.submittedAt 
+                        ? new Date(submission.submittedAt).toLocaleDateString('vi-VN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                          })
+                        : '-'
+                      }
+                    </small>
                   </td>
                   <td className="status">
                     {getStatusBadge(submission.status)}

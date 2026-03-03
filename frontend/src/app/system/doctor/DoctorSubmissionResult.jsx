@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Printer, FileText, MessageSquare, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Download, Printer, FileText, AlertCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import api from '../../../service/api';
 import exportApi from '../../../api/exportApi';
 import Button from '../../../components/ui/Button';
@@ -26,7 +26,6 @@ export const DoctorSubmissionResult = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [exporting, setExporting] = useState(false);
-  const [doctorNotes, setDoctorNotes] = useState({});
   const [assessments, setAssessments] = useState({});
   const [expandedSections, setExpandedSections] = useState({});
   
@@ -65,13 +64,6 @@ export const DoctorSubmissionResult = () => {
     } finally {
       setExporting(false);
     }
-  };
-
-  const handleAddNote = (fieldCode, note) => {
-    setDoctorNotes(prev => ({
-      ...prev,
-      [fieldCode]: note
-    }));
   };
 
   const handleAssessment = (fieldCode, assessment) => {
@@ -321,20 +313,6 @@ export const DoctorSubmissionResult = () => {
                         <AlertCircle size={14} /> Xấu
                       </button>
                     </div>
-                    
-                    {/* Doctor Notes */}
-                    <div className="doctor-notes-section">
-                      <div className="notes-label">
-                        <MessageSquare size={14} /> Ghi chú
-                      </div>
-                      <textarea
-                        className="doctor-notes-input"
-                        placeholder="Thêm ghi chú cho câu hỏi này..."
-                        value={doctorNotes[q.questionCode] || ''}
-                        onChange={(e) => handleAddNote(q.questionCode, e.target.value)}
-                        rows="2"
-                      />
-                    </div>
 
                     {q.calculatedValues && Object.keys(q.calculatedValues).length > 0 && (
                       <div className="calculated-values">
@@ -353,17 +331,6 @@ export const DoctorSubmissionResult = () => {
         ))}
       </div>
 
-      {/* General Doctor Notes */}
-      <Card className="general-notes-card">
-        <div className="card-title">📝 Nhận xét tổng thể</div>
-        <textarea
-          className="general-notes-input"
-          placeholder="Ghi chú tổng thể của bác sĩ về bệnh nhân..."
-          rows="4"
-          defaultValue={doctorNotes['_general'] || ''}
-          onChange={(e) => handleAddNote('_general', e.target.value)}
-        />
-      </Card>
     </div>
   );
 };

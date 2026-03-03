@@ -164,6 +164,8 @@ public class FormService {
         form.setVersion(1);
         form.setStatus(parseStatus(dto.getStatus()));
         form.setIsPublic(Boolean.TRUE.equals(dto.getIsPublic()));
+        form.setIsMaster(Boolean.TRUE.equals(dto.getIsMaster()));
+        form.setMasterLocked(Boolean.TRUE.equals(dto.getMasterLocked()));
         if (Boolean.TRUE.equals(form.getIsPublic())) {
             form.setPublicToken(dto.getPublicToken() != null ? dto.getPublicToken() : UUID.randomUUID());
         }
@@ -184,6 +186,10 @@ public class FormService {
         form.setIconColor(dto.getIconColor());
         form.setStatus(parseStatus(dto.getStatus()));
         form.setIsPublic(Boolean.TRUE.equals(dto.getIsPublic()));
+        form.setIsMaster(Boolean.TRUE.equals(dto.getIsMaster()));
+        if (dto.getMasterLocked() != null) {
+            form.setMasterLocked(dto.getMasterLocked());
+        }
 
         if (Boolean.TRUE.equals(form.getIsPublic()) && form.getPublicToken() == null) {
             form.setPublicToken(UUID.randomUUID());
@@ -353,6 +359,10 @@ public class FormService {
         question.setRequired(request.getRequired() != null ? request.getRequired() : Boolean.TRUE);
         question.setHelpText(request.getHelpText());
         question.setDisplayCondition(request.getDisplayCondition());
+        question.setAllowAdditionalAnswers(Boolean.TRUE.equals(request.getAllowAdditionalAnswers()));
+        question.setMaxAdditionalAnswers(Boolean.TRUE.equals(request.getAllowAdditionalAnswers())
+            ? request.getMaxAdditionalAnswers()
+            : null);
 
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
             List<FormQuestionOption> optionItems = request.getOptions().stream()
@@ -391,6 +401,14 @@ public class FormService {
         question.setRequired(request.getRequired() != null ? request.getRequired() : question.getRequired());
         question.setHelpText(request.getHelpText());
         question.setDisplayCondition(request.getDisplayCondition());
+        if (request.getAllowAdditionalAnswers() != null) {
+            question.setAllowAdditionalAnswers(request.getAllowAdditionalAnswers());
+        }
+        if (Boolean.TRUE.equals(question.getAllowAdditionalAnswers())) {
+            question.setMaxAdditionalAnswers(request.getMaxAdditionalAnswers());
+        } else {
+            question.setMaxAdditionalAnswers(null);
+        }
 
         if (request.getOptions() != null) {
             if (question.getOptionItems() == null) {

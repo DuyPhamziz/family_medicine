@@ -36,8 +36,17 @@ const calculateAge = (dob) => {
 
   const isEmpty = (val) => val === "" || val === null || val === undefined || (Array.isArray(val) && val.length === 0);
 
-  const parseValue = (val, type) => {
-    if (isEmpty(val)) return type === "MULTIPLE_CHOICE" ? [] : "";
+  const parseValue = (val, type, allowAdditionalAnswers = false) => {
+    if (isEmpty(val)) return type === "MULTIPLE_CHOICE" || allowAdditionalAnswers ? [] : "";
+    if (allowAdditionalAnswers) {
+      if (Array.isArray(val)) return val;
+      try {
+        const parsed = typeof val === "string" ? JSON.parse(val) : val;
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+      }
+      return [String(val)];
+    }
     if (type === "NUMBER") return isNaN(Number(val)) ? "" : Number(val);
     if (type === "MULTIPLE_CHOICE") {
       try { return typeof val === 'string' ? JSON.parse(val) : val; } catch { return [val]; }
@@ -127,20 +136,27 @@ const calculateAge = (dob) => {
         const key = `question_${q.questionId}`;
         const code = q.questionCode?.trim().toUpperCase();
 
-        initial[key] = q.questionType === "MULTIPLE_CHOICE" ? [] : "";
+        initial[key] = q.questionType === "MULTIPLE_CHOICE" || q.allowAdditionalAnswers === true ? [] : "";
 
         if (code === "V3" && patientProfile?.dateOfBirth) {
             initial[key] = calculateAge(patientProfile.dateOfBirth);
         } else if (code === "V4") {
             initial[key] = patientProfile?.gender === "MALE" ? "Nam" : "Nữ"; 
         } else if (code && historyMap[code]) {
-          initial[key] = parseValue(historyMap[code], q.questionType);
+          initial[key] = parseValue(historyMap[code], q.questionType, q.allowAdditionalAnswers === true);
         }
       });
     });
 
     currentSessionAnswers?.forEach((ans) => {
-      if (ans && ans.questionId) initial[`question_${ans.questionId}`] = parseValue(ans.answerValue, ans.answerType);
+      const question = formData?.sections?.flatMap((s) => s.questions || []).find((q) => q.questionId === ans?.questionId);
+      if (ans && ans.questionId) {
+        initial[`question_${ans.questionId}`] = parseValue(
+          ans.answerValue,
+          ans.answerType,
+          question?.allowAdditionalAnswers === true
+        );
+      }
     });    
     return initial;
   };
@@ -216,7 +232,9 @@ const calculateAge = (dob) => {
   const handleAnswerChange = async (question, value) => {
     setAnswers(prev => ({ ...prev, [`question_${question.questionId}`]: value }));
     if (sessionId) {
-      const valStr = question.questionType === "MULTIPLE_CHOICE" ? JSON.stringify(value) : String(value);
+      const valStr = question.questionType === "MULTIPLE_CHOICE" || question.allowAdditionalAnswers === true
+        ? JSON.stringify(Array.isArray(value) ? value : [])
+        : String(value);
       try {
         await submitAssessmentAnswer({ sessionId, questionId: question.questionId, answerType: question.questionType, answerValue: valStr });
       } catch (err) { console.error("Lưu tự động lỗi"); }
@@ -233,7 +251,9 @@ const calculateAge = (dob) => {
           sessionId,
           answers: allQuestions.filter(q => !isEmpty(answers[`question_${q.questionId}`])).map(q => ({
             questionId: q.questionId, questionCode: q.questionCode,
-            answerValue: q.questionType === "MULTIPLE_CHOICE" ? JSON.stringify(answers[`question_${q.questionId}`]) : String(answers[`question_${q.questionId}`])
+            answerValue: q.questionType === "MULTIPLE_CHOICE" || q.allowAdditionalAnswers === true
+              ? JSON.stringify(Array.isArray(answers[`question_${q.questionId}`]) ? answers[`question_${q.questionId}`] : [])
+              : String(answers[`question_${q.questionId}`])
           }))
         }),
         notes: notes || ""

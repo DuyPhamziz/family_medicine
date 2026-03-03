@@ -19,4 +19,8 @@ public class PublicFormDetailDTO {
     private String category;
     private Integer version;
     private List<PublicFormSectionDTO> sections;
+    
+    // Anti-spam fields
+    private UUID sessionToken;          // Unique token for this form view
+    private Integer remainingSubmissions; // How many submissions left today from this IP
 }

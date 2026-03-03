@@ -45,6 +45,12 @@ public class DiagnosticForm extends BaseEntity {
 
     @Column(name = "public_token", columnDefinition = "UUID", unique = true)
     private UUID publicToken;
+
+    @Column(name = "is_master", nullable = false)
+    private Boolean isMaster = false;
+
+    @Column(name = "master_locked", nullable = false)
+    private Boolean masterLocked = false;
     
     private Integer version = 1;
     

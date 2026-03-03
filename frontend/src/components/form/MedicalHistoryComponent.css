@@ -1,0 +1,172 @@
+/* Medical History Component Styles */
+
+.medical-history-component {
+  font-family: Arial, sans-serif;
+}
+
+.selected-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.selected-conditions .inline-flex {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.conditions-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.category-group {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: white;
+}
+
+.category-group button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #f3f4f6;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #374151;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.category-group button:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.category-group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.category-conditions {
+  padding: 0.75rem;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.category-conditions label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-conditions label:hover {
+  background-color: #f3f4f6;
+}
+
+.category-conditions label input[type='checkbox'] {
+  flex-shrink: 0;
+}
+
+.category-conditions label span {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.conditions-flat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.conditions-flat label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.conditions-flat label:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.conditions-flat label input[type='checkbox'] {
+  flex-shrink: 0;
+}
+
+.conditions-flat label span {
+  font-size: 0.875rem;
+  color: #374151;
+  flex: 1;
+}
+
+/* Custom condition input */
+.medical-history-component > div:last-child {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.medical-history-component input[type='text'] {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.medical-history-component input[type='text']:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.medical-history-component input[type='text']:disabled {
+  background-color: #f3f4f6;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .category-group button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .category-conditions {
+    padding: 0.5rem;
+  }
+
+  .conditions-flat label {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+}

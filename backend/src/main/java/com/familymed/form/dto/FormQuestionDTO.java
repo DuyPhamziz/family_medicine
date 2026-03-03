@@ -2,7 +2,6 @@ package com.familymed.form.dto;
 
 import com.familymed.form.entity.FormQuestion;
 import com.familymed.form.entity.FormQuestionOption;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,7 +11,6 @@ import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class FormQuestionDTO {
     private UUID questionId;
@@ -28,7 +26,70 @@ public class FormQuestionDTO {
     private Boolean required;
     private String helpText;
     private String displayCondition;
+    private String formulaExpression;
+    private Boolean allowAdditionalAnswers;
+    private Integer maxAdditionalAnswers;
     private List<FormQuestionOptionDTO> optionItems;
+
+        public FormQuestionDTO(
+            UUID questionId,
+            Integer questionOrder,
+            String questionCode,
+            String questionText,
+            String questionType,
+            String options,
+            String unit,
+            Double minValue,
+            Double maxValue,
+            Integer points,
+            Boolean required,
+            String helpText,
+            String displayCondition,
+            Boolean allowAdditionalAnswers,
+            Integer maxAdditionalAnswers,
+            List<FormQuestionOptionDTO> optionItems
+        ) {
+        this.questionId = questionId;
+        this.questionOrder = questionOrder;
+        this.questionCode = questionCode;
+        this.questionText = questionText;
+        this.questionType = questionType;
+        this.options = options;
+        this.unit = unit;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+        this.points = points;
+        this.required = required;
+        this.helpText = helpText;
+        this.displayCondition = displayCondition;
+        this.allowAdditionalAnswers = allowAdditionalAnswers;
+        this.maxAdditionalAnswers = maxAdditionalAnswers;
+        this.optionItems = optionItems;
+        }
+
+        public FormQuestionDTO(
+            UUID questionId,
+            Integer questionOrder,
+            String questionCode,
+            String questionText,
+            String questionType,
+            String options,
+            String unit,
+            Double minValue,
+            Double maxValue,
+            Integer points,
+            Boolean required,
+            String helpText,
+            String displayCondition,
+            String formulaExpression,
+            Boolean allowAdditionalAnswers,
+            Integer maxAdditionalAnswers,
+            List<FormQuestionOptionDTO> optionItems
+        ) {
+        this(questionId, questionOrder, questionCode, questionText, questionType, options, unit, minValue, maxValue,
+            points, required, helpText, displayCondition, allowAdditionalAnswers, maxAdditionalAnswers, optionItems);
+        this.formulaExpression = formulaExpression;
+        }
     
     public static FormQuestionDTO fromQuestion(FormQuestion question) {
         List<FormQuestionOptionDTO> optionItems = question.getOptionItems() != null
@@ -59,6 +120,9 @@ public class FormQuestionDTO {
                 .required(question.getRequired())
                 .helpText(question.getHelpText())
             .displayCondition(question.getDisplayCondition())
+            .formulaExpression(question.getFormulaExpression())
+            .allowAdditionalAnswers(Boolean.TRUE.equals(question.getAllowAdditionalAnswers()))
+            .maxAdditionalAnswers(question.getMaxAdditionalAnswers())
             .optionItems(optionItems)
                 .build();
     }

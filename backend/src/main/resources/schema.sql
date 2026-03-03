@@ -69,6 +69,15 @@ CREATE TABLE IF NOT EXISTS submission_answers (
 
 CREATE INDEX IF NOT EXISTS idx_submission_answers_submission ON submission_answers(submission_id);
 
+CREATE TABLE IF NOT EXISTS stored_files (
+    file_id UUID PRIMARY KEY,
+    original_file_name VARCHAR(500) NOT NULL,
+    content_type VARCHAR(255) NOT NULL,
+    file_size BIGINT NOT NULL,
+    file_data BYTEA NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE diagnostic_forms
     ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false;
 
@@ -78,6 +87,10 @@ ALTER TABLE diagnostic_forms
 ALTER TABLE diagnostic_forms
     ADD COLUMN IF NOT EXISTS estimated_time INTEGER,
     ADD COLUMN IF NOT EXISTS icon_color VARCHAR(64);
+
+ALTER TABLE diagnostic_forms
+    ADD COLUMN IF NOT EXISTS is_master BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS master_locked BOOLEAN NOT NULL DEFAULT false;
 
 ALTER TABLE patient_form_submissions
     ADD COLUMN IF NOT EXISTS form_snapshot JSONB,
@@ -99,6 +112,10 @@ ALTER TABLE diagnostic_forms
 ALTER TABLE diagnostic_forms
     ADD CONSTRAINT diagnostic_forms_status_check
     CHECK (status IN ('DRAFT', 'PUBLISHED', 'ACTIVE', 'INACTIVE', 'ARCHIVED'));
+
+ALTER TABLE form_questions
+    ADD COLUMN IF NOT EXISTS allow_additional_answers BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS max_additional_answers INTEGER;
 
 ALTER TABLE patient_form_submissions
     DROP CONSTRAINT IF EXISTS patient_form_submissions_status_check;
@@ -134,3 +151,40 @@ CREATE INDEX IF NOT EXISTS idx_question_bank_options_question_id ON question_ban
 -- QuestionBankOption.java maps to question_bank_options table with proper @ForeignKey annotation.
 -- FormQuestionOption.java maps to form_question_options table with proper @ForeignKey annotation.
 -- Let Hibernate handle constraint creation/repair on startup via UPDATE mode.
+
+-- ===== PUBLIC FORM ANTI-SPAM TABLES =====
+
+-- Session tokens for public forms - prevents reuse and tracks access
+CREATE TABLE IF NOT EXISTS public_form_sessions (
+    session_token UUID PRIMARY KEY,
+    form_id UUID NOT NULL,
+    client_ip VARCHAR(45),  -- IPv6 compatible
+    user_agent VARCHAR(500),
+    created_at TIMESTAMP NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    used_at TIMESTAMP,
+    submission_id UUID,
+    CONSTRAINT fk_session_form FOREIGN KEY (form_id) REFERENCES diagnostic_forms(form_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_client_ip ON public_form_sessions(client_ip);
+CREATE INDEX IF NOT EXISTS idx_session_created_at ON public_form_sessions(created_at);
+CREATE INDEX IF NOT EXISTS idx_session_expires_at ON public_form_sessions(expires_at);
+
+-- Rate limiting for public form submissions
+CREATE TABLE IF NOT EXISTS public_form_rate_limits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_ip VARCHAR(45) NOT NULL,
+    form_id UUID NOT NULL,
+    submission_date TIMESTAMP NOT NULL,
+    submission_count INTEGER NOT NULL DEFAULT 0,
+    last_submission_at TIMESTAMP NOT NULL,
+    blocked BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT fk_rate_limit_form FOREIGN KEY (form_id) REFERENCES diagnostic_forms(form_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_limit_ip_date ON public_form_rate_limits(client_ip, submission_date);
+CREATE INDEX IF NOT EXISTS idx_rate_limit_form_id ON public_form_rate_limits(form_id);
+CREATE INDEX IF NOT EXISTS idx_rate_limit_blocked ON public_form_rate_limits(blocked);
+

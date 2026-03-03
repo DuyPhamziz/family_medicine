@@ -32,6 +32,12 @@ export const PublicFormPage = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   
+  // Anti-spam fields
+  const [sessionToken, setSessionToken] = useState(null);
+  const [formLoadTime, setFormLoadTime] = useState(null);
+  const [honeypot, setHoneypot] = useState(''); // Should remain empty
+  const [remainingSubmissions, setRemainingSubmissions] = useState(null);
+  
   useEffect(() => {
     fetchPublicForm();
   }, [token]);
@@ -40,7 +46,25 @@ export const PublicFormPage = () => {
     try {
       setLoading(true);
       const data = await publicFormApi.getPublicForm(token);
+      console.log('[PublicFormPage] Form data received from backend:', data);
+      
+      // Log all questions to check displayCondition
+      if (data?.sections) {
+        data.sections.forEach(section => {
+          section.questions?.forEach(q => {
+            console.log(`[PublicFormPage] Question ${q.questionCode}:`, {
+              questionCode: q.questionCode,
+              questionText: q.questionText,
+              displayCondition: q.displayCondition
+            });
+          });
+        });
+      }
+      
       setFormData(data);
+      setSessionToken(data.sessionToken); // Get session token from backend
+      setFormLoadTime(Date.now()); // Record load time
+      setRemainingSubmissions(data.remainingSubmissions); // Track remaining submissions
       setError(null);
     } catch (err) {
       setError('Form not found or expired');
@@ -56,7 +80,10 @@ export const PublicFormPage = () => {
         patientName,
         email,
         phone,
-        answers
+        answers,
+        sessionToken,        // Anti-spam: session token
+        honeypot,            // Anti-spam: should be empty
+        formLoadTime         // Anti-spam: when form was loaded
       };
       
       const response = await publicFormApi.submitPublicForm(token, payload);
@@ -83,8 +110,13 @@ export const PublicFormPage = () => {
       }, 2000);
       
     } catch (err) {
-      setError('Failed to submit form. Please try again.');
+      // Display anti-spam error messages to user
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to submit form. Please try again.';
+      setError(errorMessage);
       console.error('Error submitting form:', err);
+      
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
   
@@ -294,6 +326,27 @@ export const PublicFormPage = () => {
               </p>
             )}
           </div>
+          
+          {/* Error Banner - shows submission errors */}
+          {error && !loading && (
+            <div className="bg-red-50 border-l-4 border-red-500 px-6 py-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-red-800 mb-1">Không thể gửi biểu mẫu</h3>
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-400 hover:text-red-600 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Patient Info Section */}
           <div className="bg-gradient-to-br from-blue-50 to-cyan-50 px-6 sm:px-8 py-6 sm:py-8 border-b border-blue-100">
@@ -302,7 +355,37 @@ export const PublicFormPage = () => {
               <h2 className="text-lg sm:text-xl font-bold text-gray-800">Thông tin cá nhân</h2>
             </div>
             
+            {/* Rate Limit Warning */}
+            {remainingSubmissions !== null && remainingSubmissions <= 3 && (
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                <div className="flex items-center gap-2 text-yellow-800">
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="font-semibold">
+                    Bạn còn {remainingSubmissions} lần gửi form hôm nay
+                  </span>
+                </div>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {/* Honeypot field - hidden from humans, visible to bots */}
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex="-1"
+                autoComplete="off"
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  width: '1px',
+                  height: '1px',
+                  opacity: 0
+                }}
+                aria-hidden="true"
+              />
+              
               {/* Name Input */}
               <div className="space-y-2">
                 <label htmlFor="patientName" className="flex items-center gap-2 text-sm font-semibold text-gray-700">

@@ -11,12 +11,27 @@ import { showSuccess, showError } from "../../../utils/toastNotifications";
 import Button from "../../../components/ui/Button";
 import Card from "../../../components/ui/Card";
 import TwoColumnFormLayout from "../../../components/form/TwoColumnFormLayout";
+import { generateMasterForm, setMasterFormLock } from "../../../api/formsApi";
 
 const PAGE_SIZE = 9;
+const PREDEFINED_CATEGORIES = [
+  'ENDOCRINOLOGY',
+  'CARDIOLOGY',
+  'GENERAL',
+  'RESPIRATORY',
+  'NEUROLOGY',
+  'GASTROENTEROLOGY',
+  'ORTHOPEDICS',
+  'DERMATOLOGY',
+  'OBSTETRICS',
+  'PEDIATRICS'
+];
+
 const EMPTY_FORM_DATA = {
   formName: "",
   description: "",
   category: "",
+  customCategory: "",
   status: "DRAFT",
   isPublic: false,
   publicToken: null,
@@ -61,7 +76,8 @@ function reducer(state, action) {
         editingForm: null,
         formData: EMPTY_FORM_DATA,
       };
-    case actions.OPEN_FORM_EDIT:
+    case actions.OPEN_FORM_EDIT: {
+      const isCustomCategory = !PREDEFINED_CATEGORIES.includes(action.payload.category);
       return {
         ...state,
         showForm: true,
@@ -69,12 +85,14 @@ function reducer(state, action) {
         formData: {
           formName: action.payload.formName,
           description: action.payload.description,
-          category: action.payload.category,
+          category: isCustomCategory ? 'OTHER' : action.payload.category,
+          customCategory: isCustomCategory ? action.payload.category : '',
           status: action.payload.status || "DRAFT",
           isPublic: Boolean(action.payload.isPublic),
           publicToken: action.payload.publicToken || null,
         },
       };
+    }
     case actions.CLOSE_FORM:
       return {
         ...state,
@@ -152,7 +170,7 @@ const FormModalSection = ({
 
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-              Danh mục
+              Danh mục <span className="text-red-500">*</span>
             </label>
             <select
               id="category"
@@ -160,14 +178,43 @@ const FormModalSection = ({
               value={formData.category}
               onChange={onInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             >
-              <option value="">Chọn danh mục</option>
+              <option value="">-- Chọn danh mục --</option>
               <option value="ENDOCRINOLOGY">🩺 Nội tiết</option>
               <option value="CARDIOLOGY">❤️ Tim mạch</option>
               <option value="GENERAL">📋 Tổng quát</option>
               <option value="RESPIRATORY">🫁 Hô hấp</option>
               <option value="NEUROLOGY">🧠 Thần kinh</option>
+              <option value="GASTROENTEROLOGY">🫃 Tiêu hóa</option>
+              <option value="ORTHOPEDICS">🦴 Cơ xương khớp</option>
+              <option value="DERMATOLOGY">🧴 Da liễu</option>
+              <option value="OBSTETRICS">🤰 Sản khoa</option>
+              <option value="PEDIATRICS">👶 Nhi khoa</option>
+              <option value="OTHER">✏️ Khác (Tự nhập)</option>
             </select>
+            
+            {/* Custom Category Input */}
+            {formData.category === 'OTHER' && (
+              <div className="mt-3">
+                <label htmlFor="customCategory" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nhập danh mục tùy chỉnh <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="customCategory"
+                  name="customCategory"
+                  value={formData.customCategory}
+                  onChange={onInputChange}
+                  placeholder="Ví dụ: Chuyên khoa Tai-Mũi-Họng"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Danh mục này sẽ được lưu vào database và có thể chọn lại sau
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -220,6 +267,8 @@ const AdminFormManagement = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [masterFormMeta, setMasterFormMeta] = useState(null);
+  const [masterActionLoading, setMasterActionLoading] = useState(false);
 
   const loadForms = async () => {
     try {
@@ -233,9 +282,52 @@ const AdminFormManagement = () => {
     }
   };
 
+  const loadMasterMeta = async () => {
+    try {
+      const response = await api.get("/api/admin/master-form");
+      setMasterFormMeta(response.data || null);
+    } catch {
+      setMasterFormMeta(null);
+    }
+  };
+
   useEffect(() => {
     loadForms();
+    loadMasterMeta();
   }, []);
+
+  const handleGenerateMasterForm = async () => {
+    setMasterActionLoading(true);
+    try {
+      await generateMasterForm();
+      showSuccess("Đã tạo/tái tạo Master Form thành công");
+      await Promise.all([loadForms(), loadMasterMeta()]);
+    } catch (error) {
+      console.error("Error generating master form:", error);
+      showError(error?.response?.data?.message || "Không thể tạo Master Form");
+    } finally {
+      setMasterActionLoading(false);
+    }
+  };
+
+  const handleToggleMasterLock = async () => {
+    if (!masterFormMeta) {
+      showError("Chưa có Master Form. Hãy tạo trước.");
+      return;
+    }
+
+    setMasterActionLoading(true);
+    try {
+      await setMasterFormLock(!masterFormMeta.masterLocked);
+      showSuccess(masterFormMeta.masterLocked ? "Đã mở khóa Master Form" : "Đã khóa Master Form");
+      await loadMasterMeta();
+    } catch (error) {
+      console.error("Error toggling master lock:", error);
+      showError(error?.response?.data?.message || "Không thể cập nhật trạng thái khóa Master Form");
+    } finally {
+      setMasterActionLoading(false);
+    }
+  };
 
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -257,11 +349,20 @@ const AdminFormManagement = () => {
   };
 
   const saveForm = async (payload) => {
+    // Handle custom category
+    let finalPayload = { ...payload };
+    if (payload.category === 'OTHER' && payload.customCategory) {
+      finalPayload.category = payload.customCategory.trim();
+    }
+    
+    // Remove customCategory field before sending to backend
+    delete finalPayload.customCategory;
+    
     if (state.editingForm) {
-      await api.put(`/api/forms/admin/${state.editingForm.formId}`, payload);
+      await api.put(`/api/forms/admin/${state.editingForm.formId}`, finalPayload);
       return;
     }
-    await api.post("/api/forms/admin/create", payload);
+    await api.post("/api/forms/admin/create", finalPayload);
   };
 
   const handleSubmit = async (event) => {
@@ -281,57 +382,6 @@ const AdminFormManagement = () => {
     } catch (error) {
       console.error("Error saving form:", error);
       showError("Lỗi khi lưu biểu mẫu");
-    }
-  };
-
-  const handlePublishPublic = async (form) => {
-    try {
-      await api.put(`/api/forms/admin/${form.formId}`, {
-        formName: form.formName,
-        description: form.description,
-        category: form.category,
-        estimatedTime: form.estimatedTime,
-        iconColor: form.iconColor,
-        status: "PUBLISHED",
-        isPublic: true,
-        publicToken: form.publicToken,
-      });
-      showSuccess("Biểu mẫu đã được publish và hiển thị ngoài homepage.");
-      await loadForms();
-    } catch (error) {
-      console.error("Error publishing public form:", error);
-      showError("Lỗi khi publish biểu mẫu public. Vui lòng thử lại.");
-    }
-  };
-
-  const handleTogglePublic = async (form) => {
-    const nextIsPublic = !Boolean(form.isPublic);
-
-    try {
-      await api.put(`/api/forms/admin/${form.formId}`, {
-        formName: form.formName,
-        description: form.description,
-        category: form.category,
-        estimatedTime: form.estimatedTime,
-        iconColor: form.iconColor,
-        status: form.status || "DRAFT",
-        isPublic: nextIsPublic,
-        publicToken: form.publicToken,
-      });
-
-      openMessage(
-        nextIsPublic ? "Đã chuyển Public" : "Đã chuyển Private",
-        nextIsPublic
-          ? "Biểu mẫu đã được bật public."
-          : "Biểu mẫu đã được chuyển về private."
-      );
-      await loadForms();
-    } catch (error) {
-      console.error("Error toggling public state:", error);
-      openMessage(
-        "Không thể cập nhật",
-        "Lỗi khi chuyển trạng thái public/private. Vui lòng thử lại."
-      );
     }
   };
 
@@ -374,33 +424,6 @@ const AdminFormManagement = () => {
             console.error("Error deleting form:", error);
             dispatch({ type: actions.CLOSE_CONFIRM });
             showError("Lỗi khi xóa biểu mẫu. Vui lòng thử lại.");
-          }
-        },
-      },
-    });
-  };
-
-  const handleCreateVersion = (form) => {
-    dispatch({
-      type: actions.OPEN_CONFIRM,
-      payload: {
-        open: true,
-        title: "Tạo phiên bản mới?",
-        description: "Tạo phiên bản mới từ biểu mẫu hiện tại?",
-        onConfirm: async () => {
-          try {
-            await api.post(`/api/forms/admin/${form.formId}/versions`, {
-              formName: form.formName,
-              description: form.description,
-              category: form.category,
-            });
-            dispatch({ type: actions.CLOSE_CONFIRM });
-            showSuccess("Phiên bản mới đã được tạo.");
-            await loadForms();
-          } catch (error) {
-            console.error("Error creating new version:", error);
-            dispatch({ type: actions.CLOSE_CONFIRM });
-            showError("Lỗi khi tạo phiên bản mới. Vui lòng thử lại.");
           }
         },
       },
@@ -458,6 +481,7 @@ const AdminFormManagement = () => {
         <Button
           size="sm"
           variant="outline"
+          disabled={Boolean(form.isMaster)}
           onClick={() => dispatch({ type: actions.OPEN_FORM_EDIT, payload: form })}
         >
           <Edit2 className="w-4 h-4" />
@@ -465,6 +489,7 @@ const AdminFormManagement = () => {
         <Button
           size="sm"
           variant="outline"
+          disabled={Boolean(form.isMaster)}
           onClick={() => handleDelete(form.formId)}
         >
           <Trash2 className="w-4 h-4" />
@@ -495,14 +520,44 @@ const AdminFormManagement = () => {
             {filteredForms.length} biểu mẫu
           </p>
         </div>
-        <Button
-          onClick={() => dispatch({ type: actions.OPEN_FORM_CREATE })}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Thêm biểu mẫu
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            disabled={masterActionLoading}
+            onClick={handleGenerateMasterForm}
+          >
+            Regenerate Master Form
+          </Button>
+          <Button
+            variant="outline"
+            disabled={masterActionLoading || !masterFormMeta}
+            onClick={handleToggleMasterLock}
+          >
+            {masterFormMeta?.masterLocked ? "Unlock Master" : "Lock Master"}
+          </Button>
+          <Button
+            onClick={() => dispatch({ type: actions.OPEN_FORM_CREATE })}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Thêm biểu mẫu
+          </Button>
+        </div>
       </div>
+
+      {masterFormMeta && (
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div>
+              <p className="font-semibold text-slate-800">Master Form: {masterFormMeta.formName}</p>
+              <p className="text-slate-500">Version {masterFormMeta.version} • {masterFormMeta.formId}</p>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${masterFormMeta.masterLocked ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
+              {masterFormMeta.masterLocked ? "LOCKED" : "UNLOCKED"}
+            </span>
+          </div>
+        </Card>
+      )}
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

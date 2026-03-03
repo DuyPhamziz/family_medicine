@@ -34,6 +34,7 @@ import Guidelines from "../app/system/guidelines/Guidelines";
 import CdssLogic from "../app/system/logic/CdssLogic";
 import AdminUserManagement from "../app/system/admin/AdminUserManagement";
 import AdminDebugPage from "../app/system/admin/AdminDebugPage";
+import AnalyticsDashboard from "../app/system/admin/AnalyticsDashboard";
 import DoctorSubmissionResult from "../app/system/doctor/DoctorSubmissionResult";
 import DoctorPublicSubmissions from "../app/system/doctor/DoctorPublicSubmissions";
 import DoctorSubmissionResponse from "../app/system/doctor/DoctorSubmissionResponse";
@@ -204,6 +205,18 @@ export const router = createBrowserRouter([
         <RoleGuard allowRoles={[ROLES.ADMIN]}>
           <AdminLayout>
             <AdminQuestionManagement />
+          </AdminLayout>
+        </RoleGuard>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/system/admin/analytics",
+    element: (
+      <ProtectedRoute>
+        <RoleGuard allowRoles={[ROLES.ADMIN]}>
+          <AdminLayout>
+            <AnalyticsDashboard />
           </AdminLayout>
         </RoleGuard>
       </ProtectedRoute>

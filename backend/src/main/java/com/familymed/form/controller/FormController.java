@@ -3,6 +3,7 @@ package com.familymed.form.controller;
 import com.familymed.form.dto.DiagnosticFormDTO;
 import com.familymed.form.dto.PatientFormSubmissionDTO;
 import com.familymed.form.service.FormService;
+import com.familymed.form.service.MasterFormService;
 import com.familymed.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class FormController {
 
     private final FormService formService;
+    private final MasterFormService masterFormService;
     private final UserRepository userRepository;
 
     @GetMapping
@@ -32,6 +34,14 @@ public class FormController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
     public ResponseEntity<DiagnosticFormDTO> getForm(@PathVariable UUID id) {
         return ResponseEntity.ok(formService.getFormWithQuestions(id));
+    }
+
+    @GetMapping("/master")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<DiagnosticFormDTO> getMasterForm() {
+        return masterFormService.getMasterForm()
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping

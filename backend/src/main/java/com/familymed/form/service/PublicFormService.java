@@ -27,6 +27,7 @@ public class PublicFormService {
     private final PatientFormSubmissionRepository submissionRepository;
     private final SubmissionAnswerRepository submissionAnswerRepository;
     private final FormulaEvaluationService formulaEvaluationService;
+    private final PublicFormAntiSpamService antiSpamService;
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
@@ -68,8 +69,20 @@ public class PublicFormService {
     }
 
     @Transactional
-    public Map<String, Object> submitPublicForm(UUID publicToken, PublicFormSubmitRequest request) {
+    public Map<String, Object> submitPublicForm(UUID publicToken, PublicFormSubmitRequest request, String clientIp) {
         DiagnosticForm form = findPublishedPublicForm(publicToken);
+        
+        // Generate submission ID first
+        UUID submissionId = UUID.randomUUID();
+        
+        // *** ANTI-SPAM VALIDATION ***
+        antiSpamService.validateAndRecordSubmission(
+            request.getSessionToken(),
+            form.getFormId(),
+            clientIp,
+            request.getHoneypot(),
+            submissionId
+        );
 
         Map<String, Object> answers = new LinkedHashMap<>();
         if (request.getAnswers() != null) {
@@ -82,7 +95,7 @@ public class PublicFormService {
         String answersJson = toJson(answers);
 
         PatientFormSubmission submission = new PatientFormSubmission();
-        submission.setSubmissionId(UUID.randomUUID());
+        submission.setSubmissionId(submissionId);
         submission.setForm(form);
         submission.setFormVersionNumber(form.getVersion());
         submission.setPatientName(request.getPatientName());
@@ -101,6 +114,10 @@ public class PublicFormService {
                 "status", saved.getStatus().name(),
                 "message", "Form submitted successfully"
         );
+    }
+    
+    public UUID getFormIdByToken(UUID publicToken) {
+        return findPublishedPublicForm(publicToken).getFormId();
     }
 
     private DiagnosticForm findPublishedPublicForm(UUID publicToken) {
@@ -151,6 +168,7 @@ public class PublicFormService {
                 .maxValue(question.getMaxValue())
                 .unit(question.getUnit())
                 .options(options)
+                .displayCondition(question.getDisplayCondition())
                 .build();
     }
 

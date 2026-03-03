@@ -50,6 +50,18 @@ public class FormQuestion extends BaseEntity {
     private Double minValue; // Giá trị tối thiểu
     
     private Double maxValue; // Giá trị tối đa
+
+    @Column(name = "validation_key")
+    private String validationKey; // Reference to MEDICAL_RANGES keys (e.g., GLUCOSE, BLOOD_PRESSURE_SYSTOLIC)
+
+    @Column(name = "warning_min")
+    private Double warningMin; // Warning threshold minimum
+
+    @Column(name = "warning_max")
+    private Double warningMax; // Warning threshold maximum
+
+    @Column(name = "validation_pattern")
+    private String validationPattern; // Regex pattern for text validation
     
     private Integer points; // Điểm cho câu hỏi này
     
@@ -63,6 +75,12 @@ public class FormQuestion extends BaseEntity {
 
     @Column(name = "formula_expression", columnDefinition = "TEXT")
     private String formulaExpression; // Dynamic formula expression (SpEL)
+
+    @Column(name = "allow_additional_answers", nullable = false)
+    private Boolean allowAdditionalAnswers = false;
+
+    @Column(name = "max_additional_answers")
+    private Integer maxAdditionalAnswers;
     
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<QuestionCondition> conditions; // Conditional display/require rules
@@ -78,6 +96,7 @@ public class FormQuestion extends BaseEntity {
         BOOLEAN,           // Yes/No toggle
         IMAGE_UPLOAD,      // Image file upload
         FILE_UPLOAD,       // Generic file upload
+        MEDICAL_HISTORY,   // Medical history checklist
         TEXT               // Legacy compatibility
     }
 }

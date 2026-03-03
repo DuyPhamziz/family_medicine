@@ -11,6 +11,21 @@ export const fetchFormById = async (formId) => {
   return response.data;
 };
 
+export const fetchMasterForm = async () => {
+  const response = await api.get("/api/forms/master");
+  return response.data;
+};
+
+export const generateMasterForm = async () => {
+  const response = await api.post("/api/admin/generate-master-form");
+  return response.data;
+};
+
+export const setMasterFormLock = async (locked) => {
+  const response = await api.post(`/api/admin/master-form/lock?locked=${locked}`);
+  return response.data;
+};
+
 // ===== NEW: PUBLIC FORM API =====
 
 /**

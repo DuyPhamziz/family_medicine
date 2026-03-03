@@ -22,4 +22,5 @@ public class PublicFormQuestionDTO {
     private Double maxValue;
     private String unit;
     private List<PublicFormOptionDTO> options;
+    private String displayCondition;
 }

@@ -14,6 +14,9 @@ public interface DiagnosticFormRepository extends JpaRepository<DiagnosticForm, 
     List<DiagnosticForm> findByStatus(DiagnosticForm.FormStatus status);
     List<DiagnosticForm> findByCategory(String category);
     List<DiagnosticForm> findByStatusAndIsPublicTrue(DiagnosticForm.FormStatus status);
+    List<DiagnosticForm> findByStatusInAndIsMasterFalse(List<DiagnosticForm.FormStatus> statuses);
+    Optional<DiagnosticForm> findFirstByIsMasterTrueOrderByUpdatedAtDesc();
+    Optional<DiagnosticForm> findFirstByIsMasterTrue();
     Optional<DiagnosticForm> findByPublicToken(UUID publicToken);
 }
 

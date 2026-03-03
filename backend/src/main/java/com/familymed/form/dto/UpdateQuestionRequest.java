@@ -21,5 +21,7 @@ public class UpdateQuestionRequest {
     private Boolean required;
     private String helpText;
     private String displayCondition;
+    private Boolean allowAdditionalAnswers;
+    private Integer maxAdditionalAnswers;
     private List<CreateQuestionOptionRequest> options;
 }

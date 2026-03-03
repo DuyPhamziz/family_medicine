@@ -47,14 +47,6 @@ const ModalOverlay = ({ isOpen, onClose, children, editingMode = false }) => {
     <div 
       className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200"
       onClick={onClose}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClose();
-        }
-      }}
     >
       <div 
         className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300"
@@ -111,14 +103,6 @@ const SectionModalOverlay = ({ isOpen, onClose, children, editingMode = false })
     <div 
       className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200"
       onClick={onClose}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClose();
-        }
-      }}
     >
       <div 
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-in slide-in-from-bottom-4 duration-300"
@@ -152,7 +136,7 @@ const SectionModalOverlay = ({ isOpen, onClose, children, editingMode = false })
 };
 
 // Sortable Section Component - Cải tiến
-const SortableSection = ({ section, children, onDeleteSection, onAddQuestion }) => {
+const SortableSection = ({ section, children, onDeleteSection, onAddQuestion, onEditSection }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
     id: section.sectionId,
   });
@@ -192,6 +176,13 @@ const SortableSection = ({ section, children, onDeleteSection, onAddQuestion }) 
           </div>
         </div>
         <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={onEditSection}
+            className="px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-medium text-sm transition-colors"
+            title="Chỉnh sửa nhóm"
+          >
+            ✏️
+          </button>
           <button
             onClick={onAddQuestion}
             className="px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
@@ -255,6 +246,11 @@ const SortableQuestion = ({ question, index, onEdit, onDelete }) => {
                   ⚠️ Bắt buộc
                 </span>
               )}
+              {question.allowAdditionalAnswers && (
+                <span className="inline-flex items-center gap-1 bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-bold flex-shrink-0">
+                  ➕ Trả lời thêm
+                </span>
+              )}
             </div>
             <h4 className="text-base font-semibold text-slate-900 leading-snug mb-2">{question.questionText}</h4>
             {question.helpText && (
@@ -304,6 +300,7 @@ const AdminQuestionManagement = () => {
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [showSectionForm, setShowSectionForm] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
+  const [editingSection, setEditingSection] = useState(null);
   const [activeSectionId, setActiveSectionId] = useState("");
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
@@ -332,6 +329,8 @@ const AdminQuestionManagement = () => {
     maxValue: "",
     options: "",
     required: true,
+    allowAdditionalAnswers: false,
+    maxAdditionalAnswers: "",
     questionOrder: 1,
     helpText: "",
     displayCondition: "",
@@ -421,6 +420,8 @@ const AdminQuestionManagement = () => {
       maxValue: "",
       options: "",
       required: true,
+      allowAdditionalAnswers: false,
+      maxAdditionalAnswers: "",
       questionOrder: 1,
       helpText: "",
       displayCondition: "",
@@ -436,9 +437,10 @@ const AdminQuestionManagement = () => {
       sectionName: "",
       sectionOrder: 1,
     });
+    setEditingSection(null);
   };
 
-  const handleCreateSection = async (e) => {
+  const handleSubmitSection = async (e) => {
     e.preventDefault();
 
     if (!sectionData.sectionName.trim()) {
@@ -451,26 +453,42 @@ const AdminQuestionManagement = () => {
     }
 
     try {
-      await api.post(`/api/forms/admin/${formId}/sections`, {
+      const payload = {
         sectionName: sectionData.sectionName,
         sectionOrder: Number(sectionData.sectionOrder) || 1,
-      });
+      };
+
+      if (editingSection) {
+        await api.put(`/api/forms/admin/sections/${editingSection.sectionId}`, payload);
+      } else {
+        await api.post(`/api/forms/admin/${formId}/sections`, payload);
+      }
+
       resetSectionForm();
       setShowSectionForm(false);
       await loadFormData();
       setMessageDialog({
         open: true,
         title: "Thành công",
-        description: "Nhóm câu hỏi đã được tạo.",
+        description: editingSection ? "Thông tin nhóm câu hỏi đã được cập nhật." : "Nhóm câu hỏi đã được tạo.",
       });
     } catch (error) {
-      console.error("Error creating section:", error);
+      console.error("Error saving section:", error);
       setMessageDialog({
         open: true,
-        title: "Không thể tạo",
-        description: "Lỗi khi tạo nhóm câu hỏi.",
+        title: editingSection ? "Không thể cập nhật" : "Không thể tạo",
+        description: editingSection ? "Lỗi khi cập nhật nhóm câu hỏi." : "Lỗi khi tạo nhóm câu hỏi.",
       });
     }
+  };
+
+  const handleEditSection = (section) => {
+    setEditingSection(section);
+    setSectionData({
+      sectionName: section.sectionName || "",
+      sectionOrder: section.sectionOrder || 1,
+    });
+    setShowSectionForm(true);
   };
 
   const handleDeleteSection = async (sectionId) => {
@@ -527,6 +545,10 @@ const AdminQuestionManagement = () => {
       maxValue: questionData.maxValue === "" ? null : Number(questionData.maxValue),
       points: Number(questionData.points) || 0,
       required: questionData.required,
+      allowAdditionalAnswers: Boolean(questionData.allowAdditionalAnswers),
+      maxAdditionalAnswers: questionData.allowAdditionalAnswers
+        ? (questionData.maxAdditionalAnswers === "" ? null : Number(questionData.maxAdditionalAnswers))
+        : null,
       helpText: questionData.helpText || null,
       displayCondition: questionData.displayCondition || null,
       options:
@@ -599,6 +621,8 @@ const AdminQuestionManagement = () => {
         .map((option) => option.optionText)
         .join("\n"),
       required: question.required !== false,
+      allowAdditionalAnswers: question.allowAdditionalAnswers === true,
+      maxAdditionalAnswers: question.maxAdditionalAnswers ?? "",
       questionOrder: question.questionOrder || 1,
       helpText: question.helpText || "",
       displayCondition: question.displayCondition || "",
@@ -780,6 +804,7 @@ const AdminQuestionManagement = () => {
                 <SortableSection
                   key={section.sectionId}
                   section={section}
+                  onEditSection={() => handleEditSection(section)}
                   onDeleteSection={() => handleDeleteSection(section.sectionId)}
                   onAddQuestion={() => {
                     setActiveSectionId(section.sectionId);
@@ -846,9 +871,9 @@ const AdminQuestionManagement = () => {
             resetSectionForm();
             setShowSectionForm(false);
           }}
-          editingMode={false}
+          editingMode={Boolean(editingSection)}
         >
-          <form onSubmit={handleCreateSection} className="space-y-5">
+          <form onSubmit={handleSubmitSection} className="space-y-5">
             <div>
               <label htmlFor="sectionName" className="block text-sm font-semibold text-slate-700 mb-2">
                 Tên nhóm câu hỏi *
@@ -894,7 +919,7 @@ const AdminQuestionManagement = () => {
                 type="submit"
                 className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold transition-colors"
               >
-                💾 Lưu nhóm
+                {editingSection ? "💾 Cập nhật nhóm" : "💾 Lưu nhóm"}
               </button>
             </div>
           </form>
@@ -996,6 +1021,7 @@ const AdminQuestionManagement = () => {
                   <option value="SELECT_DROPDOWN">Dropdown</option>
                   <option value="DATE">Ngày tháng</option>
                   <option value="BOOLEAN">Có/Không</option>
+                  <option value="IMAGE_UPLOAD">Tải ảnh</option>
                 </select>
               </div>
               <div>
@@ -1132,6 +1158,40 @@ const AdminQuestionManagement = () => {
               <label htmlFor="required" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
                 Câu hỏi bắt buộc
               </label>
+            </div>
+
+            <div className="space-y-3 bg-violet-50 p-4 rounded-lg border border-violet-100">
+              <div className="flex items-center gap-3">
+                <input
+                  id="allowAdditionalAnswers"
+                  type="checkbox"
+                  name="allowAdditionalAnswers"
+                  checked={questionData.allowAdditionalAnswers}
+                  onChange={handleQuestionChange}
+                  className="w-5 h-5 text-violet-600 border-slate-300 rounded focus:ring-2 focus:ring-violet-500"
+                />
+                <label htmlFor="allowAdditionalAnswers" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
+                  Hiển thị nút "Trả lời thêm"
+                </label>
+              </div>
+
+              {questionData.allowAdditionalAnswers && (
+                <div>
+                  <label htmlFor="maxAdditionalAnswers" className="block text-sm font-semibold text-slate-700 mb-2">
+                    Số câu trả lời thêm tối đa (để trống = không giới hạn)
+                  </label>
+                  <input
+                    id="maxAdditionalAnswers"
+                    type="number"
+                    name="maxAdditionalAnswers"
+                    value={questionData.maxAdditionalAnswers}
+                    onChange={handleQuestionChange}
+                    min="1"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                    placeholder="Ví dụ: 5"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 pt-6 border-t border-slate-200">

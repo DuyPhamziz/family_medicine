@@ -5,6 +5,30 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
   const [focused, setFocused] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  const repeatableValues = Array.isArray(value)
+    ? value
+    : (question.allowAdditionalAnswers ? [] : null);
+
+  const updateRepeatableValue = (idx, nextValue) => {
+    const current = Array.isArray(repeatableValues) ? [...repeatableValues] : [];
+    current[idx] = nextValue;
+    onChange(current);
+  };
+
+  const addRepeatableValue = () => {
+    const current = Array.isArray(repeatableValues) ? [...repeatableValues] : [];
+    const maxAllowed = question.maxAdditionalAnswers;
+    if (maxAllowed && current.length >= maxAllowed) return;
+    current.push("");
+    onChange(current);
+  };
+
+  const removeRepeatableValue = (idx) => {
+    const current = Array.isArray(repeatableValues) ? [...repeatableValues] : [];
+    current.splice(idx, 1);
+    onChange(current);
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -14,16 +38,30 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
 
     setIsUploading(true);
     try {
+      if (value && typeof value === "string") {
+        await api.delete(`/api/files/${value}`).catch(() => {});
+      }
+
       const response = await api.post("/api/files/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
-      
-      onChange(response.data); 
+
+      const uploadedValue = typeof response.data === "string" ? response.data : response.data?.fileId;
+      onChange(uploadedValue);
       alert("Đã tải ảnh lên thành công!");
     } catch (error) {
       alert("Lỗi khi tải ảnh lên!");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (!value || readOnly) return;
+    try {
+      await api.delete(`/api/files/${value}`).catch(() => {});
+    } finally {
+      onChange("");
     }
   };
 
@@ -35,6 +73,55 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
 
     switch (question.questionType) {
       case "TEXT":
+        if (question.allowAdditionalAnswers) {
+          const items = Array.isArray(repeatableValues) && repeatableValues.length > 0 ? repeatableValues : [""];
+          const canAddMore = !question.maxAdditionalAnswers || items.length < question.maxAdditionalAnswers;
+
+          return (
+            <div className="space-y-3">
+              {items.map((item, idx) => (
+                <div key={`${question.questionId}-text-${idx}`} className="flex gap-2 items-start">
+                  <input
+                    type="text"
+                    value={item || ""}
+                    readOnly={readOnly}
+                    onChange={(e) => !readOnly && updateRepeatableValue(idx, e.target.value)}
+                    onFocus={() => !readOnly && setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    placeholder={`Mục bổ sung #${idx + 1}`}
+                    className={`flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none transition-all ${
+                      error
+                        ? "border-red-500"
+                        : focused
+                        ? "border-blue-500 focus:ring-2 focus:ring-blue-500"
+                        : "border-gray-300"
+                    } ${readOnlyStyles}`}
+                  />
+                  {!readOnly && items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeRepeatableValue(idx)}
+                      className="px-3 py-3 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      Xóa
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {!readOnly && canAddMore && (
+                <button
+                  type="button"
+                  onClick={addRepeatableValue}
+                  className="px-4 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
+                >
+                  ➕ Trả lời thêm
+                </button>
+              )}
+            </div>
+          );
+        }
+
         return (
           <input
             type="text"
@@ -55,6 +142,57 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
         );
 
       case "NUMBER":
+        if (question.allowAdditionalAnswers) {
+          const items = Array.isArray(repeatableValues) && repeatableValues.length > 0 ? repeatableValues : [""];
+          const canAddMore = !question.maxAdditionalAnswers || items.length < question.maxAdditionalAnswers;
+
+          return (
+            <div className="space-y-3">
+              {items.map((item, idx) => (
+                <div key={`${question.questionId}-number-${idx}`} className="flex gap-2 items-start">
+                  <input
+                    type="number"
+                    value={item || ""}
+                    readOnly={readOnly}
+                    onChange={(e) => !readOnly && updateRepeatableValue(idx, e.target.value)}
+                    onFocus={() => !readOnly && setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    min={question.minValue}
+                    max={question.maxValue}
+                    placeholder={`Giá trị bổ sung #${idx + 1}`}
+                    className={`flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none transition-all ${
+                      error
+                        ? "border-red-500"
+                        : focused
+                        ? "border-blue-500 focus:ring-2 focus:ring-blue-500"
+                        : "border-gray-300"
+                    } ${readOnlyStyles}`}
+                  />
+                  {!readOnly && items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeRepeatableValue(idx)}
+                      className="px-3 py-3 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      Xóa
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {!readOnly && canAddMore && (
+                <button
+                  type="button"
+                  onClick={addRepeatableValue}
+                  className="px-4 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
+                >
+                  ➕ Trả lời thêm
+                </button>
+              )}
+            </div>
+          );
+        }
+
         return (
           <div className="flex gap-2">
             <input
@@ -84,6 +222,48 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
         );
 
       case "DATE":
+        if (question.allowAdditionalAnswers) {
+          const items = Array.isArray(repeatableValues) && repeatableValues.length > 0 ? repeatableValues : [""];
+          const canAddMore = !question.maxAdditionalAnswers || items.length < question.maxAdditionalAnswers;
+
+          return (
+            <div className="space-y-3">
+              {items.map((item, idx) => (
+                <div key={`${question.questionId}-date-${idx}`} className="flex gap-2 items-start">
+                  <input
+                    type="date"
+                    value={item || ""}
+                    readOnly={readOnly}
+                    onChange={(e) => !readOnly && updateRepeatableValue(idx, e.target.value)}
+                    className={`flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none ${
+                      error ? "border-red-500" : "border-gray-300"
+                    } ${readOnlyStyles}`}
+                  />
+                  {!readOnly && items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeRepeatableValue(idx)}
+                      className="px-3 py-3 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      Xóa
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {!readOnly && canAddMore && (
+                <button
+                  type="button"
+                  onClick={addRepeatableValue}
+                  className="px-4 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
+                >
+                  ➕ Trả lời thêm
+                </button>
+              )}
+            </div>
+          );
+        }
+
         return (
           <input
             type="date"
@@ -214,10 +394,19 @@ const QuestionCard = ({ question, index, value, onChange, error, readOnly }) => 
               <div className="mt-2 text-center">
                 <p className="text-xs text-green-600 font-medium mb-2">✅ Đã lưu file: {value}</p>
                 <img 
-                  src={`http://localhost:8081/api/files/view/${value}`} 
+                  src={`http://localhost:8080/api/files/view/${value}`} 
                   alt="Preview" 
                   className="w-32 h-32 object-cover rounded-lg shadow-md mx-auto border-2 border-white"
                 />
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteImage}
+                    className="mt-3 px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-sm"
+                  >
+                    Xóa ảnh
+                  </button>
+                )}
               </div>
             )}
           </div>

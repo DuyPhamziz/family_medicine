@@ -2,7 +2,11 @@
 import { useState, useEffect } from 'react';
 import { useConditionalLogic } from '../../hooks/system/useConditionalLogic';
 import { useFormAutosave } from '../../hooks/system/useFormAutosave';
-import { Send, AlertCircle } from 'lucide-react';
+import { Send, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
+import { formatToVietnamese, toDateInputValue, formatVietnameseLong, getAgeFromDate } from '../../utils/formatDate';
+import { convertValue } from '../../utils/unitConverter';
+import { validateMedicalValue, classifyBloodPressure, classifyBMI, getValidationStyles } from '../../utils/medicalValidation';
+import MedicalHistoryComponent from './MedicalHistoryComponent';
 
 const EMPTY_ANSWERS = {};
 
@@ -24,10 +28,34 @@ export const DynamicFormRenderer = ({
   
   const [answers, setAnswers] = useState(initialAnswers);
   const [errors, setErrors] = useState({});
+  const [validationWarnings, setValidationWarnings] = useState({});
   const { evaluateConditions } = useConditionalLogic();
   const { loadDraft, clearDraft } = useFormAutosave(formId, answers);
   
   const [conditionalState, setConditionalState] = useState({});
+
+  const visibleQuestions = (formSchema?.sections || [])
+    .flatMap(section => section.questions || [])
+    .filter(question => {
+      const questionKey = question.questionId || question.questionCode;
+      const state = conditionalState[questionKey];
+      return state ? state.visible : true;
+    });
+
+  const visibleRequiredQuestions = visibleQuestions.filter(question => {
+    const questionKey = question.questionId || question.questionCode;
+    const state = conditionalState[questionKey];
+    return state ? state.required : question.required;
+  });
+
+  const answeredRequiredCount = visibleRequiredQuestions.filter(question => {
+    const value = answers[question.questionCode];
+    return value !== undefined && value !== null && value !== '';
+  }).length;
+
+  const progressPercent = visibleRequiredQuestions.length === 0
+    ? 100
+    : Math.round((answeredRequiredCount / visibleRequiredQuestions.length) * 100);
   
   useEffect(() => {
     // Load draft on mount
@@ -46,6 +74,7 @@ export const DynamicFormRenderer = ({
   useEffect(() => {
     // Recalculate conditional state whenever answers change
     const state = evaluateConditions(formSchema, answers);
+    console.log('[DynamicFormRenderer] Conditional state updated:', { state, answers, formSchema });
     setConditionalState(state);
   }, [answers, formSchema, evaluateConditions]);
 
@@ -91,6 +120,27 @@ export const DynamicFormRenderer = ({
         return updated;
       });
     }
+
+    // Validate medical values based on question metadata
+    const question = formSchema?.sections
+      ?.flatMap(s => s.questions || [])
+      .find(q => q.questionCode === questionCode);
+
+    if (question?.validationKey && value) {
+      const validation = validateMedicalValue(value, question.validationKey);
+      if (validation.message) {
+        setValidationWarnings(prev => ({
+          ...prev,
+          [questionCode]: validation
+        }));
+      } else {
+        setValidationWarnings(prev => {
+          const updated = { ...prev };
+          delete updated[questionCode];
+          return updated;
+        });
+      }
+    }
   };
   
   const validateForm = () => {
@@ -100,7 +150,8 @@ export const DynamicFormRenderer = ({
     
     formSchema.sections.forEach(section => {
       section.questions?.forEach(question => {
-        const state = conditionalState[question.questionId];
+        const questionKey = question.questionId || question.questionCode;
+        const state = conditionalState[questionKey];
         
         // Skip validation if question is hidden
         if (state && !state.visible) {
@@ -124,6 +175,16 @@ export const DynamicFormRenderer = ({
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check 80% completion requirement
+    if (progressPercent < 80) {
+      setErrors({
+        _form: `Vui lòng hoàn thành ít nhất 80% câu hỏi bắt buộc (hiện tại: ${progressPercent}%)`
+      });
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     
     if (!validateForm()) {
       return;
@@ -149,6 +210,33 @@ export const DynamicFormRenderer = ({
   
   return (
     <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
+      {!readOnly && (
+        <div className="sticky top-[72px] z-30 rounded-xl border border-blue-100 bg-white/95 backdrop-blur px-4 py-3 shadow-sm">
+          <div className="flex items-center justify-between text-sm text-slate-600 mb-2">
+            <span className="font-medium">Tiến độ hoàn thành</span>
+            <span className={`font-semibold ${
+              progressPercent >= 80 ? 'text-green-700' : 'text-blue-700'
+            }`}>{answeredRequiredCount}/{visibleRequiredQuestions.length} • {progressPercent}%</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+            <div
+              className={`h-full transition-all duration-300 ${
+                progressPercent >= 80 
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500' 
+                  : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+              }`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          {progressPercent < 80 && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg border-l-4 border-amber-400">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <p>Cần hoàn thành ít nhất 80% để gửi biểu mẫu (còn thiếu {80 - progressPercent}%)</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {formSchema.sections.map((section, sectionIdx) => (
         <section 
           key={section.sectionId || section.sectionCode || `section-${sectionIdx}`} 
@@ -163,7 +251,8 @@ export const DynamicFormRenderer = ({
           
           <div className="space-y-4 sm:space-y-5">
             {section.questions?.map((question, questionIdx) => {
-              const state = conditionalState[question.questionId];
+              const questionKey = question.questionId || question.questionCode;
+              const state = conditionalState[questionKey];
               const isVisible = state ? state.visible : true;
               const isRequired = state ? state.required : question.required;
               const isDisabled = state ? state.disabled : false;
@@ -175,10 +264,26 @@ export const DynamicFormRenderer = ({
                   key={question.questionId || question.questionCode || `question-${sectionIdx}-${questionIdx}`}
                   className="bg-white rounded-lg p-4 sm:p-5 shadow-sm border border-gray-200 hover:border-blue-300 transition-colors"
                 >
-                  <label htmlFor={question.questionCode} className="block text-base sm:text-lg font-semibold text-gray-800 mb-2">
-                    {question.questionText}
-                    {isRequired && <span className="text-red-500 ml-1">*</span>}
-                  </label>
+                  <div className="flex items-start justify-between mb-2">
+                    <label htmlFor={question.questionCode} className="block text-base sm:text-lg font-semibold text-gray-800">
+                      {question.questionText}
+                      {isRequired && <span className="text-red-500 ml-1">*</span>}
+                      {!isRequired && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-full">
+                          Không bắt buộc
+                        </span>
+                      )}
+                    </label>
+                    {!isRequired && !readOnly && answers[question.questionCode] && (
+                      <button
+                        type="button"
+                        onClick={() => handleAnswerChange(question.questionCode, '')}
+                        className="ml-2 px-3 py-1 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Bỏ qua
+                      </button>
+                    )}
+                  </div>
                   
                   {question.helpText && (
                     <p className="text-sm text-gray-600 mb-3 italic bg-blue-50 px-3 py-2 rounded-lg border-l-4 border-blue-400">
@@ -192,6 +297,71 @@ export const DynamicFormRenderer = ({
                     (value) => handleAnswerChange(question.questionCode, value),
                     isDisabled || Boolean(question.formulaExpression),
                     readOnly
+                  )}
+                  
+                  {validationWarnings[question.questionCode] && (
+                    <div className={`mt-2 flex items-center gap-2 text-sm px-3 py-2 rounded-lg border-l-4 ${
+                      getValidationStyles(validationWarnings[question.questionCode].severity)
+                    }`}>
+                      {validationWarnings[question.questionCode].severity === 'error' && (
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      )}
+                      {validationWarnings[question.questionCode].severity === 'warning' && (
+                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                      )}
+                      {validationWarnings[question.questionCode].severity === 'success' && (
+                        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                      )}
+                      <p className="font-medium">{validationWarnings[question.questionCode].message}</p>
+                    </div>
+                  )}
+                  
+                  {/* Medical classification badges */}
+                  {question.validationKey === 'BLOOD_PRESSURE_SYSTOLIC' && answers[question.questionCode] && (
+                    (() => {
+                      const diaQuestion = formSchema?.sections
+                        ?.flatMap(s => s.questions || [])
+                        .find(q => q.validationKey === 'BLOOD_PRESSURE_DIASTOLIC');
+                      const classification = classifyBloodPressure(
+                        answers[question.questionCode],
+                        answers[diaQuestion?.questionCode] || 0
+                      );
+                      return classification ? (
+                        <div className={`mt-2 px-3 py-2 rounded-lg text-sm font-semibold`}
+                          style={{
+                            backgroundColor: classification.color === 'green' ? '#dcfce7' : 
+                                          classification.color === 'yellow' ? '#fef3c7' :
+                                          classification.color === 'orange' ? '#fedba8' :
+                                          classification.color === 'red' ? '#fecaca' : '#fee2e2',
+                            borderLeft: `4px solid ${classification.color === 'green' ? '#16a34a' :
+                                                     classification.color === 'yellow' ? '#ca8a04' :
+                                                     classification.color === 'orange' ? '#ea580c' :
+                                                     classification.color === 'red' ? '#dc2626' : '#991b1b'}`
+                          }}>
+                          🏥 {classification.classification}
+                        </div>
+                      ) : null;
+                    })()
+                  )}
+                  
+                  {/* BMI classification */}
+                  {question.validationKey === 'BMI' && answers[question.questionCode] && (
+                    (() => {
+                      const classification = classifyBMI(answers[question.questionCode]);
+                      return classification ? (
+                        <div className={`mt-2 px-3 py-2 rounded-lg text-sm font-semibold`}
+                          style={{
+                            backgroundColor: classification.color === 'green' ? '#dcfce7' :
+                                          classification.color === 'blue' ? '#dbeafe' :
+                                          classification.color === 'orange' ? '#fedba8' : '#fecaca',
+                            borderLeft: `4px solid ${classification.color === 'green' ? '#16a34a' :
+                                                     classification.color === 'blue' ? '#0284c7' :
+                                                     classification.color === 'orange' ? '#ea580c' : '#dc2626'}`
+                          }}>
+                          📊 {classification.classification}
+                        </div>
+                      ) : null;
+                    })()
                   )}
                   
                   {errors[question.questionCode] && (
@@ -208,14 +378,33 @@ export const DynamicFormRenderer = ({
       ))}
       
       {!readOnly && (
-        <div className="pt-4 sm:pt-6 flex justify-center">
-          <button 
-            type="submit" 
-            className="w-full sm:w-auto min-w-[200px] px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            <Send className="w-5 h-5" />
-            Gửi biểu mẫu
-          </button>
+        <div className="sticky bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur px-3 py-3 sm:px-0 sm:py-4">
+          {errors._form && (
+            <div className="mx-auto max-w-2xl mb-3 flex items-center gap-2 text-red-600 text-sm bg-red-50 px-4 py-3 rounded-lg border-l-4 border-red-500">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <p className="font-medium">{errors._form}</p>
+            </div>
+          )}
+          <div className="mx-auto w-full sm:w-auto flex flex-col items-center gap-2">
+            <button 
+              type="submit" 
+              disabled={progressPercent < 80}
+              className={`w-full sm:w-auto min-w-[220px] px-8 py-4 text-white font-bold text-lg rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-3 ${
+                progressPercent >= 80
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 hover:shadow-xl hover:scale-105'
+                  : 'bg-gray-400 cursor-not-allowed opacity-60'
+              } disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100`}
+              title={progressPercent < 80 ? `Cần hoàn thành ít nhất 80% (hiện tại: ${progressPercent}%)` : 'Gửi biểu mẫu'}
+            >
+              <Send className="w-5 h-5" />
+              {progressPercent >= 80 ? 'Gửi biểu mẫu' : `Hoàn thành ${progressPercent}% (cần 80%)`}
+            </button>
+            {progressPercent < 80 && (
+              <p className="text-xs text-gray-600 text-center">
+                ⚠️ Vui lòng điền thêm {Math.ceil((80 - progressPercent) * visibleRequiredQuestions.length / 100)} câu hỏi bắt buộc
+              </p>
+            )}
+          </div>
         </div>
       )}
     </form>
@@ -259,15 +448,24 @@ function renderQuestionInput(question, value, onChange, disabled, readOnly) {
       );
       
     case 'DATE':
+      const dateInputValue = toDateInputValue(value);
+      const vietnameseDate = formatVietnameseLong(value);
       return (
-        <input
-          type="date"
-          id={question.questionCode}
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled || readOnly}
-          className={inputClasses}
-        />
+        <div className="space-y-2">
+          <input
+            type="date"
+            id={question.questionCode}
+            value={dateInputValue || ''}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={disabled || readOnly}
+            className={inputClasses}
+          />
+          {value && vietnameseDate && (
+            <div className="text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-lg border-l-4 border-blue-400">
+              📅 {vietnameseDate}
+            </div>
+          )}
+        </div>
       );
       
     case 'BOOLEAN':
@@ -384,6 +582,17 @@ function renderQuestionInput(question, value, onChange, disabled, readOnly) {
         </div>
       );
       
+    case 'MEDICAL_HISTORY':
+      return (
+        <MedicalHistoryComponent
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          readOnly={readOnly}
+          showCategories={true}
+        />
+      );
+      
     default:
       return (
         <input
@@ -402,19 +611,89 @@ function renderQuestionInput(question, value, onChange, disabled, readOnly) {
 function evaluateFormulaExpression(expression, answers) {
   if (!expression || typeof expression !== 'string') return null;
   try {
-    const jsExpression = expression
-      .replace(/#([a-zA-Z0-9_]+)/g, (_, key) => {
-        const raw = answers[key];
-        if (raw === undefined || raw === null || raw === '') return '0';
-        const parsed = Number(raw);
-        return Number.isNaN(parsed) ? '0' : String(parsed);
-      })
-      .replace(/\^/g, '**');
-
-    const result = new Function(`return (${jsExpression});`)();
+    // Helper functions for formulas
+    const helperFunctions = {
+      // AGE(dateField) - Calculate age from date field
+      AGE: (dateField) => {
+        const dateValue = answers[dateField];
+        if (!dateValue) return 0;
+        return getAgeFromDate(dateValue) || 0;
+      },
+      
+      // BMI(weightField, heightField) - Calculate BMI
+      // Weight in kg, height in cm
+      BMI: (weightField, heightField) => {
+        const weight = Number(answers[weightField]);
+        const height = Number(answers[heightField]);
+        if (!weight || !height || height === 0) return 0;
+        const heightInMeters = height / 100;
+        return weight / (heightInMeters * heightInMeters);
+      },
+      
+      // CONVERT(value, fromUnit, toUnit) - Convert units
+      CONVERT: (value, fromUnit, toUnit) => {
+        const numValue = Number(value);
+        if (!numValue) return 0;
+        return convertValue(numValue, fromUnit, toUnit) || 0;
+      },
+      
+      // CONVERT_FIELD(sourceField, fromUnit, toUnit) - Convert from a field value
+      CONVERT_FIELD: (sourceField, fromUnit, toUnit) => {
+        const value = Number(answers[sourceField]);
+        if (!value) return 0;
+        return convertValue(value, fromUnit, toUnit) || 0;
+      },
+      
+      // IF(condition, trueValue, falseValue) - Conditional logic
+      IF: (condition, trueValue, falseValue) => {
+        return condition ? trueValue : falseValue;
+      },
+      
+      // MAX(...values) - Maximum value
+      MAX: (...values) => {
+        return Math.max(...values.map(Number).filter(n => !isNaN(n)));
+      },
+      
+      // MIN(...values) - Minimum value
+      MIN: (...values) => {
+        return Math.min(...values.map(Number).filter(n => !isNaN(n)));
+      },
+      
+      // AVG(...fields) - Average of field values
+      AVG: (...fields) => {
+        const values = fields.map(f => Number(answers[f])).filter(n => !isNaN(n));
+        if (values.length === 0) return 0;
+        return values.reduce((sum, v) => sum + v, 0) / values.length;
+      },
+      
+      // SUM(...fields) - Sum of field values
+      SUM: (...fields) => {
+        return fields.reduce((sum, f) => sum + (Number(answers[f]) || 0), 0);
+      },
+    };
+    
+    // Replace #variableName with actual values
+    let jsExpression = expression.replace(/#([a-zA-Z0-9_]+)/g, (_, key) => {
+      const raw = answers[key];
+      if (raw === undefined || raw === null || raw === '') return '0';
+      const parsed = Number(raw);
+      return Number.isNaN(parsed) ? '0' : String(parsed);
+    });
+    
+    // Replace ^ with ** for exponentiation
+    jsExpression = jsExpression.replace(/\^/g, '**');
+    
+    // Create evaluation context with helper functions
+    const context = { ...helperFunctions, answers };
+    
+    // Evaluate expression
+    const func = new Function(...Object.keys(context), `return (${jsExpression});`);
+    const result = func(...Object.values(context));
+    
     if (result === null || result === undefined || Number.isNaN(result)) return null;
     return result;
-  } catch {
+  } catch (error) {
+    console.error('Formula evaluation error:', error);
     return null;
   }
 }

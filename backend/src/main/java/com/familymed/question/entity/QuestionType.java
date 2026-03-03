@@ -5,5 +5,6 @@ public enum QuestionType {
     MULTIPLE_CHOICE,
     SINGLE_CHOICE,
     NUMBER,
-    DATE
+    DATE,
+    MEDICAL_HISTORY
 }

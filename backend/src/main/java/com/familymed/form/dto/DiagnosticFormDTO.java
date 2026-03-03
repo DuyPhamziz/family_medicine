@@ -26,6 +26,8 @@ public class DiagnosticFormDTO {
     private String status;
     private Boolean isPublic;
     private UUID publicToken;
+    private Boolean isMaster;
+    private Boolean masterLocked;
     private Integer version;
     private List<FormSectionDTO> sections;
     
@@ -40,6 +42,8 @@ public class DiagnosticFormDTO {
                 .status(form.getStatus().name())
                 .isPublic(form.getIsPublic())
                 .publicToken(form.getPublicToken())
+                .isMaster(form.getIsMaster())
+                .masterLocked(form.getMasterLocked())
                 .version(form.getVersion())
                 .sections(sections != null ? 
                         sections.stream()

@@ -62,6 +62,11 @@ const Sidebar = ({ collapsed, setCollapsed, onLogout }) => {
       section: "Báo cáo",
       items: [
         {
+          id: "/system/admin/analytics",
+          label: "Analytics",
+          icon: <Icons.Risk />,
+        },
+        {
           id: "/system/report/summary",
           label: "Thống kê",
           icon: <Icons.Risk />,

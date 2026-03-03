@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calculator, Plus, Trash2 } from 'lucide-react';
 import Button from '../ui/Button';
+import { UNIT_CONVERSIONS } from '../../utils/unitConverter';
 import './AutoCalculationSetup.css';
 
 /**
@@ -17,14 +18,19 @@ export const AutoCalculationSetup = ({ questions = [], value = [], onChange }) =
     { value: 'FORMULA', label: 'Công thức tùy chỉnh', fields: ['expression'] }
   ];
   
-  const unitTypes = [
-    { from: 'kg', to: 'lbs', label: 'kg → lbs (cân nặng)' },
-    { from: 'lbs', to: 'kg', label: 'lbs → kg (cân nặng)' },
-    { from: 'cm', to: 'inches', label: 'cm → inches (chiều cao)' },
-    { from: 'inches', to: 'cm', label: 'inches → cm (chiều cao)' },
-    { from: 'C', to: 'F', label: '°C → °F (nhiệt độ)' },
-    { from: 'F', to: 'C', label: '°F → °C (nhiệt độ)' }
-  ];
+  // Build unit types from UNIT_CONVERSIONS
+  const unitTypesDict = {};
+  Object.values(UNIT_CONVERSIONS).forEach(conv => {
+    const key = `${conv.from}|${conv.to}`;
+    if (!unitTypesDict[key]) {
+      unitTypesDict[key] = {
+        from: conv.from,
+        to: conv.to,
+        label: conv.description
+      };
+    }
+  });
+  const unitTypes = Object.values(unitTypesDict);
   
   const addCalculation = () => {
     const newCalc = {
@@ -135,17 +141,19 @@ export const AutoCalculationSetup = ({ questions = [], value = [], onChange }) =
             <div className="config-field">
               <label>Loại chuyển đổi</label>
               <select
-                value={`${calc.config.fromUnit || ''}-${calc.config.toUnit || ''}`}
+                value={calc.config.fromUnit && calc.config.toUnit ? JSON.stringify({from: calc.config.fromUnit, to: calc.config.toUnit}) : ''}
                 onChange={(e) => {
-                  const [from, to] = e.target.value.split('-');
-                  updateConfig(index, 'fromUnit', from);
-                  updateConfig(index, 'toUnit', to);
+                  if (e.target.value) {
+                    const { from, to } = JSON.parse(e.target.value);
+                    updateConfig(index, 'fromUnit', from);
+                    updateConfig(index, 'toUnit', to);
+                  }
                 }}
                 className="form-control"
               >
-                <option value="-">Chọn loại...</option>
-                {unitTypes.map(u => (
-                  <option key={`${u.from}-${u.to}`} value={`${u.from}-${u.to}`}>
+                <option value="">Chọn loại...</option>
+                {unitTypes.map((u, idx) => (
+                  <option key={idx} value={JSON.stringify({from: u.from, to: u.to})}>
                     {u.label}
                   </option>
                 ))}

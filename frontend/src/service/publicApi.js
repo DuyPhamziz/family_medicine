@@ -1,12 +1,14 @@
 // service/publicApi.js
 import axios from 'axios';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
 /**
  * Separate API instance for public endpoints
  * No authentication required, no automatic token handling
  */
 const publicApi = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },

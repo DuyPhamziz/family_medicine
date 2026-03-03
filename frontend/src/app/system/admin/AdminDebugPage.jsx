@@ -29,7 +29,7 @@ const AdminDebugPage = () => {
           token: token.substring(0, 50) + "...",
           tokenData,
           userData,
-          baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080"
+          baseURL: import.meta.env.VITE_API_BASE_URL
         });
       } catch (error) {
         console.error("Error decoding token:", error);
@@ -187,7 +187,7 @@ const AdminDebugPage = () => {
         <h3 className="mb-2 font-semibold text-amber-900">Hướng dẫn Debug</h3>
         <ul className="list-inside list-disc space-y-1 text-sm text-amber-800">
           <li>Kiểm tra Role phải là <strong>ADMIN</strong> (không phải ROLE_ADMIN)</li>
-          <li>API Base URL phải là <strong>http://localhost:8080</strong></li>
+          <li>API Base URL phải là <strong>VITE_API_BASE_URL</strong> của môi trường deploy</li>
           <li>Token phải còn hạn (kiểm tra Token Expires)</li>
           <li>Status 403 = Forbidden (không có quyền)</li>
           <li>Status 401 = Unauthorized (token hết hạn hoặc không hợp lệ)</li>

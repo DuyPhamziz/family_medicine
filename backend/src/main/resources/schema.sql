@@ -130,50 +130,7 @@ CREATE TABLE IF NOT EXISTS question_bank_options (
 
 CREATE INDEX IF NOT EXISTS idx_question_bank_options_question_id ON question_bank_options(question_id);
 
-DO $$
-BEGIN
-    IF to_regclass('public.question_bank') IS NOT NULL
-       AND NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'fk_question_bank_options_question_bank'
-    ) THEN
-        ALTER TABLE question_bank_options
-            ADD CONSTRAINT fk_question_bank_options_question_bank
-                FOREIGN KEY (question_id) REFERENCES question_bank(id) ON DELETE CASCADE;
-    END IF;
-END $$;
-
--- Repair legacy wrong FK: form_question_options.question_id -> question_bank(id)
-DO $$
-DECLARE
-    wrong_fk RECORD;
-BEGIN
-    FOR wrong_fk IN
-        SELECT c.conname
-        FROM pg_constraint c
-                 JOIN pg_class t ON t.oid = c.conrelid
-                 JOIN pg_class r ON r.oid = c.confrelid
-        WHERE c.contype = 'f'
-          AND t.relname = 'form_question_options'
-          AND r.relname = 'question_bank'
-        LOOP
-            EXECUTE format('ALTER TABLE form_question_options DROP CONSTRAINT IF EXISTS %I', wrong_fk.conname);
-        END LOOP;
-END $$;
-
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM pg_constraint
-        WHERE conname = 'fk_form_question_options_form_questions'
-    ) THEN
-        ALTER TABLE form_question_options
-            ADD CONSTRAINT fk_form_question_options_form_questions
-                FOREIGN KEY (question_id) REFERENCES form_questions(question_id) ON DELETE CASCADE;
-    END IF;
-END $$;
-
--- Constraints are handled by Hibernate (spring.jpa.hibernate.ddl-auto=update).
--- Explicit ALTER TABLE statements in schema.sql are removed to avoid conflicts with existing legacy constraints.
+-- FK constraints are managed by Hibernate @JoinColumn annotations (spring.jpa.hibernate.ddl-auto=update).
+-- QuestionBankOption.java maps to question_bank_options table with proper @ForeignKey annotation.
+-- FormQuestionOption.java maps to form_question_options table with proper @ForeignKey annotation.
+-- Let Hibernate handle constraint creation/repair on startup via UPDATE mode.

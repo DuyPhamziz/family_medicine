@@ -150,9 +150,9 @@ const DoctorPublicSubmissions = () => {
     });
   };
 
-  const handleExportSubmission = async (submissionId) => {
+  const handleExportSubmission = async (submission) => {
     try {
-      const response = await api.post(`/api/export/submission/${submissionId}`, {}, {
+      const response = await api.post(`/api/export/submission/${submission.submissionId}`, {}, {
         responseType: 'blob'
       });
 
@@ -164,9 +164,25 @@ const DoctorPublicSubmissions = () => {
       const link = document.createElement('a');
       link.href = url;
 
+      // Try to derive filename from submission info, fallback to header or id
+      const safe = (s) => {
+        if (!s) return '';
+        return String(s).replace(/[\\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_');
+      };
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const parts = [];
+      if (submission?.formName) parts.push(safe(submission.formName));
+      if (submission?.patientCode) parts.push(safe(submission.patientCode));
+      if (submission?.patientName) parts.push(safe(submission.patientName));
+
       const disposition = response.headers['content-disposition'];
       const filenameMatch = disposition?.match(/filename="?([^";]+)"?/);
-      link.setAttribute('download', filenameMatch?.[1] || `submission_${submissionId}.xlsx`);
+      const fallback = filenameMatch?.[1] || `submission_${submission.submissionId}`;
+
+      const filenameBase = parts.length > 0 ? parts.join('_') : fallback;
+      const filename = `${filenameBase}_${timestamp}.xlsx`;
+
+      link.setAttribute('download', filename);
 
       document.body.appendChild(link);
       link.click();
@@ -372,7 +388,7 @@ const DoctorPublicSubmissions = () => {
                     </button>
                     <button
                       className="action-btn export-btn"
-                      onClick={() => handleExportSubmission(submission.submissionId)}
+                      onClick={() => handleExportSubmission(submission)}
                       title="Xuất Excel"
                     >
                       <Download size={16} />

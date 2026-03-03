@@ -6,6 +6,7 @@ import com.familymed.form.service.FormService;
 import com.familymed.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/submissions")
 @RequiredArgsConstructor
+@Slf4j
 public class SubmissionController {
 
     private final FormService formService;
@@ -30,6 +32,9 @@ public class SubmissionController {
     public ResponseEntity<PatientFormSubmissionDTO> submitForm(
             @RequestBody SubmitFormRequest request,
             Authentication authentication) {
+        // log incoming request for debugging
+        log.debug("submitForm called with request: {}", request);
+
         if (authentication == null || authentication.getName() == null) {
             return ResponseEntity.status(401).build();
         }
@@ -42,13 +47,60 @@ public class SubmissionController {
             return ResponseEntity.status(404).build();
         }
 
-        return ResponseEntity.ok(formService.submitForm(request, doctorId));
+        // validate required ids
+        if (request.getPatientId() == null || request.getFormId() == null) {
+            log.warn("Invalid submit form request, missing patientId or formId: {}", request);
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            return ResponseEntity.ok(formService.submitForm(request, doctorId));
+        } catch (Exception ex) {
+            log.error("Error while submitting form", ex);
+            // let GlobalExceptionHandler handle translating to appropriate response
+            throw ex;
+        }
     }
 
-    @GetMapping("/patient/{patientId}")
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    public ResponseEntity<PatientFormSubmissionDTO> updateSubmission(
+            @PathVariable UUID id,
+            @RequestBody SubmitFormRequest request,
+            Authentication authentication) {
+        log.debug("updateSubmission {} with request {}", id, request);
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).build();
+        }
+        UUID doctorId = userRepository.findByEmailOrUsername(authentication.getName(), authentication.getName())
+                .map(user -> user.getUserId())
+                .orElse(null);
+        if (doctorId == null) {
+            return ResponseEntity.status(404).build();
+        }
+        if (request.getPatientId() == null || request.getFormId() == null) {
+            log.warn("Invalid update request, missing patientId or formId: {}", request);
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            return ResponseEntity.ok(formService.updateSubmission(id, request, doctorId));
+        } catch (Exception ex) {
+            log.error("Error while updating submission", ex);
+            throw ex;
+        }
+    }
+
+    @GetMapping("/patient/{identifier}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
-    public ResponseEntity<List<PatientFormSubmissionDTO>> getPatientSubmissions(@PathVariable UUID patientId) {
-        return ResponseEntity.ok(formService.getPatientSubmissions(patientId));
+    public ResponseEntity<List<PatientFormSubmissionDTO>> getPatientSubmissions(@PathVariable String identifier) {
+        // identifier may be UUID or patientCode
+        try {
+            UUID patientId = UUID.fromString(identifier);
+            return ResponseEntity.ok(formService.getPatientSubmissions(patientId));
+        } catch (IllegalArgumentException ex) {
+            // not a UUID, treat as code
+            return ResponseEntity.ok(formService.getPatientSubmissionsByCode(identifier));
+        }
     }
 
     @GetMapping("/{id}/export")

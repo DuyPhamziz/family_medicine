@@ -24,6 +24,7 @@ public class PatientFormSubmissionDTO {
     private Double totalScore;
     private String riskLevel;
     private String diagnosticResult;
+    private String submissionData;
     private String notes;
     private String status;
     private Integer formVersion;
@@ -47,6 +48,7 @@ public class PatientFormSubmissionDTO {
                 .totalScore(submission.getTotalScore())
                 .riskLevel(submission.getRiskLevel())
                 .diagnosticResult(submission.getDiagnosticResult())
+                .submissionData(submission.getSubmissionData())
                 .notes(submission.getNotes())
             .status(status != null ? status.name() : null)
                 .formVersion(submission.getFormVersionNumber())

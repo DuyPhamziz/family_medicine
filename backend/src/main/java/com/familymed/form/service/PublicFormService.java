@@ -141,6 +141,7 @@ public class PublicFormService {
                 .toList();
 
         return PublicFormQuestionDTO.builder()
+                .questionId(question.getQuestionId())
                 .questionCode(question.getQuestionCode())
                 .questionText(question.getQuestionText())
                 .questionType(question.getQuestionType() != null ? question.getQuestionType().name() : null)
@@ -150,6 +151,7 @@ public class PublicFormService {
                 .minValue(question.getMinValue())
                 .maxValue(question.getMaxValue())
                 .unit(question.getUnit())
+                .displayCondition(question.getDisplayCondition())
                 .options(options)
                 .build();
     }

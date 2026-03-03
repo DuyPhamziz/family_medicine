@@ -23,6 +23,7 @@ export const useAssessmentSession = ({ patientId, formId }) => {
   const [completed, setCompleted] = useState(false);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState({});
+  const [existingSubmissionId, setExistingSubmissionId] = useState(null);
 
   // --- HÀM BỔ TRỢ ---
 const calculateAge = (dob) => {
@@ -126,6 +127,7 @@ const calculateAge = (dob) => {
       section.questions?.forEach((q) => {
         const key = `question_${q.questionId}`;
         const code = q.questionCode?.trim().toUpperCase();
+        const histKey = `question_${q.questionId}`;
 
         initial[key] = q.questionType === "MULTIPLE_CHOICE" ? [] : "";
 
@@ -133,6 +135,8 @@ const calculateAge = (dob) => {
             initial[key] = calculateAge(patientProfile.dateOfBirth);
         } else if (code === "V4") {
             initial[key] = patientProfile?.gender === "MALE" ? "Nam" : "Nữ"; 
+        } else if (historyMap[histKey]) {
+          initial[key] = parseValue(historyMap[histKey], q.questionType);
         } else if (code && historyMap[code]) {
           initial[key] = parseValue(historyMap[code], q.questionType);
         }
@@ -178,13 +182,39 @@ const calculateAge = (dob) => {
       if (!patientId || !formId) return;
       setLoading(true);
       try {
-        const [formRes, patientRes, historyRes] = await Promise.all([
+        const [formRes, patientRes, historyRes, subsRes] = await Promise.all([
           fetchFormById(formId),
           fetchPatientById(patientId),
-          api.get(`/api/forms/latest-data/${patientId}`).catch(() => ({ data: {} }))
+          api.get(`/api/forms/latest-data/${patientId}`).catch(() => ({ data: {} })),
+          api.get(`/api/submissions/patient/${patientId}`)
         ]);
         setForm(formRes);
         setPatient(patientRes);
+
+        // check if user already submitted this form for this patient
+        const prevList = (subsRes.data || []).filter(s => s.formId === formId);
+        if (prevList.length > 0) {
+          const latest = prevList.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+          setExistingSubmissionId(latest.submissionId);
+          // decode answers from submissionData; keep notes
+          try {
+            const parsed = JSON.parse(latest.submissionData);
+            // submissionData structure created earlier: {sessionId, answers: [...]}
+            if (parsed && parsed.answers) {
+              const historyMap = {};
+              parsed.answers.forEach(ans => {
+                if (ans.questionCode) historyMap[ans.questionCode.trim().toUpperCase()] = ans.answerValue;
+                historyMap[`question_${ans.questionId}`] = ans.answerValue;
+              });
+              // We'll pass historyMap down to normalizeInitialAnswers later by supplying in historyRes.data
+              historyRes.data = historyMap;
+            }
+            if (latest.notes) setNotes(latest.notes);
+          } catch (e) {
+            console.error("Failed parse previous submission", e);
+          }
+        }
+
         // GỌI HÀM WRAPPER ĐỂ KÍCH HOẠT AUTO-SAVE
         await startOrResumeSession(formRes, patientRes, historyRes.data);
         setError(null);
@@ -224,25 +254,71 @@ const calculateAge = (dob) => {
   };
 
   const handleSubmit = async () => {
+    // client-side sanity check
+    if (!sessionId) {
+      alert("Không có session đánh giá, vui lòng tải lại trang");
+      return;
+    }
+    if (!patientId || !formId) {
+      alert("Không có bệnh nhân hoặc biểu mẫu hợp lệ");
+      return;
+    }
+
     setSubmitting(true);
     try {
+      // 1. collect all visible questions on screen
+      const visibleQs = visibleSections.flatMap(s => s.questions);
+
+      // 2. force save each visible answer regardless of change
+      const saveTasks = visibleQs.map(async (q) => {
+        const val = answers[`question_${q.questionId}`];
+        if (!isEmpty(val)) {
+          const valStr = q.questionType === "MULTIPLE_CHOICE" ? JSON.stringify(val) : String(val);
+          return submitAssessmentAnswer({
+            sessionId,
+            questionId: q.questionId,
+            answerType: q.questionType,
+            answerValue: valStr,
+          });
+        }
+        return null;
+      });
+      await Promise.all(saveTasks);
+
+      // 3. complete the session
       await completeAssessmentSession({ sessionId, notes });
+
+      // 4. submit the final payload for risk calculation
       const payload = {
-        patientId, formId,
+        patientId,
+        formId,
         submissionData: JSON.stringify({
           sessionId,
-          answers: allQuestions.filter(q => !isEmpty(answers[`question_${q.questionId}`])).map(q => ({
-            questionId: q.questionId, questionCode: q.questionCode,
-            answerValue: q.questionType === "MULTIPLE_CHOICE" ? JSON.stringify(answers[`question_${q.questionId}`]) : String(answers[`question_${q.questionId}`])
-          }))
+          answers: visibleQs
+            .filter(q => !isEmpty(answers[`question_${q.questionId}`]))
+            .map(q => ({
+              questionId: q.questionId,
+              questionCode: q.questionCode,
+              answerValue: q.questionType === "MULTIPLE_CHOICE" ? JSON.stringify(answers[`question_${q.questionId}`]) : String(answers[`question_${q.questionId}`])
+            }))
         }),
         notes: notes || ""
       };
-      await api.post("/api/submissions", payload);
+
+      if (existingSubmissionId) {
+        await api.put(`/api/submissions/${existingSubmissionId}`, payload);
+      } else {
+        await api.post("/api/submissions", payload);
+      }
+
       setCompleted(true);
       localStorage.removeItem(buildStorageKey(patientId, formId));
-    } catch (err) { alert("Lỗi khi gửi biểu mẫu"); } 
-    finally { setSubmitting(false); }
+    } catch (err) {
+      console.error("Submit failed detail:", err);
+      alert("Lỗi khi gửi biểu mẫu");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return { form, patient, answers, loading, error, submitting, progress, completed, visibleSections, handleAnswerChange, handleSubmit, notes, setNotes, errors };

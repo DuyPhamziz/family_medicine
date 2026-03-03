@@ -57,6 +57,10 @@ export const DoctorSubmissionResult = () => {
       setExporting(true);
       await exportApi.exportAndDownload({
         submissionId: submissionId,
+        // provide form and patient info so filename can be composed
+        formName: result.formName,
+        patientCode: result.patientCode,
+        patientName: result.patientName,
       });
       showSuccess('Excel report exported successfully');
     } catch (err) {

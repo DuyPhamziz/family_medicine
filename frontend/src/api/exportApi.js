@@ -53,7 +53,23 @@ const exportApi = {
   exportAndDownload: async (params) => {
     const blob = await exportApi.exportPatientReportExcel(params);
     const timestamp = new Date().toISOString().slice(0, 10);
-    const filename = `BenhNhan_KetQua_${timestamp}.xlsx`;
+
+    // Build filename: formName + patientCode + patientName + date
+    const safe = (s) => {
+      if (!s) return '';
+      return String(s)
+        .replace(/[\\/:*?"<>|]/g, '') // remove invalid file chars
+        .trim()
+        .replace(/\s+/g, '_');
+    };
+
+    const parts = [];
+    if (params?.formName) parts.push(safe(params.formName));
+    if (params?.patientCode) parts.push(safe(params.patientCode));
+    if (params?.patientName) parts.push(safe(params.patientName));
+
+    const filenameBase = parts.length > 0 ? parts.join('_') : `BenhNhan_KetQua`;
+    const filename = `${filenameBase}_${timestamp}.xlsx`;
     exportApi.downloadFile(blob, filename);
   },
 

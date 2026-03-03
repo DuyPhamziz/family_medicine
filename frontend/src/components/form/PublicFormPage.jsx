@@ -37,7 +37,26 @@ export const PublicFormPage = () => {
     }
   };
   
+  const [fieldErrors, setFieldErrors] = useState({});
+
   const handleSubmit = async (answers) => {
+    // simple front‑end check for required contact fields
+    const newErrors = {};
+    if (!patientName || patientName.trim() === '') {
+      newErrors.patientName = 'Vui lòng nhập họ tên';
+    }
+    if (!email || email.trim() === '') {
+      newErrors.email = 'Vui lòng nhập email';
+    }
+    if (!phone || phone.trim() === '') {
+      newErrors.phone = 'Vui lòng nhập số điện thoại';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      return;
+    }
+
     try {
       const payload = {
         patientName,
@@ -98,10 +117,14 @@ export const PublicFormPage = () => {
               type="text"
               id="patientName"
               value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
+              onChange={(e) => {
+                setPatientName(e.target.value);
+                setFieldErrors(prev => ({ ...prev, patientName: null }));
+              }}
               placeholder="Nguyễn Văn A"
               className="form-input"
             />
+            {fieldErrors.patientName && <p className="error-message">{fieldErrors.patientName}</p>}
           </div>
 
           <div className="form-group">
@@ -110,10 +133,14 @@ export const PublicFormPage = () => {
               type="email"
               id="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setFieldErrors(prev => ({ ...prev, email: null }));
+              }}
               placeholder="your@email.com"
               className="form-input"
             />
+            {fieldErrors.email && <p className="error-message">{fieldErrors.email}</p>}
           </div>
 
           <div className="form-group">
@@ -122,10 +149,14 @@ export const PublicFormPage = () => {
               type="tel"
               id="phone"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                setFieldErrors(prev => ({ ...prev, phone: null }));
+              }}
               placeholder="+84..."
               className="form-input"
             />
+            {fieldErrors.phone && <p className="error-message">{fieldErrors.phone}</p>}
           </div>
         </div>
         

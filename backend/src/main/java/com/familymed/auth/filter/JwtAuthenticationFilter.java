@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            logger.debug("No Authorization header or invalid format for: " + request.getRequestURI());
+            logger.trace("No Authorization header or invalid format for: " + request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
@@ -79,13 +79,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                logger.info("✓ Authentication set for user: " + username + " with authority: " + authority);
+                logger.debug("Authentication set for user: " + username + " with authority: " + authority);
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             logger.warn("JWT token expired: " + e.getMessage());
             // Token hết hạn, không set authentication
         } catch (io.jsonwebtoken.security.SignatureException | io.jsonwebtoken.MalformedJwtException e) {
-            logger.error("Invalid JWT token: " + e.getMessage());
+            logger.warn("Invalid JWT token: " + e.getMessage());
             // Token không hợp lệ, không set authentication
         } catch (Exception e) {
             logger.error("Cannot set user authentication: " + e.getMessage(), e);

@@ -42,7 +42,7 @@ public class Icd10DataInitializer implements CommandLineRunner {
 
         Resource resource = resourceLoader.getResource("classpath:icd10_codes.csv");
         if (!resource.exists()) {
-            logger.warn("ICD10_INIT skipped, icd10_codes.csv not found on classpath");
+            logger.info("ICD10_INIT skipped, icd10_codes.csv not found on classpath");
             return;
         }
 

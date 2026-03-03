@@ -10,7 +10,7 @@ import lombok.Setter;
 import java.util.UUID;
 
 @Entity
-@Table(name = "form_question_options")
+@Table(name = "question_bank_options")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,8 +22,8 @@ public class QuestionBankOption extends BaseEntity {
     @Column(name = "option_id", columnDefinition = "UUID")
     private UUID optionId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "question_id", nullable = false, foreignKey = @ForeignKey(name = "fk_question_bank_options_question_bank"))
     private QuestionBank questionBank;
 
     @Column(nullable = false)

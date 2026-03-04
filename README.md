@@ -108,17 +108,41 @@ Production-ready monorepo with Spring Boot backend and Vite/React frontend.
 3. Open:
    - `http://localhost:5173`
 
-## Production Deployment (Docker)
+## Production Deployment
 
-1. Copy `.env.example` to `.env` and set secrets:
-   - `JWT_SECRET`
-   - DB credentials
-2. Build and start:
-   - `docker compose up -d --build`
-3. Services:
-   - Frontend: `http://localhost:5173`
-   - Backend: `http://localhost:8081`
-   - DB: `localhost:5432`
+For detailed deployment instructions, see **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
+### Quick Deploy with Docker Compose
+
+1. Copy `.env.example` to `.env` and configure:
+   ```bash
+   cp .env.example .env
+   # Edit .env with production values
+   ```
+
+2. Build and start all services:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+3. For production with external database:
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+4. Services:
+   - Frontend: `http://localhost`
+   - Backend: `http://localhost:8080`
+   - Database: `localhost:5432` (development only)
+
+### Platform Deployments
+
+- **Railway**: Auto-deploy from GitHub, set env vars
+- **Vercel** (Frontend): Connect repo, configure build
+- **AWS**: Use ECS or Elastic Beanstalk
+- **Heroku**: Standard deployment with buildpacks
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for step-by-step guides.
 
 ## Health Checks
 - Backend liveness: `/actuator/health/liveness`
@@ -128,10 +152,56 @@ Production-ready monorepo with Spring Boot backend and Vite/React frontend.
 ## Logging
 - Console and rolling file logs in `backend/logs`
 - Configure log level via `logback-spring.xml`
+- Production: JSON logging with max 10MB per file
 
 ## Monitoring Readiness
 - Actuator endpoints enabled: `health`, `info`, `metrics`
 - Extend to Prometheus/Grafana by adding actuator `prometheus` if needed
 
 ## Environment Variables
-See `.env.example` for required keys.
+See `.env.example` for all required configuration keys.
+
+## 🔧 Recent Improvements
+
+### Deployment Ready ✅
+- Production configuration files added
+- Docker Compose for both dev and prod
+- GitHub Actions CI/CD pipeline
+- Comprehensive deployment documentation
+
+### Bug Fixes ✅
+- Fixed Git merge conflicts in application.properties
+- Resolved AnalyticsRepository JPA entity issue
+- Cleaned up unused imports and code
+- Backend now starts successfully
+
+### Security ✅
+- Environment-based configuration
+- Secure cookie settings for production
+- CORS properly configured
+- JWT secrets externalized
+
+## 📞 Support & Troubleshooting
+
+### Quick Fixes
+
+**Backend won't start?**
+- Check database connection
+- Verify environment variables
+- Review logs: `docker-compose logs backend`
+
+**Frontend can't connect?**
+- Verify VITE_API_BASE_URL
+- Check CORS settings
+- Inspect browser console
+
+**Docker issues?**
+- Ensure Docker Desktop is running
+- Check port conflicts (80, 8080, 5432)
+- Try: `docker-compose down && docker-compose up -d`
+
+For more help, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+---
+
+**Status**: ✅ Production Ready | Last Updated: March 2026

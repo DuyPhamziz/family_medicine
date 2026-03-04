@@ -13,6 +13,70 @@ export const useConditionalLogic = () => {
    * @param {Object} answers - Current form answers {questionCode: value}
    * @returns {Object} Conditional state for each question {questionId: {visible, required, disabled}}
    */
+  // helper to normalize displayCondition JSON (used by public forms)
+  const getConditionsForQuestion = (question) => {
+    // new style already has "conditions" array that we can use directly
+    if (question.conditions) return question.conditions;
+
+    // legacy / common field coming from backend
+    if (question.displayCondition) {
+      try {
+        const parsed = JSON.parse(question.displayCondition);
+        const arr = Array.isArray(parsed) ? parsed : [parsed];
+        return arr.map(rule => ({
+          type: (rule.conditionType || rule.type || 'SHOW').toString(),
+          rules: convertDisplayRule(rule)
+        }));
+      } catch (e) {
+        // invalid JSON; just ignore
+        return null;
+      }
+    }
+
+    return null;
+  };
+
+  // convert a single rule from displayCondition into the internal "rules" format
+  const convertDisplayRule = (rule) => {
+    // If rule already appears to be in "internal" format (has AND/OR/NOT), just return it
+    if (rule && (rule.AND || rule.OR || rule.NOT)) {
+      return rule;
+    }
+
+    // Simple condition case: has questionCode/operator/value but no nested conditions
+    if (rule && rule.questionCode && rule.operator !== undefined) {
+      return {
+        questionCode: rule.questionCode,
+        operator: rule.operator,
+        value: rule.value
+      };
+    }
+
+    // Otherwise rule may contain an array called `conditions` and optional `operators` for AND/OR
+    const list = [];
+    if (rule && rule.conditions) {
+      const conds = Array.isArray(rule.conditions) ? rule.conditions : [rule.conditions];
+      conds.forEach(c => {
+        list.push({
+          questionCode: c.questionCode || c.targetQuestion || c.questionId,
+          operator: c.operator,
+          value: c.value
+        });
+      });
+    }
+
+    if (list.length === 1) {
+      return list[0];
+    }
+
+    const op = (rule.operators || '').toString().toUpperCase();
+    if (op === 'OR') {
+      return { OR: list };
+    }
+    // default to AND (empty list allowed)
+    return { AND: list };
+  };
+
   const evaluateConditions = useCallback((formSchema, answers) => {
     const conditionalState = {};
     
@@ -31,76 +95,32 @@ export const useConditionalLogic = () => {
       });
     });
     
-    // Evaluate each question's conditions
+    // Evaluate each question's conditions and aggregate results
     formSchema.sections.forEach(section => {
       section.questions?.forEach(question => {
-        const questionKey = question.questionId || question.questionCode;
-        const state = conditionalState[questionKey];
+        if (!question.conditions) return;
         
-        // Handle legacy conditions format
-        if (question.conditions) {
-          question.conditions.forEach(condition => {
-            const conditionMet = evaluateRule(condition.rules, answers);
-            
-            switch (condition.type.toUpperCase()) {
-              case 'SHOW':
-                state.visible = conditionMet;
-                break;
-              case 'HIDE':
-                state.visible = !conditionMet;
-                break;
-              case 'REQUIRE':
-                state.required = conditionMet;
-                break;
-              case 'DISABLE':
-                state.disabled = conditionMet;
-                break;
-              default:
-                break;
-            }
-          });
-        }
-        
-        // Handle new displayCondition format (array of rules)
-        if (question.displayCondition) {
-          try {
-            let rules = question.displayCondition;
-            
-            // Parse if it's a JSON string
-            if (typeof rules === 'string') {
-              rules = JSON.parse(rules);
-            }
-            
-            console.log('[useConditionalLogic] Processing displayCondition:', {
-              questionCode: question.questionCode,
-              questionText: question.questionText,
-              rules,
-              answers
-            });
-            
-            // If rules exist, question is visible only when ALL rules are true (AND logic)
-            if (Array.isArray(rules) && rules.length > 0) {
-              const allRulesMet = rules.every(rule => {
-                const result = evaluateRule(rule, answers);
-                console.log('[useConditionalLogic] Rule evaluation:', {
-                  rule,
-                  result,
-                  answers
-                });
-                return result;
-              });
-              state.visible = allRulesMet;
-              console.log('[useConditionalLogic] All rules met?', allRulesMet);
-            }
-            // If no rules, question is always visible
-            else {
-              state.visible = true;
-            }
-          } catch (e) {
-            console.warn("Could not parse displayCondition:", e);
-            state.visible = true;
+        question.conditions.forEach(condition => {
+          const conditionMet = evaluateRule(condition.rules, answers);
+          const state = conditionalState[question.questionId];
+          
+          switch (condition.type.toUpperCase()) {
+            case 'SHOW':
+              state.visible = conditionMet;
+              break;
+            case 'HIDE':
+              state.visible = !conditionMet;
+              break;
+            case 'REQUIRE':
+              state.required = conditionMet;
+              break;
+            case 'DISABLE':
+              state.disabled = conditionMet;
+              break;
+            default:
+              break;
           }
-        }
+        });
       });
     });
     
@@ -143,10 +163,7 @@ export const useConditionalLogic = () => {
       return operator === 'empty' || operator === 'notEquals' || operator === 'not_equals';
     }
     
-    // Normalize operator to handle both camelCase and snake_case
-    const normalizedOp = operator?.toLowerCase().replace(/_/g, '');
-    
-    switch (normalizedOp) {
+    switch (operator?.toLowerCase()) {
       case 'equals':
         return String(actual) === String(expected);
       case 'notequals':
@@ -157,10 +174,6 @@ export const useConditionalLogic = () => {
         return Number(actual) > Number(expected);
       case 'lessthan':
         return Number(actual) < Number(expected);
-      case 'greaterthanorequal':
-        return Number(actual) >= Number(expected);
-      case 'lessthanorequal':
-        return Number(actual) <= Number(expected);
       case 'in':
         return Array.isArray(expected) && expected.some(v => String(v) === String(actual));
       default:

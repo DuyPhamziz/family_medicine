@@ -34,25 +34,59 @@ const FormsPage = () => {
       openMessage("Thiếu thông tin", "Vui lòng chọn biểu mẫu và bệnh nhân.");
       return;
     }
+    const formObj = forms.find(f => f.formId === selectedForm || f._id === selectedForm || f.id === selectedForm) || {};
+    if (!formObj.version || formObj.version <= 0) {
+      openMessage("Biểu mẫu chưa sẵn sàng", "Biểu mẫu này chưa có phiên bản để nhập liệu, hãy tạo hoặc xuất bản phiên bản trước.");
+      return;
+    }
 
     navigate(`/system/diagnostic-form/${selectedPatient}/${selectedForm}`);
   };
+
+  // helper to find selected form object
+  const selectedFormObj = forms.find(f => f.formId === selectedForm || f._id === selectedForm || f.id === selectedForm) || {};
+  const canStart = !!selectedForm && !!selectedPatient && (selectedFormObj.version > 0);
 
   const handleExportForm = () => {
     if (!selectedForm) {
       openMessage("Thiếu thông tin", "Vui lòng chọn biểu mẫu để xuất Excel.");
       return;
     }
+    if (!selectedPatient) {
+      openMessage("Thiếu thông tin", "Vui lòng chọn bệnh nhân để giới hạn kết quả export.");
+      return;
+    }
     const exportExcel = async () => {
       try {
+        const formObj = forms.find(f => f.id === selectedForm || f._id === selectedForm || f.formId === selectedForm) || {};
+        const patientObj = patients.find(p => p.id === selectedPatient || p._id === selectedPatient || p.patientId === selectedPatient) || {};
+
         const response = await api.get(
-          `/api/assessments/export/excel?formId=${selectedForm}`,
+          `/api/assessments/export/excel?formId=${selectedForm}` +
+            `${selectedPatient ? `&patientId=${selectedPatient}` : ''}` +
+            `${patientObj.patientCode ? `&patientCode=${patientObj.patientCode}` : ''}`,
           { responseType: "blob" },
         );
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", `assessment_${selectedForm}.xlsx`);
+
+        // Build safe filename: formName + patientCode + patientName + date
+        const safe = (s) => {
+          if (!s) return '';
+          return String(s).replace(/[\\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_');
+        };
+        const timestamp = new Date().toISOString().slice(0, 10);
+        const parts = [];
+        // Always prefer `formName` field from the form object
+        if (formObj.formName) parts.push(safe(formObj.formName));
+        else parts.push(safe(selectedForm));
+        if (patientObj.code || patientObj.patientCode) parts.push(safe(patientObj.code || patientObj.patientCode));
+        if (patientObj.name || patientObj.fullName) parts.push(safe(patientObj.name || patientObj.fullName));
+        // fallback when form object not found
+        if (parts.length === 0) parts.push(safe(`assessment_${selectedForm}`));
+        const filename = `${parts.join('_')}_${timestamp}.xlsx`;
+        link.setAttribute("download", filename);
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -119,10 +153,15 @@ const FormsPage = () => {
 
       <StartAssessmentButton
         onStart={handleStartForm}
-        disabled={!selectedForm || !selectedPatient}
+        disabled={!canStart}
       />
 
-      <RecentResultsTable selectedPatientId={selectedPatient} />
+      <RecentResultsTable 
+        selectedPatientId={selectedPatient}
+        selectedPatientCode={
+          patients.find(p => p.patientId === selectedPatient)?.patientCode || ''
+        }
+      />
 
       <MessageDialog
         open={messageDialog.open}

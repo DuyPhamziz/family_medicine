@@ -74,7 +74,26 @@ export const PublicFormPage = () => {
     }
   };
   
+  const [fieldErrors, setFieldErrors] = useState({});
+
   const handleSubmit = async (answers) => {
+    // simple front‑end check for required contact fields
+    const newErrors = {};
+    if (!patientName || patientName.trim() === '') {
+      newErrors.patientName = 'Vui lòng nhập họ tên';
+    }
+    if (!email || email.trim() === '') {
+      newErrors.email = 'Vui lòng nhập email';
+    }
+    if (!phone || phone.trim() === '') {
+      newErrors.phone = 'Vui lòng nhập số điện thoại';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      return;
+    }
+
     try {
       const payload = {
         patientName,
@@ -396,27 +415,36 @@ export const PublicFormPage = () => {
                   type="text"
                   id="patientName"
                   value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
+                  onChange={(e) => {
+                    setPatientName(e.target.value);
+                    setFieldErrors(prev => ({ ...prev, patientName: null }));
+                  }}
                   placeholder="Nguyễn Văn A"
                   required
                   className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base placeholder-gray-400"
                 />
+                {fieldErrors.patientName && <p className="text-red-500 text-sm mt-1">{fieldErrors.patientName}</p>}
               </div>
 
               {/* Email Input */}
               <div className="space-y-2">
                 <label htmlFor="email" className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                   <Mail className="w-4 h-4 text-blue-500" />
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
                   id="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setFieldErrors(prev => ({ ...prev, email: null }));
+                  }}
                   placeholder="your@email.com"
+                  required
                   className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base placeholder-gray-400"
                 />
+                {fieldErrors.email && <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>}
               </div>
 
               {/* Phone Input */}
@@ -429,11 +457,15 @@ export const PublicFormPage = () => {
                   type="tel"
                   id="phone"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    setFieldErrors(prev => ({ ...prev, phone: null }));
+                  }}
                   placeholder="0912345678"
                   required
                   className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base placeholder-gray-400"
                 />
+                {fieldErrors.phone && <p className="text-red-500 text-sm mt-1">{fieldErrors.phone}</p>}
               </div>
             </div>
           </div>

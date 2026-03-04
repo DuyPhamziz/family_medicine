@@ -194,12 +194,12 @@ public class AssessmentService {
     }
 
     @Transactional(readOnly = true)
-    public void exportToExcel(UUID formId, OutputStream outputStream) throws IOException {
-        assessmentExportService.exportFormsToExcel(List.of(formId), outputStream);
+    public void exportToExcel(UUID formId, UUID patientId, OutputStream outputStream) throws IOException {
+        assessmentExportService.exportFormsToExcel(List.of(formId), outputStream, patientId);
     }
 
     @Transactional(readOnly = true)
-    public void exportFormsToExcel(List<UUID> formIds, OutputStream outputStream) throws IOException {
-        assessmentExportService.exportFormsToExcel(formIds, outputStream);
+    public void exportFormsToExcel(List<UUID> formIds, UUID patientId, OutputStream outputStream) throws IOException {
+        assessmentExportService.exportFormsToExcel(formIds, outputStream, patientId);
     }
 }

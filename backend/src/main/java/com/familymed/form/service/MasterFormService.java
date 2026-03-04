@@ -7,7 +7,6 @@ import com.familymed.form.entity.FormQuestionOption;
 import com.familymed.form.entity.FormSection;
 import com.familymed.form.entity.QuestionCondition;
 import com.familymed.form.repository.DiagnosticFormRepository;
-import com.familymed.form.repository.FormSectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +28,6 @@ public class MasterFormService {
     public static final String MASTER_FORM_DESCRIPTION = "Form khám tổng hợp đầy đủ";
 
     private final DiagnosticFormRepository diagnosticFormRepository;
-    private final FormSectionRepository formSectionRepository;
 
     @Transactional(readOnly = true)
     public Optional<DiagnosticFormDTO> getMasterForm() {

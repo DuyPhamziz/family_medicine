@@ -125,48 +125,40 @@ public class DynamicExcelExportService {
             HospitalTemplate template
     ) {
         Sheet sheet = workbook.createSheet("THONG_TIN_BENH_NHAN");
-        sheet.setColumnWidth(0, 8000);
-        sheet.setColumnWidth(1, 15000);
+        sheet.setColumnWidth(0, 6000);
+        sheet.setColumnWidth(1, 18000);
 
         int rowIndex = 0;
 
-        // Header: Tên bệnh viện
+        // Hospital header
         Row hospitalRow = sheet.createRow(rowIndex++);
         Cell hospitalCell = hospitalRow.createCell(0);
         String hospitalName = template != null && template.getHospitalName() != null 
                 ? template.getHospitalName() : "BỆNH VIỆN ĐA KHOA";
         hospitalCell.setCellValue(hospitalName);
-        CellStyle hospitalStyle = workbook.createCellStyle();
-        Font hospitalFont = workbook.createFont();
-        hospitalFont.setBold(true);
-        hospitalFont.setFontHeightInPoints((short) 16);
-        hospitalStyle.setFont(hospitalFont);
-        hospitalStyle.setAlignment(HorizontalAlignment.CENTER);
+        CellStyle hospitalStyle = createHospitalHeaderStyle(workbook);
         hospitalCell.setCellStyle(hospitalStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 1));
+        sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 1));
 
-        rowIndex++; // Empty row
+        rowIndex++; // Space
 
         // Title
         Row titleRow = sheet.createRow(rowIndex++);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("THÔNG TIN BỆNH NHÂN");
-        CellStyle titleStyle = workbook.createCellStyle();
-        Font titleFont = workbook.createFont();
-        titleFont.setBold(true);
-        titleFont.setFontHeightInPoints((short) 14);
-        titleStyle.setFont(titleFont);
-        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+        titleCell.setCellValue("THÔNG TIN BỆNH NHÂN - " + (form.getFormName() != null ? form.getFormName() : "BIỂU MẪU"));
+        CellStyle titleStyle = createTitleStyleEnhanced(workbook);
         titleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 1));
 
-        rowIndex++; // Empty row
+        rowIndex++; // Space
+        rowIndex++; // Space
 
-        // Data rows - THÔNG TIN BỆNH NHÂN
+        // Patient information
+        addSectionHeader(sheet, workbook, rowIndex++, "THÔNG TIN BỆNH NHÂN");
+        
         String patientName = submission.getPatientName() != null ? submission.getPatientName() : "-";
         addInfoRow(sheet, workbook, rowIndex++, "Họ tên:", patientName);
         
-        // Tính tuổi nếu có DOB từ Patient object
         String ageInfo = "-";
         if (submission.getPatient() != null && submission.getPatient().getDateOfBirth() != null) {
             try {
@@ -179,7 +171,6 @@ public class DynamicExcelExportService {
         }
         addInfoRow(sheet, workbook, rowIndex++, "Ngày sinh:", ageInfo);
         
-        // Giới tính
         String gender = "-";
         if (submission.getPatient() != null && submission.getPatient().getGender() != null) {
             try {
@@ -190,29 +181,26 @@ public class DynamicExcelExportService {
         }
         addInfoRow(sheet, workbook, rowIndex++, "Giới tính:", gender);
         
-        // Số điện thoại
         String phone = submission.getPhone() != null ? submission.getPhone() : "-";
         addInfoRow(sheet, workbook, rowIndex++, "Số điện thoại:", phone);
         
-        // Email
         String email = submission.getEmail() != null ? submission.getEmail() : "-";
         addInfoRow(sheet, workbook, rowIndex++, "Email:", email);
         
-        rowIndex++; // Empty row
+        rowIndex++; // Space
+
+        // Form information
+        addSectionHeader(sheet, workbook, rowIndex++, "THÔNG TIN BIỂU MẪU");
         
-        // THÔNG TIN FORM
-        addInfoRow(sheet, workbook, rowIndex++, "Loại form:", form.getFormName());
+        addInfoRow(sheet, workbook, rowIndex++, "Loại biểu mẫu:", form.getFormName() != null ? form.getFormName() : "-");
         
-        // Ngày nhập liệu
         String submissionDate = submission.getCreatedAt() != null 
-                ? submission.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                ? submission.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
                 : "-";
         addInfoRow(sheet, workbook, rowIndex++, "Ngày nhập liệu:", submissionDate);
         
-        // Mã form submission
         addInfoRow(sheet, workbook, rowIndex++, "Mã submission:", submission.getSubmissionId().toString());
         
-        // Trạng thái
         String status = submission.getStatus() != null ? submission.getStatus().toString() : "-";
         addInfoRow(sheet, workbook, rowIndex++, "Trạng thái:", status);
     }
@@ -244,31 +232,21 @@ public class DynamicExcelExportService {
         String hospitalName = template != null && template.getHospitalName() != null 
                 ? template.getHospitalName() : "BỆNH VIỆN ĐA KHOA";
         hospitalCell.setCellValue(hospitalName);
-        CellStyle hospitalStyle = workbook.createCellStyle();
-        Font hospitalFont = workbook.createFont();
-        hospitalFont.setBold(true);
-        hospitalFont.setFontHeightInPoints((short) 16);
-        hospitalStyle.setFont(hospitalFont);
-        hospitalStyle.setAlignment(HorizontalAlignment.CENTER);
+        CellStyle hospitalStyle = createHospitalHeaderStyle(workbook);
         hospitalCell.setCellStyle(hospitalStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
+        sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 4));
 
-        rowIndex++; // Empty row
+        rowIndex++; // Space
 
         // Title
         Row titleRow = sheet.createRow(rowIndex++);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("KẾT QUẢ KHÁM");
-        CellStyle titleStyle = workbook.createCellStyle();
-        Font titleFont = workbook.createFont();
-        titleFont.setBold(true);
-        titleFont.setFontHeightInPoints((short) 14);
-        titleStyle.setFont(titleFont);
-        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+        titleCell.setCellValue("KẾT QUẢ KHÁM - CHI TIẾT CÁC HẠNG MỤC");
+        CellStyle titleStyle = createTitleStyleEnhanced(workbook);
         titleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 4));
 
-        rowIndex++; // Empty row
+        rowIndex++; // Space
 
         // Table header
         Row headerRow = sheet.createRow(rowIndex++);
@@ -341,64 +319,63 @@ public class DynamicExcelExportService {
             Map<String, String> answerMap
     ) {
         Sheet sheet = workbook.createSheet("DANH_GIA_SO_BO");
-        sheet.setColumnWidth(0, 15000);
-        sheet.setColumnWidth(1, 15000);
+        sheet.setColumnWidth(0, 6000);
+        sheet.setColumnWidth(1, 18000);
 
         int rowIndex = 0;
+
+        // Hospital header
+        Row hospitalRow = sheet.createRow(rowIndex++);
+        Cell hospitalCell = hospitalRow.createCell(0);
+        hospitalCell.setCellValue("BỆNH VIỆN ĐA KHOA");
+        CellStyle hospitalStyle = createHospitalHeaderStyle(workbook);
+        hospitalCell.setCellStyle(hospitalStyle);
+        sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 1));
+
+        rowIndex++; // Space
 
         // Title
         Row titleRow = sheet.createRow(rowIndex++);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("ĐÁNH GIÁ SƠ BỘ");
-        CellStyle titleStyle = workbook.createCellStyle();
-        Font titleFont = workbook.createFont();
-        titleFont.setBold(true);
-        titleFont.setFontHeightInPoints((short) 14);
-        titleStyle.setFont(titleFont);
-        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+        titleCell.setCellValue("ĐÁNH GIÁ SƠ BỘ - KẾT QUẢ PHÂN TÍCH");
+        CellStyle titleStyle = createTitleStyleEnhanced(workbook);
         titleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 1));
+        sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 1));
 
-        rowIndex++; // Empty row
+        rowIndex++; // Space
+        rowIndex++; // Space
 
-        // Tổng điểm
+        // Summary section
+        addSectionHeader(sheet, workbook, rowIndex++, "KẾT QUẢ ĐÁNH GIÁ");
+
         String totalScoreStr = submission.getTotalScore() != null 
                 ? String.format("%.2f", submission.getTotalScore())
                 : "Không có dữ liệu";
         addInfoRow(sheet, workbook, rowIndex++, "Tổng điểm:", totalScoreStr);
 
-        // Mức nguy cơ
         String riskLevel = submission.getRiskLevel() != null ? submission.getRiskLevel() : "Không xác định";
         addInfoRow(sheet, workbook, rowIndex++, "Mức nguy cơ:", riskLevel);
 
-        rowIndex++; // Empty row
+        rowIndex++; // Space
 
-        // Gợi ý đánh giá tự động dựa vào kết quả
-        Row suggestionHeaderRow = sheet.createRow(rowIndex++);
-        Cell suggestionHeaderCell = suggestionHeaderRow.createCell(0);
-        suggestionHeaderCell.setCellValue("GỢI Ý ĐÁNH GIÁ:");
-        CellStyle boldStyle = workbook.createCellStyle();
-        Font boldFont = workbook.createFont();
-        boldFont.setBold(true);
-        boldStyle.setFont(boldFont);
-        suggestionHeaderCell.setCellStyle(boldStyle);
-        sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 1));
+        // Suggestions section
+        addSectionHeader(sheet, workbook, rowIndex++, "GỢI Ý ĐÁNH GIÁ TỰ ĐỘNG");
 
         // Auto-generate suggestions based on answers
         List<String> suggestions = generateAutoSuggestions(questions, answerMap);
         if (!suggestions.isEmpty()) {
             for (String suggestion : suggestions) {
                 Row suggestionRow = sheet.createRow(rowIndex++);
-                Cell suggestionCell = suggestionRow.createCell(0);
+                Cell suggestionCell = suggestionRow.createCell(1);
                 suggestionCell.setCellValue("• " + suggestion);
                 CellStyle wrapStyle = workbook.createCellStyle();
                 wrapStyle.setWrapText(true);
+                wrapStyle.setVerticalAlignment(VerticalAlignment.TOP);
                 suggestionCell.setCellStyle(wrapStyle);
-                sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 1));
             }
         } else {
             Row noSuggestionRow = sheet.createRow(rowIndex++);
-            Cell noSuggestionCell = noSuggestionRow.createCell(0);
+            Cell noSuggestionCell = noSuggestionRow.createCell(1);
             noSuggestionCell.setCellValue("Chưa có đánh giá tự động. Vui lòng tham khảo ý kiến bác sĩ.");
             sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 1));
         }
@@ -482,15 +459,13 @@ public class DynamicExcelExportService {
     }
 
     /**
-     * Helper: Add info row (label + value)
+     * Helper: Add info row (label + value) with styling
      */
     private void addInfoRow(Sheet sheet, Workbook workbook, int rowIndex, String label, String value) {
         Row row = sheet.createRow(rowIndex);
         
-        CellStyle labelStyle = workbook.createCellStyle();
-        Font labelFont = workbook.createFont();
-        labelFont.setBold(true);
-        labelStyle.setFont(labelFont);
+        CellStyle labelStyle = createLabelStyleEnhanced(workbook);
+        CellStyle dataStyle = createDataStyleEnhanced(workbook);
         
         Cell labelCell = row.createCell(0);
         labelCell.setCellValue(label);
@@ -498,6 +473,29 @@ public class DynamicExcelExportService {
         
         Cell valueCell = row.createCell(1);
         valueCell.setCellValue(value);
+        valueCell.setCellStyle(dataStyle);
+    }
+
+    /**
+     * Add section header row
+     */
+    private void addSectionHeader(Sheet sheet, Workbook workbook, int rowIndex, String sectionName) {
+        Row row = sheet.createRow(rowIndex);
+        Cell cell = row.createCell(0);
+        cell.setCellValue(sectionName);
+        Cell borderCell = row.createCell(1);
+        
+        CellStyle sectionStyle = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short)11);
+        sectionStyle.setFont(font);
+        sectionStyle.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
+        sectionStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        sectionStyle.setBorderBottom(BorderStyle.MEDIUM);
+        
+        cell.setCellStyle(sectionStyle);
+        borderCell.setCellStyle(sectionStyle);
     }
 
     /**
@@ -513,8 +511,11 @@ public class DynamicExcelExportService {
         style.setFont(font);
         
         // Background
-        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        
+        // Font color
+        font.setColor(IndexedColors.WHITE.getIndex());
         
         // Border
         style.setBorderTop(BorderStyle.THIN);
@@ -530,7 +531,7 @@ public class DynamicExcelExportService {
     }
 
     /**
-     * Create data cell style
+     * Create data cell style with borders
      */
     private CellStyle createDataStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
@@ -543,7 +544,71 @@ public class DynamicExcelExportService {
         
         // Alignment
         style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(true);
         
+        return style;
+    }
+
+    /**
+     * Enhanced label style with yellow background
+     */
+    private CellStyle createLabelStyleEnhanced(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short)11);
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        return style;
+    }
+
+    /**
+     * Enhanced data style with borders and wrap
+     */
+    private CellStyle createDataStyleEnhanced(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(true);
+        return style;
+    }
+
+    /**
+     * Create hospital header style
+     */
+    private CellStyle createHospitalHeaderStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short)14);
+        font.setColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
+    }
+
+    /**
+     * Create title style with grey background
+     */
+    private CellStyle createTitleStyleEnhanced(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short)12);
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
         return style;
     }
 

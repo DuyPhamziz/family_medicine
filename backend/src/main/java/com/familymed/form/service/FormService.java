@@ -35,7 +35,6 @@ public class FormService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
-    private final RiskCalculationService riskCalculationService;
     private final AssessmentAnswerRepository answerRepository;
     private final ConditionalLogicService conditionalLogicService;
  
@@ -56,11 +55,11 @@ public class FormService {
     public List<DiagnosticFormDTO> getAllActiveForms() {
         List<DiagnosticForm> forms = formRepository.findAll();
         return forms.stream()
-                .filter(form -> form.getStatus() == DiagnosticForm.FormStatus.ACTIVE
-                        || form.getStatus() == DiagnosticForm.FormStatus.PUBLISHED)
+                .filter(form -> (form.getStatus() == DiagnosticForm.FormStatus.ACTIVE
+                        || form.getStatus() == DiagnosticForm.FormStatus.PUBLISHED))
                 .map(form -> {
-            return DiagnosticFormDTO.fromForm(form, form.getSections());
-        }).toList();
+                    return DiagnosticFormDTO.fromForm(form, form.getSections());
+                }).toList();
     }
     
     @Transactional
@@ -74,13 +73,26 @@ public class FormService {
         User doctor = userRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
         
-        // Get current published version
-        FormVersion formVersion = formVersionRepository
+        // Get current published version (fallback to any version if not published yet)
+        Optional<FormVersion> publishedOpt = formVersionRepository
             .findFirstByFormFormIdAndStatusOrderByVersionNumberDesc(
                 request.getFormId(),
                 FormVersion.VersionStatus.PUBLISHED
-            )
-                .orElseThrow(() -> new RuntimeException("No published form version found"));
+            );
+        FormVersion formVersion = null;
+        if (publishedOpt.isPresent()) {
+            formVersion = publishedOpt.get();
+        } else {
+            // no published version, try to take the latest version regardless of status
+            Optional<FormVersion> latestOpt = formVersionRepository.findByFormFormIdOrderByVersionNumberDesc(request.getFormId())
+                    .stream().findFirst();
+            if (latestOpt.isPresent()) {
+                formVersion = latestOpt.get();
+                log.warn("No published version found for form {}. Using latest available version.", request.getFormId());
+            } else {
+                log.warn("No version found for form {}. Submission will be saved without an explicit version.", request.getFormId());
+            }
+        }
         
         // Parse answers
         Map<String, Object> answersMap = new HashMap<>();
@@ -108,23 +120,27 @@ public class FormService {
         
         PatientFormSubmission savedSubmission = submissionRepository.save(submission);
         
-        // ← NEW: Create immutable snapshot of form + answers
-        try {
-            FormSubmissionSnapshot snapshot = new FormSubmissionSnapshot();
-            snapshot.setSnapshotId(UUID.randomUUID());
-            snapshot.setSubmission(savedSubmission);
-            snapshot.setFormVersion(formVersion);
-            
-            Map<String, Object> snapshotData = new HashMap<>();
-            snapshotData.put("formSchema", objectMapper.readValue(formVersion.getFormSchemaJson(), Map.class));
-            snapshotData.put("answers", answersMap);
-            snapshotData.put("conditionalResults", conditionalLogicService.evaluateConditions(form.getFormId(), answersMap));
-            snapshotData.put("submittedAt", LocalDateTime.now());
-            
-            snapshot.setSnapshotJson(objectMapper.writeValueAsString(snapshotData));
-            snapshotRepository.save(snapshot);
-        } catch (Exception e) {
-            log.warn("Could not create submission snapshot", e);
+        // ← NEW: Create immutable snapshot of form + answers (only if formVersion exists)
+        if (formVersion != null) {
+            try {
+                FormSubmissionSnapshot snapshot = new FormSubmissionSnapshot();
+                snapshot.setSnapshotId(UUID.randomUUID());
+                snapshot.setSubmission(savedSubmission);
+                snapshot.setFormVersion(formVersion);
+                
+                Map<String, Object> snapshotData = new HashMap<>();
+                snapshotData.put("formSchema", objectMapper.readValue(formVersion.getFormSchemaJson(), Map.class));
+                snapshotData.put("answers", answersMap);
+                snapshotData.put("conditionalResults", conditionalLogicService.evaluateConditions(form.getFormId(), answersMap));
+                snapshotData.put("submittedAt", LocalDateTime.now());
+                
+                snapshot.setSnapshotJson(objectMapper.writeValueAsString(snapshotData));
+                snapshotRepository.save(snapshot);
+            } catch (Exception e) {
+                log.warn("Could not create submission snapshot", e);
+            }
+        } else {
+            log.info("Skipping snapshot creation because no form version was found for form {}", request.getFormId());
         }
         
         return PatientFormSubmissionDTO.fromSubmission(savedSubmission);
@@ -134,10 +150,61 @@ public class FormService {
         List<PatientFormSubmission> submissions = submissionRepository.findByPatientPatientIdAndDeletedAtIsNull(patientId);
         return submissions.stream().map(PatientFormSubmissionDTO::fromSubmission).toList();
     }
+
+    public List<PatientFormSubmissionDTO> getPatientSubmissionsByCode(String patientCode) {
+        Optional<Patient> patientOpt = patientRepository.findByPatientCode(patientCode);
+        if (patientOpt.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return getPatientSubmissions(patientOpt.get().getPatientId());
+    }
     
     public List<PatientFormSubmissionDTO> getDoctorSubmissions(UUID doctorId) {
         List<PatientFormSubmission> submissions = submissionRepository.findByDoctorUserIdAndDeletedAtIsNull(doctorId);
         return submissions.stream().map(PatientFormSubmissionDTO::fromSubmission).toList();
+    }
+
+    @Transactional
+    public PatientFormSubmissionDTO updateSubmission(UUID submissionId, SubmitFormRequest request, UUID doctorId) {
+        PatientFormSubmission existing = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new RuntimeException("Submission not found"));
+
+        Patient patient = patientRepository.findById(request.getPatientId())
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
+        DiagnosticForm form = formRepository.findById(request.getFormId())
+                .orElseThrow(() -> new RuntimeException("Form not found"));
+        User doctor = userRepository.findById(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        existing.setPatient(patient);
+        existing.setForm(form);
+        existing.setDoctor(doctor);
+        existing.setSubmissionData(request.getSubmissionData());
+        existing.setNotes(request.getNotes());
+        // recalc results as before
+        Map<String, Object> result = calculateDiagnosticResult(form, request.getSubmissionData());
+        existing.setTotalScore((Double) result.get("totalScore"));
+        existing.setRiskLevel((String) result.get("riskLevel"));
+        existing.setDiagnosticResult((String) result.getOrDefault("diagnosticResult", "{}").toString());
+        existing.setUpdatedAt(LocalDateTime.now());
+
+        PatientFormSubmission saved = submissionRepository.save(existing);
+        // snapshot update: simply overwrite snapshot if exists
+        snapshotRepository.findBySubmissionSubmissionId(submissionId).ifPresent(snap -> {
+            try {
+                Map<String, Object> snapshotData = new HashMap<>();
+                snapshotData.put("formSchema", objectMapper.readValue(existing.getFormVersion().getFormSchemaJson(), Map.class));
+                snapshotData.put("answers", objectMapper.readValue(request.getSubmissionData(), Map.class));
+                snapshotData.put("conditionalResults", conditionalLogicService.evaluateConditions(form.getFormId(), snapshotData));
+                snapshotData.put("submittedAt", LocalDateTime.now());
+                snap.setSnapshotJson(objectMapper.writeValueAsString(snapshotData));
+                snapshotRepository.save(snap);
+            } catch (Exception e) {
+                log.warn("Failed to update snapshot", e);
+            }
+        });
+
+        return PatientFormSubmissionDTO.fromSubmission(saved);
     }
     
     private Map<String, Object> calculateDiagnosticResult(DiagnosticForm form, String submissionDataJson) {

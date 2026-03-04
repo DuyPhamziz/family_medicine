@@ -1,0 +1,22 @@
+# Docker ignore file
+*.md
+.git
+.gitignore
+.env
+.env.local
+node_modules
+npm-debug.log
+*.log
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.cache
+dist
+build
+target
+coverage
+.nyc_output

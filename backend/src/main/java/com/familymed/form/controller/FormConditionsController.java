@@ -1,8 +1,6 @@
 package com.familymed.form.controller;
 
 import com.familymed.form.service.ConditionalLogicEngine;
-import com.familymed.form.entity.FormQuestion;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +17,6 @@ public class FormConditionsController {
     
     @Autowired
     private ConditionalLogicEngine conditionalLogicEngine;
-    
-    @Autowired
-    private ObjectMapper objectMapper;
     
     /**
      * Evaluate các điều kiện và trả về trạng thái hiển thị của các questions
@@ -65,7 +60,6 @@ public class FormConditionsController {
                     
                     if (questionCode != null && displayConditionJson != null) {
                         try {
-                            @SuppressWarnings("unchecked")
                             Map<String, String> stringAnswers = new HashMap<>();
                             answers.forEach((k, v) -> stringAnswers.put(k, v != null ? v.toString() : ""));
                             

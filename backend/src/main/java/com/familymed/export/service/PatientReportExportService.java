@@ -4,7 +4,6 @@ import com.familymed.export.dto.PatientReportExportRequest;
 import com.familymed.export.entity.HospitalTemplate;
 import com.familymed.export.repository.HospitalTemplateRepository;
 import com.familymed.form.entity.PatientFormSubmission;
-import com.familymed.form.entity.SubmissionAnswer;
 import com.familymed.form.repository.FormQuestionRepository;
 import com.familymed.form.repository.PatientFormSubmissionRepository;
 import com.familymed.form.repository.SubmissionAnswerRepository;

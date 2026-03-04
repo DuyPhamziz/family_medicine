@@ -12,7 +12,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -24,7 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
 
@@ -43,7 +41,6 @@ public class ExcelExportService {
     // Color codes (RGB)
     private static final byte[] HEADER_YELLOW = new byte[]{(byte) 255, (byte) 230, (byte) 109}; // Light yellow
     private static final byte[] LIGHT_GRAY = new byte[]{(byte) 240, (byte) 240, (byte) 240};    // Light gray
-    private static final byte[] ACCENT_BLUE = new byte[]{(byte) 79, (byte) 129, (byte) 189};    // Accent blue
     private static final byte[] LIGHT_RESULT = new byte[]{(byte) 255, (byte) 253, (byte) 208}; // Light result yellow
     private static final byte[] RISK_LOW = new byte[]{(byte) 198, (byte) 239, (byte) 206};     // Light green
     private static final byte[] RISK_MEDIUM = new byte[]{(byte) 255, (byte) 242, (byte) 204}; // Light orange

@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from "react";
 import api from "../../service/api";
 
-const RecentResultsTable = ({ selectedPatientId }) => {
+const RecentResultsTable = ({ selectedPatientId, selectedPatientCode }) => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadResults = async () => {
-      if (!selectedPatientId) {
+      if (!selectedPatientId && !selectedPatientCode) {
         setSubmissions([]);
         return;
       }
       setLoading(true);
       try {
-        const response = await api.get(`/api/submissions/patient/${selectedPatientId}`);
+        // choose identifier: prefer UUID, fallback to code
+        let identifier = selectedPatientId || selectedPatientCode;
+        const response = await api.get(`/api/submissions/patient/${identifier}`);
         setSubmissions(response.data || []);
       } catch (err) {
         console.error("Error loading submissions:", err);
@@ -86,14 +88,40 @@ const RecentResultsTable = ({ selectedPatientId }) => {
                   <td className="px-4 py-3">
                     <button
                       type="button"
-                      onClick={() =>
-                        window.open(
-                          `${import.meta.env.VITE_API_BASE_URL}/api/submissions/${
-                            item.submissionId
-                          }/export`,
-                          "_blank"
-                        )
-                      }
+                      onClick={async () => {
+                        try {
+                          const response = await api.get(
+                            `/api/submissions/${item.submissionId}/export`,
+                            { responseType: 'blob' }
+                          );
+
+                          const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                          const url = window.URL.createObjectURL(blob);
+
+                          const safe = (s) => {
+                            if (!s) return '';
+                            return String(s).replace(/[\\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_');
+                          };
+                          const timestamp = new Date().toISOString().slice(0,10);
+                          const parts = [];
+                          if (item?.formName) parts.push(safe(item.formName));
+                          if (item?.patientCode) parts.push(safe(item.patientCode));
+                          if (item?.patientName) parts.push(safe(item.patientName));
+                          if (parts.length === 0) parts.push(safe(`submission_${item.submissionId}`));
+                          const filename = `${parts.join('_')}_${timestamp}.xlsx`;
+
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', filename);
+                          document.body.appendChild(link);
+                          link.click();
+                          link.remove();
+                          window.URL.revokeObjectURL(url);
+                        } catch (err) {
+                          console.error('Download error', err);
+                          alert('Không thể tải file Excel. Vui lòng thử lại.');
+                        }
+                      }}
                       className="text-emerald-600 font-semibold hover:underline"
                     >
                       Tải Excel

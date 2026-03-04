@@ -1,6 +1,5 @@
 package com.familymed.analytics;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,7 +15,7 @@ import java.util.Map;
  * and how medical history and submission data is stored
  */
 @Repository
-public interface AnalyticsRepository extends JpaRepository<Object, Object> {
+public interface AnalyticsRepository {
 
     /**
      * Get disease statistics from medical history data

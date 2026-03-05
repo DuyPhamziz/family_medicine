@@ -54,7 +54,7 @@ public class SecurityConfig {
                     "/form/**"
                 ).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/public/**", "/api/form/public/**", "/api/forms/public", "/form/public/**", "/forms/public", "/api/scoring/**", "/scoring/**").permitAll()
+                        .requestMatchers("/api/public/**", "/api/form/public/**", "/api/forms/public", "/api/forms/*/public", "/form/public/**", "/forms/public", "/api/scoring/**", "/scoring/**").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
                 )

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit2, Trash2, Copy } from "lucide-react";
+import { Plus, Edit2, Trash2 } from "lucide-react";
 import api from "../../../service/api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import AdminSearchBar from "../../../components/admin/AdminSearchBar";
@@ -349,20 +349,20 @@ const AdminFormManagement = () => {
   };
 
   const saveForm = async (payload) => {
-    // Handle custom category
     let finalPayload = { ...payload };
     if (payload.category === 'OTHER' && payload.customCategory) {
       finalPayload.category = payload.customCategory.trim();
     }
-    
-    // Remove customCategory field before sending to backend
+
     delete finalPayload.customCategory;
-    
+
     if (state.editingForm) {
-      await api.put(`/api/forms/admin/${state.editingForm.formId}`, finalPayload);
-      return;
+      const response = await api.put(`/api/forms/admin/${state.editingForm.formId}`, finalPayload);
+      return response.data;
     }
-    await api.post("/api/forms/admin/create", finalPayload);
+
+    const response = await api.post("/api/forms/admin/create", finalPayload);
+    return response.data;
   };
 
   const handleSubmit = async (event) => {
@@ -392,18 +392,35 @@ const AdminFormManagement = () => {
 
     const payload = {
       ...state.formData,
-      status: "PUBLISHED",
       isPublic: true,
     };
 
     try {
-      await saveForm(payload);
-      showSuccess("Đã Publish + Public thành công");
+      const saved = await saveForm(payload);
+      const targetFormId = state.editingForm?.formId || saved?.formId;
+
+      if (!targetFormId) {
+        throw new Error("Không xác định được formId để publish");
+      }
+
+      await api.post(`/api/forms/${targetFormId}/publish`);
+      showSuccess("Đã đồng bộ Doctor Form → Public Form thành công");
       closeForm();
       await loadForms();
     } catch (error) {
       console.error("Error save+publish form:", error);
-      showError("Lỗi khi lưu và publish biểu mẫu");
+      showError(error?.response?.data?.message || "Lỗi khi lưu và publish biểu mẫu");
+    }
+  };
+
+  const handlePublishFromRow = async (formId) => {
+    try {
+      await api.post(`/api/forms/${formId}/publish`);
+      showSuccess("Đã publish phiên bản mới ra Public");
+      await loadForms();
+    } catch (error) {
+      console.error("Error publishing form:", error);
+      showError(error?.response?.data?.message || "Không thể publish form");
     }
   };
 
@@ -485,6 +502,14 @@ const AdminFormManagement = () => {
           onClick={() => dispatch({ type: actions.OPEN_FORM_EDIT, payload: form })}
         >
           <Edit2 className="w-4 h-4" />
+        </Button>
+        <Button
+          size="sm"
+          className="bg-emerald-600 text-white hover:bg-emerald-700"
+          disabled={Boolean(form.isMaster)}
+          onClick={() => handlePublishFromRow(form.formId)}
+        >
+          Publish
         </Button>
         <Button
           size="sm"

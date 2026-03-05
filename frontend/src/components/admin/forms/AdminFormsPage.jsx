@@ -5,20 +5,31 @@ import FormModal from "./FormModal";
 
 const AdminFormsPage = () => {
   const navigate = useNavigate();
-  const { forms, loading, error, reload, saveForm, removeForm, createVersion } = useAdminForms();
+  const { forms, loading, error, reload, saveForm, removeForm, createVersion, publishForm } = useAdminForms();
   const [search, setSearch] = useState("");
   const [activeForm, setActiveForm] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [tab, setTab] = useState("all"); // "all", "draft", "published"
 
   const filteredForms = useMemo(() => {
-    if (!search.trim()) return forms;
+    let filtered = forms;
+    
+    // Filter by status tab
+    if (tab === "draft") {
+      filtered = filtered.filter((form) => form.status === "DRAFT");
+    } else if (tab === "published") {
+      filtered = filtered.filter((form) => form.status === "PUBLISHED");
+    }
+    
+    // Filter by search
+    if (!search.trim()) return filtered;
     const keyword = search.toLowerCase();
-    return forms.filter((form) =>
+    return filtered.filter((form) =>
       [form.formName, form.description, form.category].some((value) =>
         String(value || "").toLowerCase().includes(keyword)
       )
     );
-  }, [forms, search]);
+  }, [forms, search, tab]);
 
   const openCreate = () => {
     setActiveForm(null);
@@ -50,6 +61,12 @@ const AdminFormsPage = () => {
       description: form.description,
       category: form.category,
     });
+    reload();
+  };
+
+  const handlePublish = async (form) => {
+    if (!window.confirm("Publish current draft of this form to public snapshot?")) return;
+    await publishForm(form.formId);
     reload();
   };
 
@@ -87,6 +104,28 @@ const AdminFormsPage = () => {
         </div>
       </header>
 
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b border-slate-200">
+        {[
+          { key: "all", label: "All Forms", icon: "📋" },
+          { key: "draft", label: "Drafts", icon: "◇" },
+          { key: "published", label: "Published", icon: "✓" },
+        ].map((tabItem) => (
+          <button
+            key={tabItem.key}
+            onClick={() => setTab(tabItem.key)}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors border-b-2 ${
+              tab === tabItem.key
+                ? "border-sky-600 text-sky-600"
+                : "border-transparent text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <span>{tabItem.icon}</span>
+            {tabItem.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-md">
           <input
@@ -112,9 +151,15 @@ const AdminFormsPage = () => {
               </span>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span className="rounded-full border border-slate-200 px-3 py-1">Version {form.version || 1}</span>
-              <span className="rounded-full border border-slate-200 px-3 py-1">{form.status || "ACTIVE"}</span>
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+              <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-500">Version {form.version || 1}</span>
+              <span className={`rounded-full px-3 py-1 font-semibold ${
+                form.status === 'PUBLISHED' 
+                  ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' 
+                  : 'bg-orange-50 border border-orange-200 text-orange-700'
+              }`}>
+                {form.status === 'PUBLISHED' ? '✓ Published' : '◇ Draft'}
+              </span>
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
@@ -135,6 +180,16 @@ const AdminFormsPage = () => {
                 className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-sky-200 hover:bg-sky-50"
               >
                 New version
+              </button>
+              <button
+                onClick={() => handlePublish(form)}
+                className={`rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                  form.status === 'PUBLISHED'
+                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    : 'border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
+                }`}
+              >
+                {form.status === 'PUBLISHED' ? 'Publish Update' : 'Publish'}
               </button>
               <button
                 onClick={() => handleDelete(form)}

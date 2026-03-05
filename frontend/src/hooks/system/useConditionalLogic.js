@@ -8,20 +8,70 @@ import { useCallback } from 'react';
 export const useConditionalLogic = () => {
   
   /**
-   * Evaluate conditions for a form
-   * @param {Object} formSchema - The form structure (sections, questions)
-   * @param {Object} answers - Current form answers {questionCode: value}
-   * @returns {Object} Conditional state for each question {questionId: {visible, required, disabled}}
+   * Compare values using operator
    */
+  const compareValues = useCallback((actual, operator, expected) => {
+    if (actual === null || actual === undefined) {
+      return operator === 'empty' || operator === 'notEquals' || operator === 'not_equals';
+    }
+    
+    switch (operator?.toLowerCase()) {
+      case 'equals':
+        return String(actual) === String(expected);
+      case 'notequals':
+        return String(actual) !== String(expected);
+      case 'contains':
+        return String(actual).includes(String(expected));
+      case 'greaterthan':
+        return Number(actual) > Number(expected);
+      case 'lessthan':
+        return Number(actual) < Number(expected);
+      case 'in':
+        return Array.isArray(expected) && expected.some(v => String(v) === String(actual));
+      default:
+        console.warn(`Unknown operator: ${operator}`);
+        return false;
+    }
+  }, []);
+
+  /**
+   * Evaluate a single rule recursively
+   */
+  const evaluateRule = useCallback((rules, answers) => {
+    if (!rules) return true;
+    
+    // Handle AND
+    if (rules.AND) {
+      return rules.AND.every(rule => evaluateRule(rule, answers));
+    }
+    
+    // Handle OR
+    if (rules.OR) {
+      return rules.OR.some(rule => evaluateRule(rule, answers));
+    }
+    
+    // Handle NOT
+    if (rules.NOT) {
+      return !evaluateRule(rules.NOT, answers);
+    }
+    
+    // Simple comparison: {questionCode, operator, value}
+    const { questionCode, operator, value } = rules;
+    const actualValue = answers?.[questionCode];
+    
+    return compareValues(actualValue, operator, value);
+  }, [compareValues]);
+
   // helper to normalize displayCondition JSON (used by public forms)
   const getConditionsForQuestion = (question) => {
     // new style already has "conditions" array that we can use directly
     if (question.conditions) return question.conditions;
 
     // legacy / common field coming from backend
-    if (question.displayCondition) {
+    const rawCondition = question.conditionJson || question.displayCondition;
+    if (rawCondition) {
       try {
-        const parsed = JSON.parse(question.displayCondition);
+        const parsed = JSON.parse(rawCondition);
         const arr = Array.isArray(parsed) ? parsed : [parsed];
         return arr.map(rule => ({
           type: (rule.conditionType || rule.type || 'SHOW').toString(),
@@ -77,15 +127,20 @@ export const useConditionalLogic = () => {
     return { AND: list };
   };
 
+  /**
+   * Evaluate conditions for a form
+   * @param {Object} formSchema - The form structure (sections, questions)
+   * @param {Object} answers - Current form answers {questionCode: value}
+   * @returns {Object} Conditional state for each question {questionId: {visible, required, disabled}}
+   */
   const evaluateConditions = useCallback((formSchema, answers) => {
     const conditionalState = {};
-    
-    if (!formSchema.sections) return conditionalState;
-    
+
+    if (!formSchema?.sections) return conditionalState;
+
     // Initialize all questions as visible and required
     formSchema.sections.forEach(section => {
       section.questions?.forEach(question => {
-        // Use questionId if available, fallback to questionCode for public forms
         const questionKey = question.questionId || question.questionCode;
         conditionalState[questionKey] = {
           visible: true,
@@ -94,17 +149,21 @@ export const useConditionalLogic = () => {
         };
       });
     });
-    
+
     // Evaluate each question's conditions and aggregate results
     formSchema.sections.forEach(section => {
       section.questions?.forEach(question => {
-        if (!question.conditions) return;
-        
-        question.conditions.forEach(condition => {
+        const conditions = getConditionsForQuestion(question);
+        if (!conditions || !Array.isArray(conditions)) return;
+
+        const questionKey = question.questionId || question.questionCode;
+        const state = conditionalState[questionKey];
+        if (!state) return;
+
+        conditions.forEach(condition => {
           const conditionMet = evaluateRule(condition.rules, answers);
-          const state = conditionalState[question.questionId];
-          
-          switch (condition.type.toUpperCase()) {
+
+          switch ((condition.type || 'SHOW').toUpperCase()) {
             case 'SHOW':
               state.visible = conditionMet;
               break;
@@ -123,64 +182,9 @@ export const useConditionalLogic = () => {
         });
       });
     });
-    
+
     return conditionalState;
-  }, []);
-  
-  /**
-   * Evaluate a single rule recursively
-   */
-  const evaluateRule = useCallback((rules, answers) => {
-    if (!rules) return true;
-    
-    // Handle AND
-    if (rules.AND) {
-      return rules.AND.every(rule => evaluateRule(rule, answers));
-    }
-    
-    // Handle OR
-    if (rules.OR) {
-      return rules.OR.some(rule => evaluateRule(rule, answers));
-    }
-    
-    // Handle NOT
-    if (rules.NOT) {
-      return !evaluateRule(rules.NOT, answers);
-    }
-    
-    // Simple comparison: {questionCode, operator, value}
-    const { questionCode, operator, value } = rules;
-    const actualValue = answers?.[questionCode];
-    
-    return compareValues(actualValue, operator, value);
-  }, []);
-  
-  /**
-   * Compare values using operator
-   */
-  const compareValues = useCallback((actual, operator, expected) => {
-    if (actual === null || actual === undefined) {
-      return operator === 'empty' || operator === 'notEquals' || operator === 'not_equals';
-    }
-    
-    switch (operator?.toLowerCase()) {
-      case 'equals':
-        return String(actual) === String(expected);
-      case 'notequals':
-        return String(actual) !== String(expected);
-      case 'contains':
-        return String(actual).includes(String(expected));
-      case 'greaterthan':
-        return Number(actual) > Number(expected);
-      case 'lessthan':
-        return Number(actual) < Number(expected);
-      case 'in':
-        return Array.isArray(expected) && expected.some(v => String(v) === String(actual));
-      default:
-        console.warn(`Unknown operator: ${operator}`);
-        return false;
-    }
-  }, []);
+  }, [evaluateRule]);
   
   return { evaluateConditions, evaluateRule };
 };

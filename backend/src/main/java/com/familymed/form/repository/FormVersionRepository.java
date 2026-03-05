@@ -19,4 +19,6 @@ public interface FormVersionRepository extends JpaRepository<FormVersion, UUID> 
         );
     
     Optional<FormVersion> findByFormFormIdAndVersionNumber(UUID formId, Integer versionNumber);
+
+    Optional<FormVersion> findTopByFormFormIdOrderByVersionNumberDesc(UUID formId);
 }

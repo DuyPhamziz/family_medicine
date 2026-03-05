@@ -11,5 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PublicFormOptionDTO {
     private String text;
+    private String label;
     private String value;
+    private Integer orderIndex;
 }

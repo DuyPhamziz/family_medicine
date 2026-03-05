@@ -1,14 +1,14 @@
 package com.familymed.form.service;
 
-import com.familymed.form.dto.publicapi.*;
+import com.familymed.form.dto.publicapi.PublicFormDetailDTO;
+import com.familymed.form.dto.publicapi.PublicFormQuestionDTO;
+import com.familymed.form.dto.publicapi.PublicFormSectionDTO;
+import com.familymed.form.dto.publicapi.PublicFormSubmitRequest;
+import com.familymed.form.dto.publicapi.PublicFormSummaryDTO;
 import com.familymed.form.entity.DiagnosticForm;
-import com.familymed.form.entity.FormQuestion;
-import com.familymed.form.entity.FormQuestionOption;
-import com.familymed.form.entity.FormSection;
 import com.familymed.form.entity.PatientFormSubmission;
 import com.familymed.form.entity.SubmissionAnswer;
 import com.familymed.form.repository.DiagnosticFormRepository;
-import com.familymed.form.repository.FormQuestionRepository;
 import com.familymed.form.repository.PatientFormSubmissionRepository;
 import com.familymed.form.repository.SubmissionAnswerRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,11 +23,11 @@ import java.util.*;
 public class PublicFormService {
 
     private final DiagnosticFormRepository formRepository;
-    private final FormQuestionRepository questionRepository;
     private final PatientFormSubmissionRepository submissionRepository;
     private final SubmissionAnswerRepository submissionAnswerRepository;
     private final FormulaEvaluationService formulaEvaluationService;
     private final PublicFormAntiSpamService antiSpamService;
+    private final FormPublishWorkflowService publishWorkflowService;
     private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
@@ -35,12 +35,13 @@ public class PublicFormService {
         return formRepository.findByStatusAndIsPublicTrue(DiagnosticForm.FormStatus.PUBLISHED)
                 .stream()
                 .filter(form -> form.getPublicToken() != null)
+                .filter(form -> form.getPublishedVersionId() != null)
                 .map(form -> PublicFormSummaryDTO.builder()
                         .title(form.getFormName())
                         .description(form.getDescription())
                         .category(form.getCategory())
-                    .estimatedTime(form.getEstimatedTime())
-                    .iconColor(form.getIconColor())
+                        .estimatedTime(form.getEstimatedTime())
+                        .iconColor(form.getIconColor())
                         .version(form.getVersion())
                         .publicToken(form.getPublicToken())
                         .build())
@@ -50,38 +51,22 @@ public class PublicFormService {
     @Transactional(readOnly = true)
     public PublicFormDetailDTO getPublicForm(UUID publicToken) {
         DiagnosticForm form = findPublishedPublicForm(publicToken);
-
-        List<PublicFormSectionDTO> sections = form.getSections() == null
-                ? List.of()
-                : form.getSections().stream()
-                .sorted(Comparator.comparing(FormSection::getSectionOrder))
-                .map(this::toSectionDto)
-                .toList();
-
-        return PublicFormDetailDTO.builder()
-                .publicToken(form.getPublicToken())
-                .title(form.getFormName())
-                .description(form.getDescription())
-                .category(form.getCategory())
-                .version(form.getVersion())
-                .sections(sections)
-                .build();
+        return publishWorkflowService.getPublishedForm(form.getFormId());
     }
 
     @Transactional
     public Map<String, Object> submitPublicForm(UUID publicToken, PublicFormSubmitRequest request, String clientIp) {
         DiagnosticForm form = findPublishedPublicForm(publicToken);
-        
-        // Generate submission ID first
+        PublicFormDetailDTO publishedSchema = publishWorkflowService.getPublishedForm(form.getFormId());
+
         UUID submissionId = UUID.randomUUID();
-        
-        // *** ANTI-SPAM VALIDATION ***
+
         antiSpamService.validateAndRecordSubmission(
-            request.getSessionToken(),
-            form.getFormId(),
-            clientIp,
-            request.getHoneypot(),
-            submissionId
+                request.getSessionToken(),
+                form.getFormId(),
+                clientIp,
+                request.getHoneypot(),
+                submissionId
         );
 
         Map<String, Object> answers = new LinkedHashMap<>();
@@ -89,25 +74,21 @@ public class PublicFormService {
             answers.putAll(request.getAnswers());
         }
 
-        List<FormQuestion> allQuestions = questionRepository.findBySection_Form_FormId(form.getFormId());
-        applyFormulaValues(allQuestions, answers);
-
-        String answersJson = toJson(answers);
+        applyFormulaValues(publishedSchema, answers);
 
         PatientFormSubmission submission = new PatientFormSubmission();
         submission.setSubmissionId(submissionId);
         submission.setForm(form);
-        submission.setFormVersionNumber(form.getVersion());
+        submission.setFormVersionNumber(publishedSchema.getVersion());
         submission.setPatientName(request.getPatientName());
         submission.setPhone(request.getPhone());
         submission.setEmail(request.getEmail());
-        submission.setSubmissionData(answersJson);
-        submission.setFormSnapshot(buildFormSnapshot(form, answers));
+        submission.setSubmissionData(toJson(answers));
+        submission.setFormSnapshot(buildFormSnapshot(publishedSchema, answers));
         submission.setStatus(PatientFormSubmission.SubmissionStatus.PENDING);
 
         PatientFormSubmission saved = submissionRepository.save(submission);
-
-        saveAnswerRows(saved, form, answers);
+        saveAnswerRows(saved, form.getFormId(), answers);
 
         return Map.of(
                 "submissionId", saved.getSubmissionId(),
@@ -115,9 +96,14 @@ public class PublicFormService {
                 "message", "Form submitted successfully"
         );
     }
-    
+
     public UUID getFormIdByToken(UUID publicToken) {
         return findPublishedPublicForm(publicToken).getFormId();
+    }
+
+    @Transactional(readOnly = true)
+    public PublicFormDetailDTO getPublishedFormById(UUID formId) {
+        return publishWorkflowService.getPublishedForm(formId);
     }
 
     private DiagnosticForm findPublishedPublicForm(UUID publicToken) {
@@ -127,63 +113,23 @@ public class PublicFormService {
         if (!Boolean.TRUE.equals(form.getIsPublic()) || form.getStatus() != DiagnosticForm.FormStatus.PUBLISHED) {
             throw new RuntimeException("Form is not publicly available");
         }
+        if (form.getPublishedVersionId() == null) {
+            throw new RuntimeException("Published form snapshot not found");
+        }
 
         return form;
     }
 
-    private PublicFormSectionDTO toSectionDto(FormSection section) {
-        List<PublicFormQuestionDTO> questions = section.getQuestions() == null
-                ? List.of()
-                : section.getQuestions().stream()
-                .sorted(Comparator.comparing(FormQuestion::getQuestionOrder))
-                .map(this::toQuestionDto)
-                .toList();
-
-        return PublicFormSectionDTO.builder()
-                .sectionName(section.getSectionName())
-                .sectionOrder(section.getSectionOrder())
-                .questions(questions)
-                .build();
-    }
-
-    private PublicFormQuestionDTO toQuestionDto(FormQuestion question) {
-        List<PublicFormOptionDTO> options = question.getOptionItems() == null
-                ? List.of()
-                : question.getOptionItems().stream()
-                .sorted(Comparator.comparing(FormQuestionOption::getOptionOrder, Comparator.nullsLast(Integer::compareTo)))
-                .map(option -> PublicFormOptionDTO.builder()
-                        .text(option.getOptionText())
-                        .value(option.getOptionValue())
-                        .build())
-                .toList();
-
-        return PublicFormQuestionDTO.builder()
-                .questionId(question.getQuestionId())
-                .questionCode(question.getQuestionCode())
-                .questionText(question.getQuestionText())
-                .questionType(question.getQuestionType() != null ? question.getQuestionType().name() : null)
-                .formulaExpression(question.getFormulaExpression())
-                .required(Boolean.TRUE.equals(question.getRequired()))
-                .helpText(question.getHelpText())
-                .minValue(question.getMinValue())
-                .maxValue(question.getMaxValue())
-                .unit(question.getUnit())
-                .displayCondition(question.getDisplayCondition())
-                .options(options)
-                .displayCondition(question.getDisplayCondition())
-                .build();
-    }
-
-    private void applyFormulaValues(List<FormQuestion> questions, Map<String, Object> answers) {
-        if (questions == null || questions.isEmpty()) {
+    private void applyFormulaValues(PublicFormDetailDTO schema, Map<String, Object> answers) {
+        List<PublicFormQuestionDTO> questions = flattenQuestions(schema);
+        if (questions.isEmpty()) {
             return;
         }
 
-        // Evaluate formulas in multiple passes to support dependency chains
         for (int pass = 0; pass < 3; pass++) {
             boolean changed = false;
 
-            for (FormQuestion question : questions) {
+            for (PublicFormQuestionDTO question : questions) {
                 if (question.getFormulaExpression() == null || question.getFormulaExpression().isBlank()) {
                     continue;
                 }
@@ -209,15 +155,26 @@ public class PublicFormService {
         }
     }
 
-    private void saveAnswerRows(PatientFormSubmission submission, DiagnosticForm form, Map<String, Object> answers) {
+    private List<PublicFormQuestionDTO> flattenQuestions(PublicFormDetailDTO schema) {
+        if (schema == null || schema.getSections() == null) {
+            return List.of();
+        }
+
+        List<PublicFormQuestionDTO> result = new ArrayList<>();
+        for (PublicFormSectionDTO section : schema.getSections()) {
+            if (section.getQuestions() != null) {
+                result.addAll(section.getQuestions());
+            }
+        }
+        return result;
+    }
+
+    private void saveAnswerRows(PatientFormSubmission submission, UUID formId, Map<String, Object> answers) {
         if (answers.isEmpty()) {
             return;
         }
 
-        Map<String, UUID> questionCodeMap = questionRepository.findBySection_Form_FormId(form.getFormId())
-                .stream()
-                .collect(HashMap::new, (map, q) -> map.put(q.getQuestionCode(), q.getQuestionId()), HashMap::putAll);
-
+        Map<String, UUID> questionCodeMap = publishWorkflowService.getPublishedQuestionCodeMap(formId);
         List<SubmissionAnswer> answerRows = new ArrayList<>();
 
         answers.forEach((questionCode, value) -> {
@@ -233,14 +190,14 @@ public class PublicFormService {
         submissionAnswerRepository.saveAll(answerRows);
     }
 
-    private String buildFormSnapshot(DiagnosticForm form, Map<String, Object> answers) {
+    private String buildFormSnapshot(PublicFormDetailDTO schema, Map<String, Object> answers) {
         Map<String, Object> snapshot = new LinkedHashMap<>();
-        snapshot.put("publicToken", form.getPublicToken());
-        snapshot.put("title", form.getFormName());
-        snapshot.put("description", form.getDescription());
-        snapshot.put("category", form.getCategory());
-        snapshot.put("version", form.getVersion());
-        snapshot.put("sections", getPublicForm(form.getPublicToken()).getSections());
+        snapshot.put("publicToken", schema.getPublicToken());
+        snapshot.put("title", schema.getTitle());
+        snapshot.put("description", schema.getDescription());
+        snapshot.put("category", schema.getCategory());
+        snapshot.put("version", schema.getVersion());
+        snapshot.put("sections", schema.getSections());
         snapshot.put("answers", answers);
         return toJson(snapshot);
     }

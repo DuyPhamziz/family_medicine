@@ -23,6 +23,12 @@ public class PublicFormQuestionDTO {
     private Double minValue;
     private Double maxValue;
     private String unit;
-    private String displayCondition; // JSON used for conditional logic
+    private String displayCondition; // Legacy key for condition JSON
+    private String conditionJson;
+    private String metadataJson;
+    private Integer orderIndex;
+    private String type;
+    private String label;
+    private String placeholder;
     private List<PublicFormOptionDTO> options;
 }

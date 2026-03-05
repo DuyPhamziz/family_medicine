@@ -380,6 +380,7 @@ public class FormService {
         section.setSectionName(request.getSectionName());
         section.setSectionOrder(request.getSectionOrder() != null ? request.getSectionOrder() : 1);
 
+        markFormAsDraft(form);
         FormSection saved = sectionRepository.save(section);
         return FormSectionDTO.fromSection(saved);
     }
@@ -396,6 +397,7 @@ public class FormService {
             section.setSectionOrder(request.getSectionOrder());
         }
 
+        markFormAsDraft(section.getForm());
         FormSection saved = sectionRepository.save(section);
         return FormSectionDTO.fromSection(saved);
     }
@@ -404,6 +406,7 @@ public class FormService {
     public void deleteSection(UUID sectionId) {
         FormSection section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new RuntimeException("Section not found"));
+        markFormAsDraft(section.getForm());
         sectionRepository.delete(section);
     }
 
@@ -440,6 +443,7 @@ public class FormService {
             question.setOptions(optionsToJson(optionItems));
         }
 
+        markFormAsDraft(section.getForm());
         FormQuestion saved = questionRepository.save(question);
         return FormQuestionDTO.fromQuestion(saved);
     }
@@ -490,6 +494,7 @@ public class FormService {
             question.setOptions(optionsToJson(optionItems));
         }
 
+        markFormAsDraft(question.getSection().getForm());
         FormQuestion saved = questionRepository.save(question);
         return FormQuestionDTO.fromQuestion(saved);
     }
@@ -498,6 +503,7 @@ public class FormService {
     public void deleteQuestion(UUID questionId) {
         FormQuestion question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
+        markFormAsDraft(question.getSection().getForm());
         questionRepository.delete(question);
     }
 
@@ -507,6 +513,7 @@ public class FormService {
                 .orElseThrow(() -> new RuntimeException("Question not found"));
 
         FormQuestionOption option = toOptionEntity(request, question);
+        markFormAsDraft(question.getSection().getForm());
         FormQuestionOption saved = optionRepository.save(option);
         return FormQuestionOptionDTO.fromOption(saved);
     }
@@ -523,6 +530,7 @@ public class FormService {
         option.setOptionOrder(request.getOptionOrder());
         option.setPoints(request.getPoints());
 
+        markFormAsDraft(option.getQuestion().getSection().getForm());
         FormQuestionOption saved = optionRepository.save(option);
         return FormQuestionOptionDTO.fromOption(saved);
     }
@@ -531,6 +539,7 @@ public class FormService {
     public void deleteOption(UUID optionId) {
         FormQuestionOption option = optionRepository.findById(optionId)
                 .orElseThrow(() -> new RuntimeException("Option not found"));
+        markFormAsDraft(option.getQuestion().getSection().getForm());
         optionRepository.delete(option);
     }
 
@@ -541,7 +550,7 @@ public class FormService {
      */
     @Transactional
     public void reorderQuestions(ReorderQuestionsRequest request) {
-        FormSection section = sectionRepository.findById(request.getSectionId())
+        sectionRepository.findById(request.getSectionId())
                 .orElseThrow(() -> new RuntimeException("Section not found"));
         
         for (ReorderQuestionsRequest.QuestionOrder order : request.getQuestionOrders()) {
@@ -553,6 +562,7 @@ public class FormService {
             }
             
             question.setQuestionOrder(order.getNewOrder());
+            markFormAsDraft(question.getSection().getForm());
             questionRepository.save(question);
         }
     }
@@ -562,7 +572,7 @@ public class FormService {
      */
     @Transactional
     public void reorderSections(ReorderSectionsRequest request) {
-        DiagnosticForm form = formRepository.findById(request.getFormId())
+        formRepository.findById(request.getFormId())
                 .orElseThrow(() -> new RuntimeException("Form not found"));
         
         for (ReorderSectionsRequest.SectionOrder order : request.getSectionOrders()) {
@@ -574,6 +584,7 @@ public class FormService {
             }
             
             section.setSectionOrder(order.getNewOrder());
+            markFormAsDraft(section.getForm());
             sectionRepository.save(section);
         }
     }
@@ -613,6 +624,15 @@ public class FormService {
             return DiagnosticForm.FormStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException ex) {
             return DiagnosticForm.FormStatus.DRAFT;
+        }
+    }
+
+    private void markFormAsDraft(DiagnosticForm form) {
+        if (form == null) {
+            return;
+        }
+        if (form.getStatus() != DiagnosticForm.FormStatus.ARCHIVED) {
+            form.setStatus(DiagnosticForm.FormStatus.DRAFT);
         }
     }
 

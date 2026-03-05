@@ -29,6 +29,16 @@ export const createAdminFormVersion = async (formId, payload) => {
   return response.data;
 };
 
+export const publishAdminForm = async (formId) => {
+  const response = await api.post(`/api/forms/${formId}/publish`);
+  return response.data;
+};
+
+export const getPublishedAdminForm = async (formId) => {
+  const response = await api.get(`/api/forms/${formId}/public`);
+  return response.data;
+};
+
 export const createSection = async (formId, payload) => {
   const response = await api.post(`/api/forms/admin/${formId}/sections`, payload);
   return response.data;

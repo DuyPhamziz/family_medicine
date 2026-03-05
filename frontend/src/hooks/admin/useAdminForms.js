@@ -4,6 +4,7 @@ import {
   createAdminFormVersion,
   deleteAdminForm,
   getAdminForms,
+  publishAdminForm,
   updateAdminForm,
 } from "../../api/adminFormsApi";
 
@@ -45,6 +46,10 @@ export const useAdminForms = () => {
     return createAdminFormVersion(formId, payload);
   };
 
+  const publishForm = async (formId) => {
+    return publishAdminForm(formId);
+  };
+
   return {
     forms,
     loading,
@@ -53,5 +58,6 @@ export const useAdminForms = () => {
     saveForm,
     removeForm,
     createVersion,
+    publishForm,
   };
 };

@@ -34,4 +34,9 @@ public class FormQuestionOption extends BaseEntity {
     private Integer optionOrder;
 
     private Integer points;
+
+    @Column(name = "sub_fields_config", columnDefinition = "TEXT")
+    private String subFieldsConfig; // JSON config for sub-fields when option is selected
+                                    // Example: [{"key":"year","label":"Năm tiêm","type":"NUMBER"},
+                                    //           {"key":"notes","label":"Ghi chú","type":"TEXT"}]
 }

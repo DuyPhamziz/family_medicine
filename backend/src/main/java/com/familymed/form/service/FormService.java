@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class FormService {
     private final DiagnosticFormRepository formRepository;
     private final FormQuestionRepository questionRepository;
     private final FormQuestionOptionRepository optionRepository;
+    private final FamilyDiseaseMatrixConfigRepository matrixConfigRepository;
     private final PatientFormSubmissionRepository submissionRepository;
     private final FormSectionRepository sectionRepository;
     private final FormVersionRepository formVersionRepository;
@@ -341,6 +343,24 @@ public class FormService {
                         copiedQuestion.setRequired(question.getRequired());
                         copiedQuestion.setHelpText(question.getHelpText());
                         copiedQuestion.setDisplayCondition(question.getDisplayCondition());
+                        copiedQuestion.setAllowAdditionalAnswers(question.getAllowAdditionalAnswers());
+                        copiedQuestion.setMaxAdditionalAnswers(question.getMaxAdditionalAnswers());
+                        copiedQuestion.setGroupId(question.getGroupId());
+                        copiedQuestion.setIsRepeatableGroup(question.getIsRepeatableGroup());
+                        copiedQuestion.setRepeatGroupRoot(question.getRepeatGroupRoot());
+                        copiedQuestion.setMaxRepeat(question.getMaxRepeat());
+                        copiedQuestion.setLabelAddButton(question.getLabelAddButton());
+
+                        FamilyDiseaseMatrixConfig sourceMatrixConfig = question.getMatrixConfig();
+                        if (sourceMatrixConfig != null) {
+                            FamilyDiseaseMatrixConfig copiedMatrixConfig = new FamilyDiseaseMatrixConfig();
+                            copiedMatrixConfig.setQuestion(copiedQuestion);
+                            copiedMatrixConfig.setRowsJson(sourceMatrixConfig.getRowsJson());
+                            copiedMatrixConfig.setColumnsJson(sourceMatrixConfig.getColumnsJson());
+                            copiedMatrixConfig.setAllowAdditionalColumn(Boolean.TRUE.equals(sourceMatrixConfig.getAllowAdditionalColumn()));
+                            copiedMatrixConfig.setAllowAdditionalRow(Boolean.TRUE.equals(sourceMatrixConfig.getAllowAdditionalRow()));
+                            copiedQuestion.setMatrixConfig(copiedMatrixConfig);
+                        }
 
                         if (question.getOptionItems() != null) {
                             List<FormQuestionOption> copiedOptions = question.getOptionItems().stream().map(option -> {
@@ -350,6 +370,7 @@ public class FormService {
                                 copiedOption.setOptionValue(option.getOptionValue());
                                 copiedOption.setOptionOrder(option.getOptionOrder());
                                 copiedOption.setPoints(option.getPoints());
+                                copiedOption.setSubFieldsConfig(option.getSubFieldsConfig());
                                 return copiedOption;
                             }).toList();
                             copiedQuestion.setOptionItems(copiedOptions);
@@ -433,6 +454,13 @@ public class FormService {
         question.setMaxAdditionalAnswers(Boolean.TRUE.equals(request.getAllowAdditionalAnswers())
             ? request.getMaxAdditionalAnswers()
             : null);
+        question.setGroupId(resolveGroupId(request.getGroupId(), request.getQuestionCode(), section.getSectionId()));
+        question.setIsRepeatableGroup(Boolean.TRUE.equals(request.getIsRepeatableGroup()));
+        question.setRepeatGroupRoot(Boolean.TRUE.equals(request.getRepeatGroupRoot()));
+        question.setMaxRepeat(Boolean.TRUE.equals(request.getIsRepeatableGroup()) ? request.getMaxRepeat() : null);
+        question.setLabelAddButton(Boolean.TRUE.equals(request.getIsRepeatableGroup())
+            ? normalizeLabelAddButton(request.getLabelAddButton())
+            : null);
 
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
             List<FormQuestionOption> optionItems = request.getOptions().stream()
@@ -445,7 +473,9 @@ public class FormService {
 
         markFormAsDraft(section.getForm());
         FormQuestion saved = questionRepository.save(question);
-        return FormQuestionDTO.fromQuestion(saved);
+        saveOrUpdateMatrixConfig(saved, request.getMatrixConfig());
+        syncRepeatGroupConfig(saved);
+        return FormQuestionDTO.fromQuestion(questionRepository.findById(saved.getQuestionId()).orElse(saved));
     }
 
     @Transactional
@@ -480,6 +510,17 @@ public class FormService {
         } else {
             question.setMaxAdditionalAnswers(null);
         }
+        question.setGroupId(resolveGroupId(request.getGroupId(), question.getQuestionCode(), question.getSection().getSectionId()));
+        question.setIsRepeatableGroup(Boolean.TRUE.equals(request.getIsRepeatableGroup()));
+        question.setRepeatGroupRoot(Boolean.TRUE.equals(request.getRepeatGroupRoot()));
+        if (Boolean.TRUE.equals(question.getIsRepeatableGroup())) {
+            question.setMaxRepeat(request.getMaxRepeat());
+            question.setLabelAddButton(normalizeLabelAddButton(request.getLabelAddButton()));
+        } else {
+            question.setMaxRepeat(null);
+            question.setLabelAddButton(null);
+            question.setRepeatGroupRoot(false);
+        }
 
         if (request.getOptions() != null) {
             if (question.getOptionItems() == null) {
@@ -496,7 +537,9 @@ public class FormService {
 
         markFormAsDraft(question.getSection().getForm());
         FormQuestion saved = questionRepository.save(question);
-        return FormQuestionDTO.fromQuestion(saved);
+        saveOrUpdateMatrixConfig(saved, request.getMatrixConfig());
+        syncRepeatGroupConfig(saved);
+        return FormQuestionDTO.fromQuestion(questionRepository.findById(saved.getQuestionId()).orElse(saved));
     }
 
     @Transactional
@@ -505,6 +548,44 @@ public class FormService {
                 .orElseThrow(() -> new RuntimeException("Question not found"));
         markFormAsDraft(question.getSection().getForm());
         questionRepository.delete(question);
+    }
+
+    @Transactional
+    public int bulkUpdateQuestionGroupConfig(BulkQuestionGroupUpdateRequest request) {
+        if (request == null || request.getQuestionIds() == null || request.getQuestionIds().isEmpty()) {
+            throw new RuntimeException("questionIds is required");
+        }
+
+        List<FormQuestion> questions = questionRepository.findAllById(request.getQuestionIds());
+        if (questions.isEmpty()) {
+            throw new RuntimeException("No questions found for bulk update");
+        }
+
+        String resolvedGroupId = request.getGroupId();
+        if (resolvedGroupId == null || resolvedGroupId.isBlank()) {
+            FormQuestion seed = questions.get(0);
+            resolvedGroupId = resolveGroupId(null, seed.getQuestionCode(), seed.getSection() != null ? seed.getSection().getSectionId() : null);
+        }
+
+        Set<UUID> selectedQuestionIdSet = request.getQuestionIds().stream().collect(Collectors.toSet());
+        UUID rootQuestionId = request.getRootQuestionId() != null ? request.getRootQuestionId() : request.getQuestionIds().get(0);
+        Integer maxRepeat = request.getMaxRepeat();
+        String labelAddButton = normalizeLabelAddButton(request.getLabelAddButton());
+
+        for (FormQuestion question : questions) {
+            if (!selectedQuestionIdSet.contains(question.getQuestionId())) {
+                continue;
+            }
+            question.setGroupId(resolvedGroupId);
+            question.setIsRepeatableGroup(true);
+            question.setRepeatGroupRoot(question.getQuestionId().equals(rootQuestionId));
+            question.setMaxRepeat(maxRepeat);
+            question.setLabelAddButton(labelAddButton);
+            markFormAsDraft(question.getSection().getForm());
+        }
+
+        questionRepository.saveAll(questions);
+        return questions.size();
     }
 
     @Transactional
@@ -529,6 +610,7 @@ public class FormService {
         option.setOptionValue(request.getOptionValue());
         option.setOptionOrder(request.getOptionOrder());
         option.setPoints(request.getPoints());
+        option.setSubFieldsConfig(request.getSubFieldsConfig());
 
         markFormAsDraft(option.getQuestion().getSection().getForm());
         FormQuestionOption saved = optionRepository.save(option);
@@ -596,6 +678,7 @@ public class FormService {
         option.setOptionValue(request.getOptionValue());
         option.setOptionOrder(request.getOptionOrder());
         option.setPoints(request.getPoints());
+        option.setSubFieldsConfig(request.getSubFieldsConfig());
         return option;
     }
 
@@ -614,6 +697,90 @@ public class FormService {
             return requestedCode;
         }
         return "Q" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+    }
+
+    private String resolveGroupId(String requestedGroupId, String questionCode, UUID sectionId) {
+        if (requestedGroupId != null && !requestedGroupId.isBlank()) {
+            return requestedGroupId.trim();
+        }
+        if (questionCode != null && !questionCode.isBlank()) {
+            return "grp_" + questionCode.trim().toLowerCase();
+        }
+        if (sectionId != null) {
+            return "grp_" + sectionId.toString().substring(0, 8);
+        }
+        return null;
+    }
+
+    private String normalizeLabelAddButton(String labelAddButton) {
+        if (labelAddButton == null || labelAddButton.isBlank()) {
+            return "Thêm mục khác";
+        }
+        return labelAddButton.trim();
+    }
+
+    private void saveOrUpdateMatrixConfig(FormQuestion question, MatrixFamilyDiseaseConfigDTO matrixConfigDto) {
+        boolean isMatrixQuestion = question.getQuestionType() == FormQuestion.QuestionType.MATRIX_FAMILY_DISEASE;
+        if (!isMatrixQuestion) {
+            matrixConfigRepository.deleteByQuestionQuestionId(question.getQuestionId());
+            question.setMatrixConfig(null);
+            return;
+        }
+
+        if (matrixConfigDto == null) {
+            return;
+        }
+
+        FamilyDiseaseMatrixConfig config = matrixConfigRepository.findByQuestionQuestionId(question.getQuestionId())
+                .orElseGet(FamilyDiseaseMatrixConfig::new);
+
+        config.setQuestion(question);
+        config.setRowsJson(writeJson(matrixConfigDto.getRows()));
+        config.setColumnsJson(writeJson(matrixConfigDto.getColumns()));
+        config.setAllowAdditionalColumn(Boolean.TRUE.equals(matrixConfigDto.getAllowAdditionalColumn()));
+        config.setAllowAdditionalRow(Boolean.TRUE.equals(matrixConfigDto.getAllowAdditionalRow()));
+
+        FamilyDiseaseMatrixConfig savedConfig = matrixConfigRepository.save(config);
+        question.setMatrixConfig(savedConfig);
+    }
+
+    private String writeJson(Object value) {
+        if (value == null) {
+            return "[]";
+        }
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception ex) {
+            throw new RuntimeException("Cannot serialize matrix config", ex);
+        }
+    }
+
+    private void syncRepeatGroupConfig(FormQuestion question) {
+        if (!Boolean.TRUE.equals(question.getIsRepeatableGroup())) {
+            return;
+        }
+        if (question.getSection() == null || question.getSection().getForm() == null || question.getGroupId() == null || question.getGroupId().isBlank()) {
+            return;
+        }
+
+        UUID formId = question.getSection().getForm().getFormId();
+        List<FormQuestion> sameGroupQuestions = questionRepository.findBySection_Form_FormIdAndGroupId(formId, question.getGroupId());
+        for (FormQuestion sameGroupQuestion : sameGroupQuestions) {
+            if (sameGroupQuestion.getQuestionId().equals(question.getQuestionId())) {
+                continue;
+            }
+            sameGroupQuestion.setGroupId(question.getGroupId());
+            sameGroupQuestion.setIsRepeatableGroup(true);
+            if (question.getMaxRepeat() != null) {
+                sameGroupQuestion.setMaxRepeat(question.getMaxRepeat());
+            }
+            if (question.getLabelAddButton() != null && !question.getLabelAddButton().isBlank()) {
+                sameGroupQuestion.setLabelAddButton(question.getLabelAddButton());
+            }
+        }
+        if (!sameGroupQuestions.isEmpty()) {
+            questionRepository.saveAll(sameGroupQuestions);
+        }
     }
 
     private DiagnosticForm.FormStatus parseStatus(String status) {
@@ -709,6 +876,121 @@ public class FormService {
         );
     }
     
+    /**
+     * Duplicate a form with all its sections, questions, options, and configurations
+     * Creates a new form with "(Copy)" suffix in the name
+     */
+    @Transactional
+    public DiagnosticFormDTO duplicateForm(UUID sourceFormId) {
+        DiagnosticForm sourceForm = formRepository.findById(sourceFormId)
+                .orElseThrow(() -> new RuntimeException("Source form not found"));
+        
+        // 1. Create new form
+        DiagnosticForm newForm = new DiagnosticForm();
+        newForm.setFormId(UUID.randomUUID());
+        newForm.setFormName(sourceForm.getFormName() + " (Copy)");
+        newForm.setDescription(sourceForm.getDescription());
+        newForm.setCategory(sourceForm.getCategory());
+        newForm.setEstimatedTime(sourceForm.getEstimatedTime());
+        newForm.setIconColor(sourceForm.getIconColor());
+        newForm.setVersion(1);
+        newForm.setStatus(DiagnosticForm.FormStatus.DRAFT);
+        newForm.setIsPublic(sourceForm.getIsPublic());
+        newForm.setIsMaster(false); // New form is not master
+        newForm.setMasterLocked(false);
+        if (Boolean.TRUE.equals(newForm.getIsPublic())) {
+            newForm.setPublicToken(UUID.randomUUID());
+        }
+        
+        DiagnosticForm savedForm = formRepository.save(newForm);
+        
+        // 2. Get source sections with questions
+        List<FormSection> sourceSections = sectionRepository.findByForm_FormIdOrderBySectionOrder(sourceFormId);
+        Map<UUID, UUID> sectionIdMap = new HashMap<>();
+        
+        for (FormSection sourceSection : sourceSections) {
+            // Copy section
+            FormSection newSection = new FormSection();
+            newSection.setSectionId(UUID.randomUUID());
+            newSection.setForm(savedForm);
+            newSection.setSectionName(sourceSection.getSectionName());
+            newSection.setSectionOrder(sourceSection.getSectionOrder());
+            
+            FormSection savedSection = sectionRepository.save(newSection);
+            sectionIdMap.put(sourceSection.getSectionId(), savedSection.getSectionId());
+            
+            // 3. Copy questions with their options and configs
+            List<FormQuestion> sourceQuestions = questionRepository.findBySection_SectionIdOrderByQuestionOrder(sourceSection.getSectionId());
+            Map<UUID, UUID> questionIdMap = new HashMap<>();
+            
+            for (FormQuestion sourceQuestion : sourceQuestions) {
+                FormQuestion newQuestion = new FormQuestion();
+                newQuestion.setQuestionId(UUID.randomUUID());
+                newQuestion.setSection(savedSection);
+                newQuestion.setQuestionCode(sourceQuestion.getQuestionCode());
+                newQuestion.setQuestionText(sourceQuestion.getQuestionText());
+                newQuestion.setQuestionType(sourceQuestion.getQuestionType());
+                newQuestion.setPoints(sourceQuestion.getPoints());
+                newQuestion.setUnit(sourceQuestion.getUnit());
+                newQuestion.setMinValue(sourceQuestion.getMinValue());
+                newQuestion.setMaxValue(sourceQuestion.getMaxValue());
+                newQuestion.setRequired(sourceQuestion.getRequired());
+                newQuestion.setQuestionOrder(sourceQuestion.getQuestionOrder());
+                newQuestion.setHelpText(sourceQuestion.getHelpText());
+                newQuestion.setDisplayCondition(sourceQuestion.getDisplayCondition());
+                newQuestion.setValidationKey(sourceQuestion.getValidationKey());
+                newQuestion.setWarningMin(sourceQuestion.getWarningMin());
+                newQuestion.setWarningMax(sourceQuestion.getWarningMax());
+                newQuestion.setValidationPattern(sourceQuestion.getValidationPattern());
+                newQuestion.setFormulaExpression(sourceQuestion.getFormulaExpression());
+                newQuestion.setAllowAdditionalAnswers(sourceQuestion.getAllowAdditionalAnswers());
+                newQuestion.setMaxAdditionalAnswers(sourceQuestion.getMaxAdditionalAnswers());
+                newQuestion.setGroupId(sourceQuestion.getGroupId());
+                newQuestion.setIsRepeatableGroup(sourceQuestion.getIsRepeatableGroup());
+                newQuestion.setRepeatGroupRoot(sourceQuestion.getRepeatGroupRoot());
+                newQuestion.setMaxRepeat(sourceQuestion.getMaxRepeat());
+                newQuestion.setLabelAddButton(sourceQuestion.getLabelAddButton());
+                
+                FormQuestion savedQuestion = questionRepository.save(newQuestion);
+                questionIdMap.put(sourceQuestion.getQuestionId(), savedQuestion.getQuestionId());
+                
+                // 4. Copy question options
+                List<FormQuestionOption> sourceOptions = optionRepository.findByQuestion_QuestionIdOrderByOptionOrder(sourceQuestion.getQuestionId());
+                for (FormQuestionOption sourceOption : sourceOptions) {
+                    FormQuestionOption newOption = new FormQuestionOption();
+                    newOption.setOptionId(UUID.randomUUID());
+                    newOption.setQuestion(savedQuestion);
+                    newOption.setOptionText(sourceOption.getOptionText());
+                    newOption.setOptionValue(sourceOption.getOptionValue());
+                    newOption.setPoints(sourceOption.getPoints());
+                    newOption.setOptionOrder(sourceOption.getOptionOrder());
+                    newOption.setSubFieldsConfig(sourceOption.getSubFieldsConfig());
+                    
+                    optionRepository.save(newOption);
+                }
+                
+                // 5. Copy matrix configurations if this is a MATRIX_FAMILY_DISEASE question
+                if (sourceQuestion.getQuestionType() == FormQuestion.QuestionType.MATRIX_FAMILY_DISEASE) {
+                    Optional<FamilyDiseaseMatrixConfig> sourceConfigOpt = matrixConfigRepository.findByQuestionQuestionId(sourceQuestion.getQuestionId());
+                    if (sourceConfigOpt.isPresent()) {
+                        FamilyDiseaseMatrixConfig sourceConfig = sourceConfigOpt.get();
+                        FamilyDiseaseMatrixConfig newConfig = new FamilyDiseaseMatrixConfig();
+                        newConfig.setId(UUID.randomUUID());
+                        newConfig.setQuestion(savedQuestion);
+                        newConfig.setRowsJson(sourceConfig.getRowsJson());
+                        newConfig.setColumnsJson(sourceConfig.getColumnsJson());
+                        newConfig.setAllowAdditionalRow(sourceConfig.getAllowAdditionalRow());
+                        newConfig.setAllowAdditionalColumn(sourceConfig.getAllowAdditionalColumn());
+                        
+                        matrixConfigRepository.save(newConfig);
+                    }
+                }
+            }
+        }
+        
+        return DiagnosticFormDTO.fromForm(savedForm, savedForm.getSections());
+    }
+
     // ===== CONDITIONAL LOGIC MANAGEMENT =====
     
     /**

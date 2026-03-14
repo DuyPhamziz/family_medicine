@@ -1,0 +1,9 @@
+ALTER TABLE form_questions
+    ADD COLUMN IF NOT EXISTS group_id VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS is_repeatable_group BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS repeat_group_root BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS max_repeat INTEGER,
+    ADD COLUMN IF NOT EXISTS label_add_button VARCHAR(255);
+
+ALTER TABLE submission_answers
+    ADD COLUMN IF NOT EXISTS repeat_index INTEGER NOT NULL DEFAULT 0;

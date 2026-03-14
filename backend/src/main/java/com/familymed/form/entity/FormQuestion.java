@@ -81,9 +81,27 @@ public class FormQuestion extends BaseEntity {
 
     @Column(name = "max_additional_answers")
     private Integer maxAdditionalAnswers;
+
+    @Column(name = "group_id")
+    private String groupId;
+
+    @Column(name = "is_repeatable_group", nullable = false)
+    private Boolean isRepeatableGroup = false;
+
+    @Column(name = "repeat_group_root", nullable = false)
+    private Boolean repeatGroupRoot = false;
+
+    @Column(name = "max_repeat")
+    private Integer maxRepeat;
+
+    @Column(name = "label_add_button")
+    private String labelAddButton;
     
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private java.util.List<QuestionCondition> conditions; // Conditional display/require rules
+
+    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private FamilyDiseaseMatrixConfig matrixConfig;
     
     public enum QuestionType {
         SHORT_TEXT,        // Single line text input
@@ -91,6 +109,9 @@ public class FormQuestion extends BaseEntity {
         NUMBER,            // Numeric input
         SINGLE_CHOICE,     // Radio buttons
         MULTIPLE_CHOICE,   // Checkboxes
+        MULTIPLE_CHOICE_WITH_SUBFIELDS, // Checkboxes with sub-questions for each option
+        SINGLE_CHOICE_WITH_SUBFIELDS, // Radio buttons with sub-questions for selected option
+        MATRIX_FAMILY_DISEASE, // Matrix table for family disease history
         SELECT_DROPDOWN,   // Dropdown select
         DATE,              // Date picker
         BOOLEAN,           // Yes/No toggle

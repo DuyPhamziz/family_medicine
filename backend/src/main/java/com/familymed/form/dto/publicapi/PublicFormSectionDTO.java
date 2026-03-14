@@ -15,4 +15,5 @@ public class PublicFormSectionDTO {
     private String sectionName;
     private Integer sectionOrder;
     private List<PublicFormQuestionDTO> questions;
+    private List<PublicFormQuestionGroupDTO> questionGroups;
 }

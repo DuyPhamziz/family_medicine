@@ -34,4 +34,12 @@ public class SubmissionAnswer extends BaseEntity {
 
     @Column(name = "value", columnDefinition = "TEXT")
     private String value;
+
+    @Column(name = "repeat_index", nullable = true)
+    private Integer repeatIndex = 0;
+
+    @Column(name = "sub_fields_data", columnDefinition = "TEXT")
+    private String subFieldsData; // JSON data for sub-fields answers when MULTIPLE_CHOICE_WITH_SUBFIELDS
+                                   // Example: {"Phế cầu": {"year": "2023", "notes": "Tiêm 2 mũi"},
+                                   //           "HPV": {"year": "2024"}}
 }

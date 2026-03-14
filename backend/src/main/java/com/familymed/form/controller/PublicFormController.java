@@ -1,15 +1,16 @@
 package com.familymed.form.controller;
 
+import com.familymed.form.application.PublicFormSubmitUseCase;
 import com.familymed.form.dto.publicapi.PublicFormDetailDTO;
 import com.familymed.form.dto.publicapi.PublicFormSubmitRequest;
 import com.familymed.form.dto.publicapi.PublicFormSummaryDTO;
 import com.familymed.form.service.PublicFormAntiSpamService;
-import com.familymed.form.service.PublicFormService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,25 +23,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PublicFormController {
     
-    private final PublicFormService publicFormService;
+    private final PublicFormSubmitUseCase publicFormSubmitUseCase;
     private final PublicFormAntiSpamService antiSpamService;
     
     @GetMapping
     public ResponseEntity<List<PublicFormSummaryDTO>> getPublicForms() {
-        return ResponseEntity.ok(publicFormService.getPublicForms());
+        return ResponseEntity.ok(publicFormSubmitUseCase.getPublicForms());
     }
 
     @GetMapping("/{formToken}")
     public ResponseEntity<PublicFormDetailDTO> getPublicForm(
             @PathVariable UUID formToken,
             HttpServletRequest request) {
-        PublicFormDetailDTO form = publicFormService.getPublicForm(formToken);
+        PublicFormDetailDTO form = publicFormSubmitUseCase.getPublicForm(formToken);
         
         // Create session token for anti-spam
         String clientIp = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
         UUID sessionToken = antiSpamService.createSession(
-            publicFormService.getFormIdByToken(formToken), 
+            publicFormSubmitUseCase.getFormIdByToken(formToken), 
             clientIp, 
             userAgent
         );
@@ -48,7 +49,7 @@ public class PublicFormController {
         // Add session token to response
         form.setSessionToken(sessionToken);
         form.setRemainingSubmissions(antiSpamService.getRemainingSubmissions(
-            publicFormService.getFormIdByToken(formToken), 
+            publicFormSubmitUseCase.getFormIdByToken(formToken), 
             clientIp
         ));
         
@@ -62,33 +63,56 @@ public class PublicFormController {
             HttpServletRequest httpRequest) {
         
         String clientIp = getClientIp(httpRequest);
-        return ResponseEntity.ok(publicFormService.submitPublicForm(formToken, request, clientIp));
+        return ResponseEntity.ok(publicFormSubmitUseCase.submitPublicForm(formToken, request, clientIp));
     }
     
     /**
      * Get client IP address from request, handling proxies
      */
     private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
+        String remoteAddr = sanitizeIp(request.getRemoteAddr());
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+
+        // Only trust forwarding headers when request comes from a private/loopback proxy hop.
+        if (isLikelyTrustedProxy(remoteAddr) && xForwardedFor != null && !xForwardedFor.isBlank()) {
+            String forwardedIp = sanitizeIp(xForwardedFor.split(",")[0]);
+            if (forwardedIp != null) {
+                return forwardedIp;
+            }
         }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
+
+        return remoteAddr != null ? remoteAddr : "0.0.0.0";
+    }
+
+    private boolean isLikelyTrustedProxy(String ip) {
+        if (ip == null) {
+            return false;
         }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
+        return ip.startsWith("10.")
+                || ip.startsWith("192.168.")
+                || ip.startsWith("127.")
+                || ip.equals("::1")
+                || ip.startsWith("172.16.")
+                || ip.startsWith("172.17.")
+                || ip.startsWith("172.18.")
+                || ip.startsWith("172.19.")
+                || ip.startsWith("172.2")
+                || ip.startsWith("172.30.")
+                || ip.startsWith("172.31.");
+    }
+
+    private String sanitizeIp(String rawIp) {
+        if (rawIp == null) {
+            return null;
         }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        String ip = rawIp.trim();
+        if (ip.isEmpty() || "unknown".equalsIgnoreCase(ip) || ip.length() > 64) {
+            return null;
         }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
+        try {
+            return InetAddress.getByName(ip).getHostAddress();
+        } catch (Exception ex) {
+            return null;
         }
-        // Take first IP if comma-separated
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
     }
 }

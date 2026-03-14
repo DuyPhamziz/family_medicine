@@ -3,17 +3,20 @@ package com.familymed.form.service;
 import com.familymed.form.dto.publicapi.PublicFormDetailDTO;
 import com.familymed.form.dto.publicapi.PublicFormOptionDTO;
 import com.familymed.form.dto.publicapi.PublicFormQuestionDTO;
+import com.familymed.form.dto.publicapi.PublicFormQuestionGroupDTO;
 import com.familymed.form.dto.publicapi.PublicFormSectionDTO;
 import com.familymed.form.entity.DiagnosticForm;
 import com.familymed.form.entity.FormQuestion;
 import com.familymed.form.entity.FormQuestionOption;
 import com.familymed.form.entity.FormSection;
 import com.familymed.form.entity.FormVersion;
+import com.familymed.form.exception.FormValidationException;
 import com.familymed.form.repository.DiagnosticFormRepository;
 import com.familymed.form.repository.FormVersionRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FormPublishWorkflowService {
 
     private final DiagnosticFormRepository formRepository;
@@ -166,47 +170,102 @@ public class FormPublishWorkflowService {
 
     private void validateDraft(DiagnosticForm form) {
         List<FormSection> sections = form.getSections() == null ? List.of() : form.getSections();
+        
         if (sections.isEmpty()) {
-            throw new RuntimeException("Form must have at least one section before publish");
+            log.error("Form {} has no sections", form.getFormId());
+            throw new FormValidationException("Biểu mẫu phải có ít nhất một phần trước khi công khai");
         }
 
         Set<String> questionCodes = new HashSet<>();
 
         for (FormSection section : sections) {
+            if (section.getSectionId() == null) {
+                log.warn("Form {} has section with null ID", form.getFormId());
+            }
+            
             List<FormQuestion> questions = section.getQuestions() == null ? List.of() : section.getQuestions();
             if (questions.isEmpty()) {
-                throw new RuntimeException("Section has no questions: " + section.getSectionName());
+                log.error("Form {} section {} ({}) has no questions", 
+                    form.getFormId(), section.getSectionId(), section.getSectionName());
+                throw new FormValidationException(
+                    "Phần '" + section.getSectionName() + "' không có câu hỏi nào");
             }
 
             Set<Integer> orderIndices = new HashSet<>();
             for (FormQuestion question : questions) {
-                if (question.getQuestionOrder() == null || !orderIndices.add(question.getQuestionOrder())) {
-                    throw new RuntimeException("Duplicate or missing order_index in section: " + section.getSectionName());
+                // Validate questionOrder
+                if (question.getQuestionOrder() == null) {
+                    log.error("Form {} question {} has null order", 
+                        form.getFormId(), question.getQuestionId());
+                    throw new FormValidationException(
+                        "Câu hỏi phải có thứ tự sắp xếp (order) trong phần '" + section.getSectionName() + "'");
                 }
+                
+                if (!orderIndices.add(question.getQuestionOrder())) {
+                    log.error("Form {} section {} has duplicate order {}", 
+                        form.getFormId(), section.getSectionId(), question.getQuestionOrder());
+                    throw new FormValidationException(
+                        "Phần '" + section.getSectionName() + "' có các câu hỏi với cùng thứ tự sắp xếp: " + 
+                        question.getQuestionOrder());
+                }
+                
+                // Validate question code
                 if (question.getQuestionCode() == null || question.getQuestionCode().isBlank()) {
-                    throw new RuntimeException("Question code is required");
+                    log.error("Form {} question {} has empty code", 
+                        form.getFormId(), question.getQuestionId());
+                    throw new FormValidationException(
+                        "Mỗi câu hỏi phải có mã câu hỏi (question code)");
                 }
+                
+                // Validate question text
                 if (question.getQuestionText() == null || question.getQuestionText().isBlank()) {
-                    throw new RuntimeException("Question label is required for question: " + question.getQuestionCode());
+                    log.error("Form {} question {} ({}) has empty text", 
+                        form.getFormId(), question.getQuestionId(), question.getQuestionCode());
+                    throw new FormValidationException(
+                        "Câu hỏi '" + question.getQuestionCode() + "' phải có nội dung câu hỏi");
                 }
+
+                if (Boolean.TRUE.equals(question.getIsRepeatableGroup())) {
+                    if (question.getGroupId() == null || question.getGroupId().isBlank()) {
+                        throw new FormValidationException(
+                            "Câu hỏi '" + question.getQuestionCode() + "' bật repeat group nhưng thiếu group_id");
+                    }
+                    if (question.getMaxRepeat() != null && question.getMaxRepeat() < 0) {
+                        throw new FormValidationException(
+                            "Câu hỏi '" + question.getQuestionCode() + "' có max_repeat không hợp lệ");
+                    }
+                }
+                
                 questionCodes.add(question.getQuestionCode());
 
+                // Validate choice questions have options
                 String type = question.getQuestionType() == null ? "" : question.getQuestionType().name();
                 if (isChoiceType(type)) {
                     List<FormQuestionOption> options = question.getOptionItems() == null ? List.of() : question.getOptionItems();
                     if (options.isEmpty()) {
-                        throw new RuntimeException("Choice question must have options: " + question.getQuestionCode());
+                        log.error("Form {} choice question {} ({}) has no options", 
+                            form.getFormId(), question.getQuestionId(), question.getQuestionCode());
+                        throw new FormValidationException(
+                            "Câu hỏi lựa chọn '" + question.getQuestionCode() + "' phải có ít nhất một lựa chọn");
                     }
                 }
             }
         }
 
+        // Validate display conditions reference valid questions
         for (FormSection section : sections) {
             List<FormQuestion> questions = section.getQuestions() == null ? List.of() : section.getQuestions();
             for (FormQuestion question : questions) {
-                validateConditionJson(question.getDisplayCondition(), questionCodes, question.getQuestionCode());
+                try {
+                    validateConditionJson(question.getDisplayCondition(), questionCodes, question.getQuestionCode());
+                } catch (FormValidationException ex) {
+                    log.error("Display condition validation failed for question {}", question.getQuestionCode(), ex);
+                    throw ex;
+                }
             }
         }
+        
+        log.info("Form {} validation passed with {} questions", form.getFormId(), questionCodes.size());
     }
 
     private void validateConditionJson(String conditionJson, Set<String> questionCodes, String currentQuestionCode) {
@@ -221,16 +280,24 @@ public class FormPublishWorkflowService {
 
             for (String ref : refs) {
                 if (!questionCodes.contains(ref)) {
-                    throw new RuntimeException("Condition references unknown question code: " + ref);
+                    log.error("Display condition for question {} references unknown question: {}", 
+                        currentQuestionCode, ref);
+                    throw new FormValidationException(
+                        "Điều kiện hiển thị của câu hỏi '" + currentQuestionCode + 
+                        "' tham chiếu đến câu hỏi không tồn tại: '" + ref + "'");
                 }
                 if (ref.equals(currentQuestionCode)) {
-                    throw new RuntimeException("Condition cannot self-reference question: " + currentQuestionCode);
+                    log.error("Question {} has self-referencing display condition", currentQuestionCode);
+                    throw new FormValidationException(
+                        "Câu hỏi '" + currentQuestionCode + "' không thể tham chiếu tới chính nó trong điều kiện hiển thị");
                 }
             }
-        } catch (RuntimeException ex) {
+        } catch (FormValidationException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new RuntimeException("Invalid condition_json for question: " + currentQuestionCode, ex);
+            log.error("Failed to parse display condition for question {}: {}", currentQuestionCode, ex.getMessage());
+            throw new FormValidationException(
+                "Điều kiện hiển thị không hợp lệ cho câu hỏi '" + currentQuestionCode + "': " + ex.getMessage(), ex);
         }
     }
 
@@ -261,6 +328,9 @@ public class FormPublishWorkflowService {
         String normalized = type.toUpperCase(Locale.ROOT);
         return normalized.equals("SINGLE_CHOICE")
                 || normalized.equals("MULTIPLE_CHOICE")
+                || normalized.equals("SINGLE_CHOICE_WITH_SUBFIELDS")
+                || normalized.equals("MULTIPLE_CHOICE_WITH_SUBFIELDS")
+                || normalized.equals("SELECT_DROPDOWN")
                 || normalized.equals("RADIO")
                 || normalized.equals("CHECKBOX");
     }
@@ -295,6 +365,19 @@ public class FormPublishWorkflowService {
         questionMap.put("unit", question.getUnit());
         questionMap.put("formulaExpression", question.getFormulaExpression());
         questionMap.put("displayCondition", question.getDisplayCondition());
+        questionMap.put("groupId", question.getGroupId());
+        questionMap.put("isRepeatableGroup", Boolean.TRUE.equals(question.getIsRepeatableGroup()));
+        questionMap.put("repeatGroupRoot", Boolean.TRUE.equals(question.getRepeatGroupRoot()));
+        questionMap.put("maxRepeat", question.getMaxRepeat());
+        questionMap.put("labelAddButton", question.getLabelAddButton());
+        if (question.getMatrixConfig() != null) {
+            questionMap.put("rows", parseJsonList(question.getMatrixConfig().getRowsJson()));
+            questionMap.put("columns", parseJsonList(question.getMatrixConfig().getColumnsJson()));
+            questionMap.put("allowAdditionalColumn", Boolean.TRUE.equals(question.getMatrixConfig().getAllowAdditionalColumn()));
+            questionMap.put("allowAdditionalRow", Boolean.TRUE.equals(question.getMatrixConfig().getAllowAdditionalRow()));
+            questionMap.put("allow_additional_column", Boolean.TRUE.equals(question.getMatrixConfig().getAllowAdditionalColumn()));
+            questionMap.put("allow_additional_row", Boolean.TRUE.equals(question.getMatrixConfig().getAllowAdditionalRow()));
+        }
 
         questionMap.put("type", question.getQuestionType() == null ? null : question.getQuestionType().name());
         questionMap.put("label", question.getQuestionText());
@@ -310,6 +393,19 @@ public class FormPublishWorkflowService {
         metadataJson.put("validationPattern", question.getValidationPattern());
         metadataJson.put("allowAdditionalAnswers", Boolean.TRUE.equals(question.getAllowAdditionalAnswers()));
         metadataJson.put("maxAdditionalAnswers", question.getMaxAdditionalAnswers());
+        metadataJson.put("groupId", question.getGroupId());
+        metadataJson.put("isRepeatableGroup", Boolean.TRUE.equals(question.getIsRepeatableGroup()));
+        metadataJson.put("repeatGroupRoot", Boolean.TRUE.equals(question.getRepeatGroupRoot()));
+        metadataJson.put("maxRepeat", question.getMaxRepeat());
+        metadataJson.put("labelAddButton", question.getLabelAddButton());
+        if (question.getMatrixConfig() != null) {
+            metadataJson.put("rows", parseJsonList(question.getMatrixConfig().getRowsJson()));
+            metadataJson.put("columns", parseJsonList(question.getMatrixConfig().getColumnsJson()));
+            metadataJson.put("allowAdditionalColumn", Boolean.TRUE.equals(question.getMatrixConfig().getAllowAdditionalColumn()));
+            metadataJson.put("allowAdditionalRow", Boolean.TRUE.equals(question.getMatrixConfig().getAllowAdditionalRow()));
+            metadataJson.put("allow_additional_column", Boolean.TRUE.equals(question.getMatrixConfig().getAllowAdditionalColumn()));
+            metadataJson.put("allow_additional_row", Boolean.TRUE.equals(question.getMatrixConfig().getAllowAdditionalRow()));
+        }
         questionMap.put("metadataJson", metadataJson);
 
         List<Map<String, Object>> optionMaps = new ArrayList<>();
@@ -328,6 +424,7 @@ public class FormPublishWorkflowService {
         optionMap.put("label", option.getOptionText());
         optionMap.put("value", option.getOptionValue() == null ? option.getOptionText() : option.getOptionValue());
         optionMap.put("orderIndex", option.getOptionOrder());
+        optionMap.put("subFieldsConfig", option.getSubFieldsConfig());
         return optionMap;
     }
 
@@ -376,10 +473,41 @@ public class FormPublishWorkflowService {
             }
         }
 
+        Map<String, List<PublicFormQuestionDTO>> groupedQuestions = new LinkedHashMap<>();
+        questions.stream()
+            .filter(q -> q.getGroupId() != null && !q.getGroupId().isBlank())
+            .forEach(q -> groupedQuestions.computeIfAbsent(q.getGroupId(), ignored -> new ArrayList<>()).add(q));
+
+        List<PublicFormQuestionGroupDTO> questionGroups = groupedQuestions.entrySet().stream()
+            .map(entry -> {
+                List<PublicFormQuestionDTO> groupQuestions = entry.getValue();
+                boolean repeatable = groupQuestions.stream().anyMatch(q -> Boolean.TRUE.equals(q.getIsRepeatableGroup()));
+                Integer maxRepeat = groupQuestions.stream()
+                    .map(PublicFormQuestionDTO::getMaxRepeat)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+                String labelAddButton = groupQuestions.stream()
+                    .map(PublicFormQuestionDTO::getLabelAddButton)
+                    .filter(label -> label != null && !label.isBlank())
+                    .findFirst()
+                    .orElse(null);
+
+                return PublicFormQuestionGroupDTO.builder()
+                    .questionGroup(entry.getKey())
+                    .repeatable(repeatable)
+                    .maxRepeat(maxRepeat)
+                    .labelAddButton(labelAddButton)
+                    .questions(groupQuestions)
+                    .build();
+            })
+            .toList();
+
         return PublicFormSectionDTO.builder()
                 .sectionName(asText(sectionNode, "sectionName", ""))
                 .sectionOrder(sectionNode.path("sectionOrder").asInt(0))
                 .questions(questions)
+            .questionGroups(questionGroups)
                 .build();
     }
 
@@ -393,6 +521,7 @@ public class FormPublishWorkflowService {
                 optionDto.setLabel(asText(optionNode, "label", asText(optionNode, "text", null)));
                 optionDto.setValue(asText(optionNode, "value", asText(optionNode, "text", null)));
                 optionDto.setOrderIndex(optionNode.path("orderIndex").isNumber() ? optionNode.path("orderIndex").asInt() : null);
+                optionDto.setSubFieldsConfig(asText(optionNode, "subFieldsConfig", null));
                 options.add(optionDto);
             }
         }
@@ -415,8 +544,43 @@ public class FormPublishWorkflowService {
         dto.setType(asText(node, "type", asText(node, "questionType", null)));
         dto.setLabel(asText(node, "label", asText(node, "questionText", null)));
         dto.setPlaceholder(asText(node, "placeholder", asText(node, "helpText", null)));
+        dto.setGroupId(readStringValue(node, "groupId", "metadataJson", "groupId"));
+        dto.setIsRepeatableGroup(readBooleanValue(node, "isRepeatableGroup", "metadataJson", "isRepeatableGroup", false));
+        dto.setRepeatGroupRoot(readBooleanValue(node, "repeatGroupRoot", "metadataJson", "repeatGroupRoot", false));
+        dto.setMaxRepeat(readIntegerValue(node, "maxRepeat", "metadataJson", "maxRepeat"));
+        dto.setLabelAddButton(readStringValue(node, "labelAddButton", "metadataJson", "labelAddButton"));
+        dto.setRows(readObjectListValue(node, "rows", "metadataJson", "rows"));
+        dto.setColumns(readObjectListValue(node, "columns", "metadataJson", "columns"));
+        dto.setAllowAdditionalColumn(readBooleanValueWithAliases(node, "allowAdditionalColumn", "allow_additional_column", "metadataJson", "allowAdditionalColumn", false));
+        dto.setAllowAdditionalRow(readBooleanValueWithAliases(node, "allowAdditionalRow", "allow_additional_row", "metadataJson", "allowAdditionalRow", false));
         dto.setOptions(options);
         return dto;
+    }
+
+    private List<Map<String, Object>> parseJsonList(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            JsonNode node = objectMapper.readTree(json);
+            if (!node.isArray()) {
+                return List.of();
+            }
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (JsonNode item : node) {
+                if (item.isObject()) {
+                    result.add(objectMapper.convertValue(item, Map.class));
+                } else if (item.isTextual()) {
+                    result.add(Map.of(
+                        "key", slugify(item.asText()),
+                        "label", item.asText()
+                    ));
+                }
+            }
+            return result;
+        } catch (Exception ex) {
+            return List.of();
+        }
     }
 
     private String asText(JsonNode node, String field, String fallback) {
@@ -436,5 +600,101 @@ public class FormPublishWorkflowService {
         } catch (IllegalArgumentException ex) {
             return null;
         }
+    }
+
+    private String readStringValue(JsonNode node, String topLevelField, String metadataField, String metadataKey) {
+        String topLevelValue = asText(node, topLevelField, null);
+        if (topLevelValue != null) {
+            return topLevelValue;
+        }
+
+        JsonNode metadataNode = node.path(metadataField);
+        if (metadataNode.isObject() && metadataNode.has(metadataKey) && !metadataNode.get(metadataKey).isNull()) {
+            String value = metadataNode.get(metadataKey).asText();
+            return value == null || value.isBlank() ? null : value;
+        }
+        return null;
+    }
+
+    private Boolean readBooleanValue(JsonNode node, String topLevelField, String metadataField, String metadataKey, boolean fallback) {
+        if (node.has(topLevelField) && !node.get(topLevelField).isNull()) {
+            return node.get(topLevelField).asBoolean(fallback);
+        }
+
+        JsonNode metadataNode = node.path(metadataField);
+        if (metadataNode.isObject() && metadataNode.has(metadataKey) && !metadataNode.get(metadataKey).isNull()) {
+            return metadataNode.get(metadataKey).asBoolean(fallback);
+        }
+        return fallback;
+    }
+
+    private Integer readIntegerValue(JsonNode node, String topLevelField, String metadataField, String metadataKey) {
+        if (node.has(topLevelField) && node.get(topLevelField).isNumber()) {
+            return node.get(topLevelField).asInt();
+        }
+
+        JsonNode metadataNode = node.path(metadataField);
+        if (metadataNode.isObject() && metadataNode.has(metadataKey) && metadataNode.get(metadataKey).isNumber()) {
+            return metadataNode.get(metadataKey).asInt();
+        }
+        return null;
+    }
+
+    private Boolean readBooleanValueWithAliases(JsonNode node, String topLevelField, String topLevelAlias, String metadataField, String metadataKey, boolean fallback) {
+        if (node.has(topLevelField) && !node.get(topLevelField).isNull()) {
+            return node.get(topLevelField).asBoolean(fallback);
+        }
+        if (node.has(topLevelAlias) && !node.get(topLevelAlias).isNull()) {
+            return node.get(topLevelAlias).asBoolean(fallback);
+        }
+
+        JsonNode metadataNode = node.path(metadataField);
+        if (metadataNode.isObject()) {
+            if (metadataNode.has(metadataKey) && !metadataNode.get(metadataKey).isNull()) {
+                return metadataNode.get(metadataKey).asBoolean(fallback);
+            }
+            if (metadataNode.has(topLevelAlias) && !metadataNode.get(topLevelAlias).isNull()) {
+                return metadataNode.get(topLevelAlias).asBoolean(fallback);
+            }
+        }
+        return fallback;
+    }
+
+    private List<Map<String, Object>> readObjectListValue(JsonNode node, String topLevelField, String metadataField, String metadataKey) {
+        JsonNode source = node.path(topLevelField);
+        if (source.isMissingNode() || source.isNull()) {
+            JsonNode metadataNode = node.path(metadataField);
+            if (metadataNode.isObject()) {
+                source = metadataNode.path(metadataKey);
+            }
+        }
+
+        if (!source.isArray()) {
+            return List.of();
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (JsonNode item : source) {
+            if (item.isObject()) {
+                result.add(objectMapper.convertValue(item, Map.class));
+            } else if (item.isTextual()) {
+                result.add(Map.of(
+                    "key", slugify(item.asText()),
+                    "label", item.asText()
+                ));
+            }
+        }
+        return result;
+    }
+
+    private String slugify(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .trim()
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_+|_+$", "");
     }
 }

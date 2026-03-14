@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Wrench } from "lucide-react";
 import api from "../../../service/api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import AdminSearchBar from "../../../components/admin/AdminSearchBar";
@@ -41,6 +41,11 @@ const EMPTY_CONFIRM_DIALOG = {
   title: "",
   description: "",
   onConfirm: null,
+};
+
+const extractQuestionCodeFromPublishError = (message = "") => {
+  const match = message.match(/Cau hoi lua chon '([^']+)'/i);
+  return match?.[1] || null;
 };
 
 const initialState = {
@@ -409,7 +414,24 @@ const AdminFormManagement = () => {
       await loadForms();
     } catch (error) {
       console.error("Error save+publish form:", error);
-      showError(error?.response?.data?.message || "Lỗi khi lưu và publish biểu mẫu");
+      const backendMessage = error?.response?.data?.message || "Lỗi khi lưu và publish biểu mẫu";
+      const questionCode = extractQuestionCodeFromPublishError(backendMessage);
+      showError(backendMessage);
+
+      if (questionCode) {
+        dispatch({
+          type: actions.OPEN_CONFIRM,
+          payload: {
+            open: true,
+            title: "Lỗi cấu hình câu hỏi",
+            description: `Câu hỏi '${questionCode}' chưa có lựa chọn. Mở màn hình câu hỏi để sửa ngay?`,
+            onConfirm: async () => {
+              dispatch({ type: actions.CLOSE_CONFIRM });
+              navigate(`/system/admin/forms/${targetFormId}/questions?focusCode=${encodeURIComponent(questionCode)}`);
+            },
+          },
+        });
+      }
     }
   };
 
@@ -420,7 +442,80 @@ const AdminFormManagement = () => {
       await loadForms();
     } catch (error) {
       console.error("Error publishing form:", error);
-      showError(error?.response?.data?.message || "Không thể publish form");
+      const backendMessage = error?.response?.data?.message || "Không thể publish form";
+      const questionCode = extractQuestionCodeFromPublishError(backendMessage);
+      showError(backendMessage);
+
+      if (questionCode) {
+        dispatch({
+          type: actions.OPEN_CONFIRM,
+          payload: {
+            open: true,
+            title: "Lỗi cấu hình câu hỏi",
+            description: `Hệ thống phát hiện câu hỏi '${questionCode}' chưa có lựa chọn. Bạn có muốn mở màn hình câu hỏi để sửa ngay không?`,
+            onConfirm: async () => {
+              dispatch({ type: actions.CLOSE_CONFIRM });
+              navigate(`/system/admin/forms/${formId}/questions?focusCode=${encodeURIComponent(questionCode)}`);
+            },
+          },
+        });
+      }
+    }
+  };
+
+  const handleFixDuplicateOrders = async (formId) => {
+    try {
+      // Fetch form details with all sections and questions
+      const response = await api.get(`/api/forms/admin/${formId}`);
+      const sections = response.data.sections || [];
+      
+      let fixedCount = 0;
+      const fixPromises = [];
+
+      for (const section of sections) {
+        const questions = section.questions || [];
+        if (questions.length === 0) continue;
+
+        // Check for duplicate orders
+        const orders = questions.map(q => q.questionOrder);
+        const hasDuplicates = orders.length !== new Set(orders).size;
+
+        if (hasDuplicates) {
+          // Renumber all questions in this section (1, 2, 3, ...)
+          const questionOrders = questions
+            .sort((a, b) => {
+              // Sort by current order, then by questionId as tiebreaker
+              if (a.questionOrder !== b.questionOrder) {
+                return a.questionOrder - b.questionOrder;
+              }
+              return a.questionId.localeCompare(b.questionId);
+            })
+            .map((q, index) => ({
+              questionId: q.questionId,
+              newOrder: index + 1,
+            }));
+
+          fixPromises.push(
+            api.put("/api/forms/admin/questions/reorder", {
+              sectionId: section.sectionId,
+              questionOrders,
+            })
+          );
+          fixedCount++;
+        }
+      }
+
+      if (fixedCount === 0) {
+        showSuccess("Không tìm thấy lỗi duplicate order nào");
+        return;
+      }
+
+      await Promise.all(fixPromises);
+      showSuccess(`Đã fix ${fixedCount} section(s) có duplicate order`);
+      await loadForms();
+    } catch (error) {
+      console.error("Error fixing duplicate orders:", error);
+      showError(error?.response?.data?.message || "Không thể fix duplicate orders");
     }
   };
 
@@ -502,6 +597,16 @@ const AdminFormManagement = () => {
           onClick={() => dispatch({ type: actions.OPEN_FORM_EDIT, payload: form })}
         >
           <Edit2 className="w-4 h-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
+          disabled={Boolean(form.isMaster)}
+          onClick={() => handleFixDuplicateOrders(form.formId)}
+          title="Tự động sửa lỗi duplicate order numbers"
+        >
+          <Wrench className="w-4 h-4" />
         </Button>
         <Button
           size="sm"

@@ -18,6 +18,7 @@ public class FormQuestionOptionDTO {
     private String optionValue;
     private Integer optionOrder;
     private Integer points;
+    private String subFieldsConfig;
 
     public static FormQuestionOptionDTO fromOption(FormQuestionOption option) {
         return FormQuestionOptionDTO.builder()
@@ -26,6 +27,7 @@ public class FormQuestionOptionDTO {
                 .optionValue(option.getOptionValue())
                 .optionOrder(option.getOptionOrder())
                 .points(option.getPoints())
+                .subFieldsConfig(option.getSubFieldsConfig())
                 .build();
     }
 }

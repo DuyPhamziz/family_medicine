@@ -12,4 +12,5 @@ public class CreateQuestionOptionRequest {
     private String optionValue;
     private Integer optionOrder;
     private Integer points;
+    private String subFieldsConfig;
 }

@@ -26,9 +26,21 @@ public class PublicFormAntiSpamService {
     
     // Configuration constants
     private static final int MAX_SUBMISSIONS_PER_IP_PER_DAY = 10;
+    private static final int MAX_SUBMISSIONS_LOCALHOST = 1000; // More lenient for development
     private static final int MAX_SESSIONS_PER_IP_PER_HOUR = 20;
+    private static final int MAX_SESSIONS_LOCALHOST = 1000; // More lenient for development
     private static final int MIN_FORM_FILL_TIME_SECONDS = 5; // Too fast = bot
     private static final int SESSION_EXPIRY_HOURS = 2;
+    
+    /**
+     * Check if IP is localhost (development environment)
+     */
+    private boolean isLocalhost(String ip) {
+        return "127.0.0.1".equals(ip) || 
+               "0:0:0:0:0:0:0:1".equals(ip) || 
+               "::1".equals(ip) ||
+               "localhost".equalsIgnoreCase(ip);
+    }
     
     /**
      * Create a new session token when user opens the form
@@ -39,7 +51,10 @@ public class PublicFormAntiSpamService {
         LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
         long recentSessions = sessionRepository.countByClientIpAndCreatedAtAfter(clientIp, oneHourAgo);
         
-        if (recentSessions >= MAX_SESSIONS_PER_IP_PER_HOUR) {
+        // Use higher limit for localhost to support development (React Strict Mode causes duplicate calls)
+        int maxSessions = isLocalhost(clientIp) ? MAX_SESSIONS_LOCALHOST : MAX_SESSIONS_PER_IP_PER_HOUR;
+        
+        if (recentSessions >= maxSessions) {
             log.warn("IP {} exceeded session creation limit: {} sessions in 1 hour", clientIp, recentSessions);
             throw new RuntimeException("Quá nhiều yêu cầu từ địa chỉ IP của bạn. Vui lòng thử lại sau.");
         }
@@ -129,13 +144,15 @@ public class PublicFormAntiSpamService {
             }
             
             // Check submission count
-            if (rateLimit.getSubmissionCount() >= MAX_SUBMISSIONS_PER_IP_PER_DAY) {
+            int maxSubmissions = isLocalhost(clientIp) ? MAX_SUBMISSIONS_LOCALHOST : MAX_SUBMISSIONS_PER_IP_PER_DAY;
+            
+            if (rateLimit.getSubmissionCount() >= maxSubmissions) {
                 log.warn("IP {} exceeded daily limit for form {}: {} submissions", 
                         clientIp, formId, rateLimit.getSubmissionCount());
                 rateLimit.setBlocked(true);
                 rateLimitRepository.save(rateLimit);
                 throw new RuntimeException("Bạn đã đạt giới hạn gửi form hôm nay (" + 
-                        MAX_SUBMISSIONS_PER_IP_PER_DAY + " lần). Vui lòng thử lại vào ngày mai.");
+                        maxSubmissions + " lần). Vui lòng thử lại vào ngày mai.");
             }
             
             // Increment count
@@ -151,9 +168,10 @@ public class PublicFormAntiSpamService {
         session.setSubmissionId(submissionId);
         sessionRepository.save(session);
         
+        int maxSubmissionsForLog = isLocalhost(clientIp) ? MAX_SUBMISSIONS_LOCALHOST : MAX_SUBMISSIONS_PER_IP_PER_DAY;
         log.info("Validated submission {} for session {} from IP {} (attempt {}/{})", 
                 submissionId, sessionToken, clientIp, 
-                rateLimit.getSubmissionCount(), MAX_SUBMISSIONS_PER_IP_PER_DAY);
+                rateLimit.getSubmissionCount(), maxSubmissionsForLog);
     }
     
     /**
@@ -175,14 +193,16 @@ public class PublicFormAntiSpamService {
                 .findByClientIpAndFormIdAndSubmissionDateAfter(clientIp, formId, oneDayAgo)
                 .orElse(null);
         
+        int maxSubmissions = isLocalhost(clientIp) ? MAX_SUBMISSIONS_LOCALHOST : MAX_SUBMISSIONS_PER_IP_PER_DAY;
+        
         if (rateLimit == null) {
-            return MAX_SUBMISSIONS_PER_IP_PER_DAY;
+            return maxSubmissions;
         }
         
         if (Boolean.TRUE.equals(rateLimit.getBlocked())) {
             return 0;
         }
         
-        return Math.max(0, MAX_SUBMISSIONS_PER_IP_PER_DAY - rateLimit.getSubmissionCount());
+        return Math.max(0, maxSubmissions - rateLimit.getSubmissionCount());
     }
 }

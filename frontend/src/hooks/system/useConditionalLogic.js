@@ -19,13 +19,22 @@ export const useConditionalLogic = () => {
       case 'equals':
         return String(actual) === String(expected);
       case 'notequals':
+      case 'not_equals':
         return String(actual) !== String(expected);
       case 'contains':
         return String(actual).includes(String(expected));
       case 'greaterthan':
+      case 'greater_than':
         return Number(actual) > Number(expected);
       case 'lessthan':
+      case 'less_than':
         return Number(actual) < Number(expected);
+      case 'greaterthanorequal':
+      case 'greater_than_or_equal':
+        return Number(actual) >= Number(expected);
+      case 'lessthanorequal':
+      case 'less_than_or_equal':
+        return Number(actual) <= Number(expected);
       case 'in':
         return Array.isArray(expected) && expected.some(v => String(v) === String(actual));
       default:
@@ -88,6 +97,10 @@ export const useConditionalLogic = () => {
 
   // convert a single rule from displayCondition into the internal "rules" format
   const convertDisplayRule = (rule) => {
+    if (rule && rule.rules) {
+      return convertDisplayRule(rule.rules);
+    }
+
     // If rule already appears to be in "internal" format (has AND/OR/NOT), just return it
     if (rule && (rule.AND || rule.OR || rule.NOT)) {
       return rule;

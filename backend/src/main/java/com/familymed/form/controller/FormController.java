@@ -1,10 +1,10 @@
 package com.familymed.form.controller;
 
+import com.familymed.form.application.FormPublishUseCase;
 import com.familymed.form.dto.DiagnosticFormDTO;
 import com.familymed.form.dto.PatientFormSubmissionDTO;
 import com.familymed.form.dto.publicapi.PublicFormDetailDTO;
 import com.familymed.form.entity.FormVersion;
-import com.familymed.form.service.FormPublishWorkflowService;
 import com.familymed.form.service.FormService;
 import com.familymed.form.service.MasterFormService;
 import com.familymed.user.repository.UserRepository;
@@ -25,7 +25,7 @@ public class FormController {
 
     private final FormService formService;
     private final MasterFormService masterFormService;
-    private final FormPublishWorkflowService publishWorkflowService;
+    private final FormPublishUseCase formPublishUseCase;
     private final UserRepository userRepository;
 
     @GetMapping
@@ -92,11 +92,12 @@ public class FormController {
     @PostMapping("/{id}/publish")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<FormVersion> publishForm(@PathVariable UUID id) {
-        return ResponseEntity.ok(publishWorkflowService.publishForm(id));
+        return ResponseEntity.ok(formPublishUseCase.publish(id));
     }
 
     @GetMapping("/{id}/public")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
     public ResponseEntity<PublicFormDetailDTO> getPublishedForm(@PathVariable UUID id) {
-        return ResponseEntity.ok(publishWorkflowService.getPublishedForm(id));
+        return ResponseEntity.ok(formPublishUseCase.getPublishedForm(id));
     }
 }

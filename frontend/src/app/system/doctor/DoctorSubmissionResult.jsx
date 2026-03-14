@@ -84,8 +84,43 @@ export const DoctorSubmissionResult = () => {
     }));
   };
 
+  const translateCodeValue = (value) => {
+    if (value === null || value === undefined) return '';
+    const stringValue = String(value).trim();
+    if (!stringValue) return '';
+
+    const translations = {
+      YES: 'Có',
+      NO: 'Không',
+      TRUE: 'Có',
+      FALSE: 'Không',
+      GOOD: 'Tốt',
+      BAD: 'Kém',
+      WARNING: 'Cảnh báo',
+      NONE: 'Không',
+      HIGH: 'Cao',
+      MEDIUM: 'Trung bình',
+      LOW: 'Thấp',
+      MALE: 'Nam',
+      FEMALE: 'Nữ',
+      OTHER: 'Khác',
+      POOR: 'Kém',
+      FAIR: 'Trung bình',
+      NORMAL: 'Bình thường',
+      VERY_GOOD: 'Rất tốt',
+      VERY_BAD: 'Rất kém',
+    };
+
+    const key = stringValue.toUpperCase();
+    if (translations[key]) {
+      return translations[key];
+    }
+
+    return stringValue;
+  };
+
   const formatAnswer = (answer) => {
-    if (!answer) return 'N/A';
+    if (answer === null || answer === undefined || answer === '') return '';
     
     // Nếu là string, thử parse JSON
     let parsedAnswer = answer;
@@ -97,7 +132,7 @@ export const DoctorSubmissionResult = () => {
         }
       } catch (e) {
         // Không phải JSON hợp lệ, giữ nguyên string
-        return answer;
+        return translateCodeValue(answer);
       }
     }
     
@@ -107,9 +142,8 @@ export const DoctorSubmissionResult = () => {
       // Join các giá trị, format đẹp hơn
       return parsedAnswer
         .map(item => {
-          // Chuyển từ UPPERCASE sang Title Case
           if (typeof item === 'string') {
-            return item.charAt(0).toUpperCase() + item.slice(1).toLowerCase();
+            return translateCodeValue(item);
           }
           return item;
         })
@@ -122,7 +156,7 @@ export const DoctorSubmissionResult = () => {
     }
     
     // String bình thường
-    return parsedAnswer;
+    return translateCodeValue(parsedAnswer);
   };
 
   const getAssessmentClass = (assessment) => {
@@ -193,7 +227,7 @@ export const DoctorSubmissionResult = () => {
           </div>
           <div className="patient-field">
             <label>Mã bệnh nhân</label>
-            <p className="patient-value">{result.patientCode || 'N/A'}</p>
+            <p className="patient-value">{result.patientCode || ''}</p>
           </div>
           <div className="patient-field">
             <label>Email</label>
@@ -349,7 +383,7 @@ function getRiskLevelClass(level) {
 }
 
 function formatRiskLevel(level) {
-  if (!level) return 'N/A';
+  if (!level) return '';
   const lower = level.toLowerCase();
   if (lower.includes('cao') || lower.includes('high')) return '⚠️ CAO';
   if (lower.includes('vừa') || lower.includes('medium')) return '⚡ VỪA';
@@ -358,7 +392,7 @@ function formatRiskLevel(level) {
 }
 
 function formatDate(dateTime) {
-  if (!dateTime) return 'N/A';
+  if (!dateTime) return '';
   const date = new Date(dateTime);
   return date.toLocaleDateString('vi-VN', {
     year: 'numeric',

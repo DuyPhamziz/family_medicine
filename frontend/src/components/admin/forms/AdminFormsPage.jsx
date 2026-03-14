@@ -5,7 +5,7 @@ import FormModal from "./FormModal";
 
 const AdminFormsPage = () => {
   const navigate = useNavigate();
-  const { forms, loading, error, reload, saveForm, removeForm, createVersion, publishForm } = useAdminForms();
+  const { forms, loading, error, reload, saveForm, removeForm, createVersion, publishForm, duplicateForm } = useAdminForms();
   const [search, setSearch] = useState("");
   const [activeForm, setActiveForm] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -68,6 +68,21 @@ const AdminFormsPage = () => {
     if (!window.confirm("Publish current draft of this form to public snapshot?")) return;
     await publishForm(form.formId);
     reload();
+  };
+
+  const handleCopyForm = async (form) => {
+    try {
+      await duplicateForm(form.formId);
+      reload();
+      // Optional: Show success notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed bottom-4 right-4 bg-emerald-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      notification.textContent = `'${form.formName}' duplicated successfully`;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    } catch (error) {
+      alert('Failed to duplicate form: ' + (error.response?.data?.message || error.message));
+    }
   };
 
   if (loading) {
@@ -174,6 +189,12 @@ const AdminFormsPage = () => {
                 className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-sky-200 hover:bg-sky-50"
               >
                 Edit
+              </button>
+              <button
+                onClick={() => handleCopyForm(form)}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-purple-200 hover:bg-purple-50"
+              >
+                Copy
               </button>
               <button
                 onClick={() => handleCreateVersion(form)}

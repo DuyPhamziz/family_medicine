@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,5 +31,16 @@ public class PublicFormQuestionDTO {
     private String type;
     private String label;
     private String placeholder;
+    private String groupId;
+    private Boolean isRepeatableGroup;
+    private Boolean repeatGroupRoot;
+    private Integer maxRepeat;
+    private String labelAddButton;
+    private List<java.util.Map<String, Object>> rows;
+    private List<java.util.Map<String, Object>> columns;
+    @JsonProperty("allow_additional_column")
+    private Boolean allowAdditionalColumn;
+    @JsonProperty("allow_additional_row")
+    private Boolean allowAdditionalRow;
     private List<PublicFormOptionDTO> options;
 }

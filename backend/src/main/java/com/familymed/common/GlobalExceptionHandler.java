@@ -1,5 +1,6 @@
 package com.familymed.common;
 
+import com.familymed.form.exception.FormValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -53,6 +54,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Access denied"));
     }
 
+    @ExceptionHandler(FormValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFormValidationException(FormValidationException ex) {
+        logger.warn("Form validation error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("Lỗi xác thực biểu mẫu: " + ex.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Void>> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -67,7 +75,23 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequestBody(HttpMessageNotReadableException ex) {
+        String message = "Malformed request body";
+        
+        // Provide more specific error messages for specific cases
+        if (ex.getCause() instanceof com.fasterxml.jackson.databind.JsonMappingException jsonEx) {
+            String fieldPath = jsonEx.getPath().stream()
+                    .map(Object::toString)
+                    .reduce((a, b) -> a + "." + b)
+                    .orElse("unknown field");
+            message = String.format("Lỗi chuyển đổi dữ liệu tại: %s. Kiểm tra kiểu dữ liệu gửi lên.", fieldPath);
+        } else if (ex.getCause() != null) {
+            String cause = ex.getCause().getMessage();
+            if (cause != null && cause.contains("UUID")) {
+                message = "rootQuestionId phải là UUID hợp lệ";
+            }
+        }
+        
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Malformed request body"));
+                .body(ApiResponse.error(message));
     }
 }

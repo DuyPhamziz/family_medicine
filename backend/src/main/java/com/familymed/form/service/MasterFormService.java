@@ -2,6 +2,7 @@ package com.familymed.form.service;
 
 import com.familymed.form.dto.DiagnosticFormDTO;
 import com.familymed.form.entity.DiagnosticForm;
+import com.familymed.form.entity.FamilyDiseaseMatrixConfig;
 import com.familymed.form.entity.FormQuestion;
 import com.familymed.form.entity.FormQuestionOption;
 import com.familymed.form.entity.FormSection;
@@ -189,6 +190,15 @@ public class MasterFormService {
         clone.setFormulaExpression(source.getFormulaExpression());
         clone.setAllowAdditionalAnswers(Boolean.TRUE.equals(source.getAllowAdditionalAnswers()));
         clone.setMaxAdditionalAnswers(source.getMaxAdditionalAnswers());
+        if (source.getMatrixConfig() != null) {
+            FamilyDiseaseMatrixConfig matrixConfig = new FamilyDiseaseMatrixConfig();
+            matrixConfig.setRowsJson(source.getMatrixConfig().getRowsJson());
+            matrixConfig.setColumnsJson(source.getMatrixConfig().getColumnsJson());
+            matrixConfig.setAllowAdditionalColumn(Boolean.TRUE.equals(source.getMatrixConfig().getAllowAdditionalColumn()));
+            matrixConfig.setAllowAdditionalRow(Boolean.TRUE.equals(source.getMatrixConfig().getAllowAdditionalRow()));
+            matrixConfig.setQuestion(clone);
+            clone.setMatrixConfig(matrixConfig);
+        }
 
         List<FormQuestionOption> optionItems = source.getOptionItems() == null ? List.of() : source.getOptionItems();
         if (!optionItems.isEmpty()) {
@@ -262,6 +272,15 @@ public class MasterFormService {
         if (isBlank(base.getFormulaExpression()) && !isBlank(incoming.getFormulaExpression())) {
             base.setFormulaExpression(incoming.getFormulaExpression());
         }
+        if (base.getMatrixConfig() == null && incoming.getMatrixConfig() != null) {
+            FamilyDiseaseMatrixConfig matrixConfig = new FamilyDiseaseMatrixConfig();
+            matrixConfig.setQuestion(base);
+            matrixConfig.setRowsJson(incoming.getMatrixConfig().getRowsJson());
+            matrixConfig.setColumnsJson(incoming.getMatrixConfig().getColumnsJson());
+            matrixConfig.setAllowAdditionalColumn(Boolean.TRUE.equals(incoming.getMatrixConfig().getAllowAdditionalColumn()));
+            matrixConfig.setAllowAdditionalRow(Boolean.TRUE.equals(incoming.getMatrixConfig().getAllowAdditionalRow()));
+            base.setMatrixConfig(matrixConfig);
+        }
 
         base.setAllowAdditionalAnswers(Boolean.TRUE.equals(base.getAllowAdditionalAnswers())
             || Boolean.TRUE.equals(incoming.getAllowAdditionalAnswers()));
@@ -292,7 +311,14 @@ public class MasterFormService {
             if (option == null) {
                 continue;
             }
-            byKey.putIfAbsent(optionKey(option), cloneDetachedOption(option));
+            String key = optionKey(option);
+            FormQuestionOption existing = byKey.get(key);
+            if (existing == null) {
+                byKey.put(key, cloneDetachedOption(option));
+            } else if ((existing.getSubFieldsConfig() == null || existing.getSubFieldsConfig().isBlank())
+                && option.getSubFieldsConfig() != null && !option.getSubFieldsConfig().isBlank()) {
+                existing.setSubFieldsConfig(option.getSubFieldsConfig());
+            }
         }
 
         int index = 1;
@@ -342,6 +368,7 @@ public class MasterFormService {
         clone.setOptionValue(source.getOptionValue());
         clone.setOptionOrder(source.getOptionOrder());
         clone.setPoints(source.getPoints());
+        clone.setSubFieldsConfig(source.getSubFieldsConfig());
         return clone;
     }
 
@@ -390,6 +417,15 @@ public class MasterFormService {
         clone.setFormulaExpression(source.getFormulaExpression());
         clone.setAllowAdditionalAnswers(Boolean.TRUE.equals(source.getAllowAdditionalAnswers()));
         clone.setMaxAdditionalAnswers(source.getMaxAdditionalAnswers());
+        if (source.getMatrixConfig() != null) {
+            FamilyDiseaseMatrixConfig matrixConfig = new FamilyDiseaseMatrixConfig();
+            matrixConfig.setRowsJson(source.getMatrixConfig().getRowsJson());
+            matrixConfig.setColumnsJson(source.getMatrixConfig().getColumnsJson());
+            matrixConfig.setAllowAdditionalColumn(Boolean.TRUE.equals(source.getMatrixConfig().getAllowAdditionalColumn()));
+            matrixConfig.setAllowAdditionalRow(Boolean.TRUE.equals(source.getMatrixConfig().getAllowAdditionalRow()));
+            matrixConfig.setQuestion(clone);
+            clone.setMatrixConfig(matrixConfig);
+        }
 
         List<FormQuestionOption> sourceOptions = source.getOptionItems();
         if (sourceOptions != null && !sourceOptions.isEmpty()) {
@@ -404,6 +440,7 @@ public class MasterFormService {
                     optionClone.setOptionValue(option.getOptionValue());
                     optionClone.setOptionOrder(option.getOptionOrder());
                     optionClone.setPoints(option.getPoints());
+                    optionClone.setSubFieldsConfig(option.getSubFieldsConfig());
                     return optionClone;
                 })
                 .toList();

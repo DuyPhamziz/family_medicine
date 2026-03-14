@@ -99,6 +99,15 @@ const DoctorPublicSubmissions = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const formatRiskLevel = (level) => {
+    if (!level) return '';
+    const upper = String(level).toUpperCase();
+    if (upper === 'HIGH') return 'Cao';
+    if (upper === 'MEDIUM') return 'Trung bình';
+    if (upper === 'LOW') return 'Thấp';
+    return level;
+  };
   
   const handleOpenDeleteModal = (submission) => {
     setDeleteModal({
@@ -149,9 +158,20 @@ const DoctorPublicSubmissions = () => {
     });
   };
 
-  const handleExportSubmission = async (submission) => {
+  const handleExportSubmission = async (submissionOrId) => {
     try {
-      const response = await api.post(`/api/export/submission/${submission.submissionId}`, {}, {
+      const submissionId = typeof submissionOrId === 'string'
+        ? submissionOrId
+        : submissionOrId?.submissionId;
+
+      if (!submissionId) {
+        alert('Không tìm thấy mã submission để xuất Excel. Vui lòng tải lại trang và thử lại.');
+        return;
+      }
+
+      const submission = typeof submissionOrId === 'object' ? submissionOrId : null;
+
+      const response = await api.post(`/api/export/submission/${submissionId}`, {}, {
         responseType: 'blob'
       });
 
@@ -176,7 +196,7 @@ const DoctorPublicSubmissions = () => {
 
       const disposition = response.headers['content-disposition'];
       const filenameMatch = disposition?.match(/filename="?([^";]+)"?/);
-      const fallback = filenameMatch?.[1] || `submission_${submission.submissionId}`;
+      const fallback = filenameMatch?.[1] || `submission_${submissionId}`;
 
       const filenameBase = parts.length > 0 ? parts.join('_') : fallback;
       const filename = `${filenameBase}_${timestamp}.xlsx`;
@@ -394,7 +414,7 @@ const DoctorPublicSubmissions = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500">Mức độ rủi ro:</span>
                       <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getRiskLevelColor(submission.riskLevel)}`}>
-                        {submission.riskLevel}
+                        {formatRiskLevel(submission.riskLevel)}
                       </span>
                     </div>
                   )}
@@ -420,7 +440,7 @@ const DoctorPublicSubmissions = () => {
                   )}
                   <button
                     className="px-3 py-2 bg-cyan-600 text-white rounded-lg text-sm font-medium hover:bg-cyan-700 transition-colors flex items-center justify-center gap-2"
-                    onClick={() => handleExportSubmission(submission.submissionId)}
+                    onClick={() => handleExportSubmission(submission)}
                     title="Xuất Excel"
                   >
                     <Download size={14} />
@@ -508,7 +528,7 @@ const DoctorPublicSubmissions = () => {
                         )}
                         <button
                           className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-                          onClick={() => handleExportSubmission(submission.submissionId)}
+                          onClick={() => handleExportSubmission(submission)}
                           title="Xuất Excel"
                         >
                           <Download size={16} />
@@ -543,7 +563,7 @@ const DoctorPublicSubmissions = () => {
           <button
             disabled={pagination.page === 0}
             onClick={() => loadSubmissions(pagination.page - 1, filterStatus)}
-            className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm sm:text-base"
+            className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             Trang trước
           </button>
@@ -553,7 +573,7 @@ const DoctorPublicSubmissions = () => {
           <button
             disabled={pagination.page >= pagination.totalPages - 1}
             onClick={() => loadSubmissions(pagination.page + 1, filterStatus)}
-            className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm sm:text-base"
+            className="px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed text-sm sm:text-base"
           >
             Trang sau
           </button>

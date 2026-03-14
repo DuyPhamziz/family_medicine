@@ -3,6 +3,7 @@ import {
   createAdminForm,
   createAdminFormVersion,
   deleteAdminForm,
+  duplicateAdminForm,
   getAdminForms,
   publishAdminForm,
   updateAdminForm,
@@ -50,6 +51,10 @@ export const useAdminForms = () => {
     return publishAdminForm(formId);
   };
 
+  const duplicateForm = async (formId) => {
+    return duplicateAdminForm(formId);
+  };
+
   return {
     forms,
     loading,
@@ -59,5 +64,6 @@ export const useAdminForms = () => {
     removeForm,
     createVersion,
     publishForm,
+    duplicateForm,
   };
 };

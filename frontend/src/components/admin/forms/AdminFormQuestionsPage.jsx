@@ -67,7 +67,15 @@ const AdminFormQuestionsPage = () => {
 
   const handleCreateQuestion = () => {
     if (!activeSectionId) return;
-    setEditingQuestion(null);
+    
+    // Calculate next question order
+    const activeSection = sections.find(s => s.sectionId === activeSectionId);
+    const maxOrder = activeSection?.questions?.length > 0 
+      ? Math.max(...activeSection.questions.map(q => q.questionOrder || 0))
+      : 0;
+    const nextOrder = maxOrder + 1;
+    
+    setEditingQuestion({ questionOrder: nextOrder }); // Pre-set the order
     setQuestionModalOpen(true);
   };
 

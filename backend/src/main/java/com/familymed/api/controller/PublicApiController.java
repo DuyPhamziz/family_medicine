@@ -30,19 +30,25 @@ public class PublicApiController {
     public ResponseEntity<PublicCheckResultResponse> checkResult(
             @RequestParam String phone,
             @RequestParam String submissionId) {
-        
-        log.info("Public check result request - phone: {}, submissionId: {}", phone, submissionId);
+
+        log.info("Public check result request - phoneSuffix: {}, submissionPrefix: {}",
+                maskPhoneSuffix(phone),
+                maskSubmissionPrefix(submissionId));
 
         try {
             UUID uuid = UUID.fromString(submissionId);
             PatientFormSubmission submission = submissionRepository.findById(uuid)
                     .orElse(null);
 
+            String normalizedInputPhone = normalizePhone(phone);
+            String normalizedSubmissionPhone = normalizePhone(submission == null ? null : submission.getPhone());
+
             // Validate submission exists and phone matches
             if (submission == null || 
-                !phone.equals(submission.getPhone()) ||
+                normalizedInputPhone == null ||
+                !normalizedInputPhone.equals(normalizedSubmissionPhone) ||
                 Boolean.TRUE.equals(submission.getIsDeleted())) {
-                log.warn("Submission not found or phone mismatch");
+                log.warn("Submission not found or phone mismatch for submissionPrefix: {}", maskSubmissionPrefix(submissionId));
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
 
@@ -109,5 +115,28 @@ public class PublicApiController {
         if (node == null || !node.has(fieldName)) return null;
         JsonNode fieldNode = node.get(fieldName);
         return fieldNode.isNull() ? null : fieldNode.asText();
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null) {
+            return null;
+        }
+        String normalized = phone.replaceAll("[^0-9+]", "").trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private String maskPhoneSuffix(String phone) {
+        String normalized = normalizePhone(phone);
+        if (normalized == null || normalized.length() < 4) {
+            return "****";
+        }
+        return "****" + normalized.substring(normalized.length() - 4);
+    }
+
+    private String maskSubmissionPrefix(String submissionId) {
+        if (submissionId == null || submissionId.isBlank()) {
+            return "unknown";
+        }
+        return submissionId.substring(0, Math.min(8, submissionId.length()));
     }
 }

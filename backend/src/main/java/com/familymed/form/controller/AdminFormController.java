@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -43,6 +44,11 @@ public class AdminFormController {
     public ResponseEntity<Void> deleteForm(@PathVariable UUID id) {
         formService.deleteForm(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/duplicate")
+    public ResponseEntity<DiagnosticFormDTO> duplicateForm(@PathVariable UUID id) {
+        return ResponseEntity.ok(formService.duplicateForm(id));
     }
 
     @PostMapping("/{id}/versions")
@@ -90,6 +96,24 @@ public class AdminFormController {
     public ResponseEntity<Void> deleteQuestion(@PathVariable UUID questionId) {
         formService.deleteQuestion(questionId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/questions/group-config")
+    public ResponseEntity<Map<String, Object>> bulkUpdateQuestionGroupConfig(
+            @RequestBody BulkQuestionGroupUpdateRequest request) {
+        try {
+            int updated = formService.bulkUpdateQuestionGroupConfig(request);
+            return ResponseEntity.ok(Map.of(
+                    "updatedCount", updated,
+                    "message", "Bulk group config updated"
+            ));
+        } catch (Exception e) {
+            // Log the exception with request details
+            org.slf4j.LoggerFactory.getLogger(AdminFormController.class)
+                    .error("Error in bulkUpdateQuestionGroupConfig - Request: {}, Error: {}", 
+                            request, e.getMessage(), e);
+            throw e;
+        }
     }
 
     @PostMapping("/questions/{questionId}/options")

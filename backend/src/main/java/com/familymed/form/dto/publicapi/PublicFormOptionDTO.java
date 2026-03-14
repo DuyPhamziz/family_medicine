@@ -14,4 +14,5 @@ public class PublicFormOptionDTO {
     private String label;
     private String value;
     private Integer orderIndex;
+    private String subFieldsConfig;
 }

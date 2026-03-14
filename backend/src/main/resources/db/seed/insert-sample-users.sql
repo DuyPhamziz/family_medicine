@@ -18,20 +18,20 @@ ON CONFLICT (email) DO NOTHING;
 
 -- Assign roles to users
 INSERT INTO user_roles (user_id, role_id)
-SELECT u.user_id, r.role_id 
-FROM users u, roles r 
+SELECT u.user_id, r.role_id
+FROM users u, roles r
 WHERE u.email = 'admin@familymed.vn' AND r.role_code = 'ADMIN'
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
 INSERT INTO user_roles (user_id, role_id)
-SELECT u.user_id, r.role_id 
-FROM users u, roles r 
+SELECT u.user_id, r.role_id
+FROM users u, roles r
 WHERE u.email = 'doctor@familymed.vn' AND r.role_code = 'DOCTOR'
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
 INSERT INTO user_roles (user_id, role_id)
-SELECT u.user_id, r.role_id 
-FROM users u, roles r 
+SELECT u.user_id, r.role_id
+FROM users u, roles r
 WHERE u.email = 'nurse@familymed.vn' AND r.role_code = 'NURSE'
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
@@ -59,7 +59,7 @@ BEGIN
     RETURNING section_id INTO v_section_id;
 
     INSERT INTO form_questions (section_id, question_text, question_type, question_order, is_required, created_at)
-    VALUES 
+    VALUES
     (v_section_id, 'Tuổi của bạn?', 'SINGLE_CHOICE', 1, true, NOW()),
     (v_section_id, 'Chỉ số BMI của bạn (kg/m²)?', 'SINGLE_CHOICE', 2, true, NOW()),
     (v_section_id, 'Vòng eo của bạn (cm)?', 'SINGLE_CHOICE', 3, true, NOW());
@@ -70,7 +70,7 @@ BEGIN
     RETURNING section_id INTO v_section_id;
 
     INSERT INTO form_questions (section_id, question_text, question_type, question_order, is_required, created_at)
-    VALUES 
+    VALUES
     (v_section_id, 'Bạn có tập thể dục thể thao ít nhất 30 phút mỗi ngày không?', 'BOOLEAN', 1, true, NOW()),
     (v_section_id, 'Bạn có ăn rau hoặc trái cây mỗi ngày không?', 'BOOLEAN', 2, true, NOW()),
     (v_section_id, 'Bạn có từng dùng thuốc hạ huyết áp không?', 'BOOLEAN', 3, true, NOW()),
@@ -82,8 +82,7 @@ BEGIN
     RETURNING section_id INTO v_section_id;
 
     INSERT INTO form_questions (section_id, question_text, question_type, question_order, is_required, created_at)
-    VALUES 
+    VALUES
     (v_section_id, 'Có ai trong gia đình bạn bị tiểu đường không?', 'SINGLE_CHOICE', 1, true, NOW());
 
 END $$;
-

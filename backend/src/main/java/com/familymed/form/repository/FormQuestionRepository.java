@@ -11,5 +11,6 @@ import java.util.UUID;
 public interface FormQuestionRepository extends JpaRepository<FormQuestion, UUID> {
     List<FormQuestion> findBySection_SectionIdOrderByQuestionOrder(UUID sectionId);
     List<FormQuestion> findBySection_Form_FormId(UUID formId);
+    List<FormQuestion> findBySection_Form_FormIdAndGroupId(UUID formId, String groupId);
 }
 

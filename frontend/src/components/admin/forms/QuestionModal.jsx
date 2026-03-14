@@ -7,6 +7,8 @@ const QUESTION_TYPES = [
   "BOOLEAN",
   "SINGLE_CHOICE",
   "MULTIPLE_CHOICE",
+  "SINGLE_CHOICE_WITH_SUBFIELDS",
+  "MULTIPLE_CHOICE_WITH_SUBFIELDS",
 ];
 
 const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeSectionId }) => {
@@ -19,6 +21,7 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
     minValue: "",
     maxValue: "",
     options: "",
+    subFieldsConfig: "",
     required: true,
     questionOrder: 1,
     helpText: "",
@@ -27,6 +30,12 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
 
   useEffect(() => {
     if (initialData) {
+      // Build subFieldsConfig from optionItems if available
+      let subFieldsConfigStr = "";
+      if (initialData.optionItems && initialData.optionItems.length > 0 && initialData.optionItems[0].subFieldsConfig) {
+        subFieldsConfigStr = initialData.optionItems[0].subFieldsConfig;
+      }
+      
       setQuestionData({
         questionCode: initialData.questionCode || "",
         questionText: initialData.questionText || "",
@@ -36,6 +45,7 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
         minValue: initialData.minValue ?? "",
         maxValue: initialData.maxValue ?? "",
         options: (initialData.optionItems || []).map((opt) => opt.optionText).join("\n"),
+        subFieldsConfig: subFieldsConfigStr,
         required: initialData.required !== false,
         questionOrder: initialData.questionOrder || 1,
         helpText: initialData.helpText || "",
@@ -43,6 +53,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
       });
       return;
     }
+    
+    // For new questions, use auto-calculated order if available
+    const autoOrder = initialData?.questionOrder || 1;
     setQuestionData({
       questionCode: "",
       questionText: "",
@@ -52,8 +65,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
       minValue: "",
       maxValue: "",
       options: "",
+      subFieldsConfig: "",
       required: true,
-      questionOrder: 1,
+      questionOrder: autoOrder,
       helpText: "",
       displayCondition: "",
     });
@@ -81,6 +95,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
       optionText: text,
       optionValue: text,
       optionOrder: index + 1,
+      subFieldsConfig: (questionData.questionType === "MULTIPLE_CHOICE_WITH_SUBFIELDS" || questionData.questionType === "SINGLE_CHOICE_WITH_SUBFIELDS")
+        ? (questionData.subFieldsConfig || null)
+        : null,
     }));
   };
 
@@ -100,7 +117,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
       displayCondition: questionData.displayCondition || null,
       options:
         questionData.questionType === "SINGLE_CHOICE" ||
-        questionData.questionType === "MULTIPLE_CHOICE"
+        questionData.questionType === "MULTIPLE_CHOICE" ||
+        questionData.questionType === "SINGLE_CHOICE_WITH_SUBFIELDS" ||
+        questionData.questionType === "MULTIPLE_CHOICE_WITH_SUBFIELDS"
           ? buildOptions()
           : [],
     });
@@ -256,7 +275,9 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
           </div>
 
           {(questionData.questionType === "SINGLE_CHOICE" ||
-            questionData.questionType === "MULTIPLE_CHOICE") && (
+            questionData.questionType === "MULTIPLE_CHOICE" ||
+            questionData.questionType === "SINGLE_CHOICE_WITH_SUBFIELDS" ||
+            questionData.questionType === "MULTIPLE_CHOICE_WITH_SUBFIELDS") && (
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-slate-700">Options (one per line)</label>
               <textarea
@@ -265,6 +286,25 @@ const QuestionModal = ({ open, onClose, onSubmit, initialData, sections, activeS
                 onChange={handleChange}
                 rows="4"
                 className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+              />
+            </div>
+          )}
+
+          {(questionData.questionType === "MULTIPLE_CHOICE_WITH_SUBFIELDS" || questionData.questionType === "SINGLE_CHOICE_WITH_SUBFIELDS") && (
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-slate-700">
+                Sub-fields config (JSON - áp dụng cho tất cả options)
+              </label>
+              <div className="text-xs text-slate-500 mt-1 mb-2">
+                Ví dụ: <code>[{'{'}"key":"year","label":"Năm tiêm","type":"NUMBER"{'}'}]</code>
+              </div>
+              <textarea
+                name="subFieldsConfig"
+                value={questionData.subFieldsConfig}
+                onChange={handleChange}
+                rows="3"
+                placeholder='[{"key":"year","label":"Năm tiêm","type":"NUMBER"},{"key":"notes","label":"Ghi chú","type":"TEXT"}]'
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 font-mono focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
               />
             </div>
           )}

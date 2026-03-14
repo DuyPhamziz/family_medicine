@@ -23,5 +23,11 @@ public class UpdateQuestionRequest {
     private String displayCondition;
     private Boolean allowAdditionalAnswers;
     private Integer maxAdditionalAnswers;
+    private String groupId;
+    private Boolean isRepeatableGroup;
+    private Boolean repeatGroupRoot;
+    private Integer maxRepeat;
+    private String labelAddButton;
+    private MatrixFamilyDiseaseConfigDTO matrixConfig;
     private List<CreateQuestionOptionRequest> options;
 }

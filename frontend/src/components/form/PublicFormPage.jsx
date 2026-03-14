@@ -331,7 +331,6 @@ export const PublicFormPage = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden mb-8">
-          {/* Form Header */}
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 px-6 sm:px-8 py-8 sm:py-12 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 rounded-2xl mb-4">
               <Heart className="w-8 h-8 text-white" />
@@ -421,7 +420,7 @@ export const PublicFormPage = () => {
                   }}
                   placeholder="Nguyễn Văn A"
                   required
-                  className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base placeholder-gray-400"
+                  className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base text-gray-900 placeholder-gray-400"
                 />
                 {fieldErrors.patientName && <p className="text-red-500 text-sm mt-1">{fieldErrors.patientName}</p>}
               </div>
@@ -442,7 +441,7 @@ export const PublicFormPage = () => {
                   }}
                   placeholder="your@email.com"
                   required
-                  className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base placeholder-gray-400"
+                  className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base text-gray-900 placeholder-gray-400"
                 />
                 {fieldErrors.email && <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>}
               </div>
@@ -463,7 +462,7 @@ export const PublicFormPage = () => {
                   }}
                   placeholder="0912345678"
                   required
-                  className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base placeholder-gray-400"
+                  className="w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base text-gray-900 placeholder-gray-400"
                 />
                 {fieldErrors.phone && <p className="text-red-500 text-sm mt-1">{fieldErrors.phone}</p>}
               </div>
@@ -478,14 +477,14 @@ export const PublicFormPage = () => {
               onSubmit={handleSubmit}
             />
           </div>
-        </div>
 
-        {/* Help Section */}
-        <div className="bg-white rounded-xl shadow-md border border-blue-100 px-6 py-4 text-center">
-          <p className="text-sm text-gray-600">
-            Cần hỗ trợ? Liên hệ: <a href="tel:1900xxxx" className="text-blue-600 font-semibold hover:underline">1900 xxxx</a> hoặc{' '}
-            <a href="mailto:support@familymed.vn" className="text-blue-600 font-semibold hover:underline">support@familymed.vn</a>
-          </p>
+          {/* Help Section */}
+          <div className="bg-white rounded-xl shadow-md border border-blue-100 px-6 py-4 text-center">
+            <p className="text-sm text-gray-600">
+              Cần hỗ trợ? Liên hệ: <a href="tel:1900xxxx" className="text-blue-600 font-semibold hover:underline">1900 xxxx</a> hoặc{' '}
+              <a href="mailto:support@familymed.vn" className="text-blue-600 font-semibold hover:underline">support@familymed.vn</a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

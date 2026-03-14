@@ -24,6 +24,45 @@ const DoctorSubmissionResponse = () => {
   useEffect(() => {
     loadSubmission();
   }, [submissionId]);
+
+  const translateCodeValue = (value) => {
+    if (value === null || value === undefined) return '';
+    const str = String(value).trim();
+    if (!str) return '';
+
+    const map = {
+      YES: 'Có',
+      NO: 'Không',
+      TRUE: 'Có',
+      FALSE: 'Không',
+      GOOD: 'Tốt',
+      BAD: 'Kém',
+      WARNING: 'Cảnh báo',
+      NONE: 'Không',
+      HIGH: 'Cao',
+      MEDIUM: 'Trung bình',
+      LOW: 'Thấp',
+      POOR: 'Kém',
+      FAIR: 'Trung bình',
+      NORMAL: 'Bình thường',
+      VERY_GOOD: 'Rất tốt',
+      VERY_BAD: 'Rất kém',
+    };
+
+    return map[str.toUpperCase()] || str;
+  };
+
+  const formatAnswerValue = (value) => {
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item) => translateCodeValue(item)).join(', ');
+    }
+
+    return translateCodeValue(value);
+  };
   
   const loadSubmission = async () => {
     try {
@@ -132,7 +171,7 @@ const DoctorSubmissionResponse = () => {
                     <div key={qIdx} className="question-answer">
                       <div className="question-text">{q.questionText}</div>
                       <div className="answer-value">
-                        {Array.isArray(q.value) ? q.value.join(', ') : q.value}
+                        {formatAnswerValue(q.value)}
                       </div>
                     </div>
                   ))}

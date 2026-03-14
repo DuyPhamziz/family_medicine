@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api from "../../../service/api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import MessageDialog from "../../../components/common/MessageDialog";
@@ -22,6 +22,191 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+
+const SUB_FIELDS_CONFIG_TEMPLATES = [
+  {
+    id: "vaccine-basic",
+    label: "Mau vaccin co ban",
+    description: "Nam tiem va ghi chu",
+    config: [
+      { key: "year", label: "Nam tiem", type: "NUMBER", placeholder: "Vi du: 2024" },
+      { key: "notes", label: "Ghi chu", type: "TEXT", rows: 2, placeholder: "Neu can ghi them" },
+    ],
+  },
+  {
+    id: "vaccine-advanced",
+    label: "Mau vaccin nang cao",
+    description: "Nam, loai vaccin, tinh trang mui",
+    config: [
+      { key: "year", label: "Nam tiem", type: "NUMBER", placeholder: "Vi du: 2024" },
+      {
+        key: "vaccine_type",
+        label: "Loai vaccin",
+        type: "SELECT",
+        options: [
+          { value: "PCV13", label: "PCV13" },
+          { value: "PPSV23", label: "PPSV23" },
+          { value: "other", label: "Khac" },
+        ],
+      },
+      {
+        key: "dose_status",
+        label: "Tinh trang mui tiem",
+        type: "SELECT",
+        options: [
+          { value: "completed", label: "Da du mui" },
+          { value: "incomplete", label: "Chua du mui" },
+        ],
+      },
+      { key: "notes", label: "Ghi chu", type: "TEXT", rows: 2 },
+    ],
+  },
+];
+
+const SUB_FIELD_TYPE_OPTIONS = [
+  { value: "TEXT", label: "Van ban" },
+  { value: "TEXTAREA", label: "Van ban dai" },
+  { value: "NUMBER", label: "So" },
+  { value: "DATE", label: "Ngay" },
+  { value: "SELECT", label: "Lua chon" },
+  { value: "BOOLEAN", label: "Co/Khong" },
+  { value: "SINGLE_CHOICE", label: "Chon 1" },
+  { value: "MULTIPLE_CHOICE", label: "Chon nhieu" },
+];
+
+const SUB_FIELDS_QUESTION_TYPES = ["MULTIPLE_CHOICE_WITH_SUBFIELDS", "SINGLE_CHOICE_WITH_SUBFIELDS"];
+
+const slugifySubFieldKey = (input) => {
+  return (input || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+};
+
+const parseSubFieldsConfig = (raw) => {
+  if (!raw || !raw.trim()) {
+    return [];
+  }
+  const parsed = JSON.parse(raw);
+  return Array.isArray(parsed) ? parsed : [];
+};
+
+const stringifySubFieldsConfig = (fields) => {
+  return JSON.stringify(fields, null, 2);
+};
+
+const createSubFieldRow = (field = {}, index = 0) => {
+  const fallbackIndex = index + 1;
+  return {
+    uiId: field.uiId || `sf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    key: field.key || `field_${fallbackIndex}`,
+    label: field.label || `Truong ${fallbackIndex}`,
+    type: field.type || "TEXT",
+    placeholder: field.placeholder || "",
+    rows: field.rows,
+    options: Array.isArray(field.options) ? field.options : [],
+  };
+};
+
+const sanitizeSubFieldRows = (rows) => {
+  return (rows || []).map((field, index) => {
+    const generatedKey = slugifySubFieldKey(field.key || field.label || `field_${index + 1}`) || `field_${index + 1}`;
+    return {
+      key: generatedKey,
+      label: field.label || `Truong ${index + 1}`,
+      type: field.type || "TEXT",
+      placeholder: field.placeholder || "",
+      rows: field.rows,
+      options: Array.isArray(field.options) ? field.options : undefined,
+    };
+  });
+};
+
+const parseOptionLines = (rawOptions) => {
+  return (rawOptions || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+};
+
+const stringifyOptionLines = (options) => {
+  return (options || []).map((item) => `${item || ""}`.trim()).filter(Boolean).join("\n");
+};
+
+const sanitizeDisplayCondition = (raw) => {
+  if (!raw || !raw.trim()) {
+    return "";
+  }
+
+  const pruneRuleNode = (node) => {
+    if (!node || typeof node !== "object") {
+      return null;
+    }
+
+    if (Array.isArray(node.AND)) {
+      const children = node.AND.map((child) => pruneRuleNode(child)).filter(Boolean);
+      return children.length > 0 ? { AND: children } : null;
+    }
+
+    if (Array.isArray(node.OR)) {
+      const children = node.OR.map((child) => pruneRuleNode(child)).filter(Boolean);
+      return children.length > 0 ? { OR: children } : null;
+    }
+
+    const questionCode = typeof node.questionCode === "string" ? node.questionCode.trim() : "";
+    const questionId = node.questionId || null;
+    if (!questionCode && !questionId) {
+      return null;
+    }
+
+    return {
+      ...node,
+      questionCode,
+      questionId,
+    };
+  };
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return "";
+    }
+
+    const cleaned = parsed
+      .map((entry) => {
+        if (!entry || typeof entry !== "object") {
+          return null;
+        }
+        const rules = pruneRuleNode(entry.rules);
+        if (!rules) {
+          return null;
+        }
+
+        return {
+          ...entry,
+          rules,
+        };
+      })
+      .filter(Boolean);
+
+    return cleaned.length > 0 ? JSON.stringify(cleaned) : "";
+  } catch {
+    return "";
+  }
+};
+
+const slugifyMatrixKey = (input) => {
+  return (input || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+};
 
 // Modal Overlay Component - Cải thiện UX
 const ModalOverlay = ({ isOpen, onClose, children, editingMode = false }) => {
@@ -204,7 +389,7 @@ const SortableSection = ({ section, children, onDeleteSection, onAddQuestion, on
 };
 
 // Sortable Question Component - Cải tiến drag-and-drop
-const SortableQuestion = ({ question, index, onEdit, onDelete }) => {
+const SortableQuestion = ({ question, index, onEdit, onDelete, selected, onToggleSelect, highlighted }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
     id: question.questionId,
   });
@@ -217,14 +402,28 @@ const SortableQuestion = ({ question, index, onEdit, onDelete }) => {
 
   return (
     <div
+      id={`question-${question.questionId}`}
       ref={setNodeRef}
       style={style}
       className={`border-2 rounded-xl p-4 transition-all duration-200 ${
-        isDragging ? "bg-slate-50 border-slate-300 shadow-lg" : isOver ? "border-teal-400 bg-teal-50" : "border-slate-200 bg-white hover:border-slate-300"
+        isDragging
+          ? "bg-slate-50 border-slate-300 shadow-lg"
+          : isOver
+            ? "border-teal-400 bg-teal-50"
+            : highlighted
+              ? "border-amber-400 bg-amber-50"
+              : "border-slate-200 bg-white hover:border-slate-300"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3 flex-1 min-w-0">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => onToggleSelect(question.questionId, e.target.checked)}
+            className="mt-3 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            title="Chọn câu hỏi để gán group hàng loạt"
+          />
           <button
             {...attributes}
             {...listeners}
@@ -237,6 +436,9 @@ const SortableQuestion = ({ question, index, onEdit, onDelete }) => {
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold flex-shrink-0">
                 <span>Q{index + 1}</span>
+                {question.questionCode && (
+                  <span className="font-extrabold">{question.questionCode}</span>
+                )}
               </span>
               <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-bold flex-shrink-0">
                 {question.questionType}
@@ -251,13 +453,25 @@ const SortableQuestion = ({ question, index, onEdit, onDelete }) => {
                   ➕ Trả lời thêm
                 </span>
               )}
+              {question.isRepeatableGroup && (
+                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold flex-shrink-0">
+                  🔁 Repeat group
+                </span>
+              )}
+              {question.groupId && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0">
+                  {question.groupId}
+                </span>
+              )}
             </div>
             <h4 className="text-base font-semibold text-slate-900 leading-snug mb-2">{question.questionText}</h4>
             {question.helpText && (
               <p className="text-sm text-slate-500 mb-2 italic">💡 {question.helpText}</p>
             )}
             {(question.questionType === "SINGLE_CHOICE" ||
-              question.questionType === "MULTIPLE_CHOICE") && (
+              question.questionType === "MULTIPLE_CHOICE" ||
+              question.questionType === "SINGLE_CHOICE_WITH_SUBFIELDS" ||
+              question.questionType === "MULTIPLE_CHOICE_WITH_SUBFIELDS") && (
               <p className="text-sm text-slate-600 bg-slate-50 px-3 py-2 rounded-lg mt-2">
                 📝 {(question.optionItems || []).map((option) => option.optionText).join(", ")}
               </p>
@@ -293,6 +507,7 @@ const SortableQuestion = ({ question, index, onEdit, onDelete }) => {
 const AdminQuestionManagement = () => {
   const { formId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [form, setForm] = useState(null);
   const [sections, setSections] = useState([]);
@@ -313,6 +528,13 @@ const AdminQuestionManagement = () => {
     title: "",
     description: "",
   });
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState([]);
+  const [bulkGroupConfig, setBulkGroupConfig] = useState({
+    groupId: "",
+    maxRepeat: "",
+    labelAddButton: "Thêm mục khác",
+    rootQuestionId: "",
+  });
 
   const [sectionData, setSectionData] = useState({
     sectionName: "",
@@ -328,9 +550,19 @@ const AdminQuestionManagement = () => {
     minValue: "",
     maxValue: "",
     options: "",
+    subFieldsConfig: "",
+    matrixRows: [],
+    matrixColumns: [],
+    matrixAllowAdditionalColumn: true,
+    matrixAllowAdditionalRow: true,
     required: true,
     allowAdditionalAnswers: false,
     maxAdditionalAnswers: "",
+    groupId: "",
+    isRepeatableGroup: false,
+    repeatGroupRoot: false,
+    maxRepeat: "",
+    labelAddButton: "",
     questionOrder: 1,
     helpText: "",
     displayCondition: "",
@@ -341,6 +573,10 @@ const AdminQuestionManagement = () => {
   
   // State cho scoring rules của question
   const [scoringRules, setScoringRules] = useState("");
+  const [showAdvancedSubFieldsJson, setShowAdvancedSubFieldsJson] = useState(false);
+  const [subFieldRows, setSubFieldRows] = useState([]);
+  const [optionDraft, setOptionDraft] = useState("");
+  const [highlightQuestionId, setHighlightQuestionId] = useState("");
 
   // Drag and Drop sensors
   const sensors = useSensors(
@@ -380,6 +616,287 @@ const AdminQuestionManagement = () => {
     );
   }, [sections]);
 
+  const allQuestions = useMemo(() => sections.flatMap((section) => section.questions || []), [sections]);
+
+  const selectedQuestions = useMemo(
+    () => allQuestions.filter((question) => selectedQuestionIds.includes(question.questionId)),
+    [allQuestions, selectedQuestionIds]
+  );
+
+  const subFieldsConfigState = useMemo(() => {
+    if (!SUB_FIELDS_QUESTION_TYPES.includes(questionData.questionType)) {
+      return { valid: true, message: "", fields: [] };
+    }
+
+    const raw = questionData.subFieldsConfig?.trim();
+    if (!raw) {
+      return {
+        valid: false,
+        message: "Ban chua nhap Sub-fields config. Bam 'Dung mau' de tao nhanh.",
+        fields: [],
+      };
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return { valid: false, message: "JSON phai la mang [].", fields: [] };
+      }
+
+      const invalidField = parsed.find(
+        (item) => !item || typeof item !== "object" || !item.key || !item.label || !item.type
+      );
+
+      if (invalidField) {
+        return {
+          valid: false,
+          message: "Moi field can co du 3 thuoc tinh: key, label, type.",
+          fields: [],
+        };
+      }
+
+      return { valid: true, message: "JSON hop le", fields: parsed };
+    } catch (error) {
+      return {
+        valid: false,
+        message: "JSON khong hop le. Kiem tra dau phay, dau ngoac, dau nhay kep.",
+        fields: [],
+      };
+    }
+  }, [questionData.questionType, questionData.subFieldsConfig]);
+
+  useEffect(() => {
+    if (!SUB_FIELDS_QUESTION_TYPES.includes(questionData.questionType)) {
+      setSubFieldRows([]);
+      return;
+    }
+
+    try {
+      const parsedRows = parseSubFieldsConfig(questionData.subFieldsConfig || "[]");
+      setSubFieldRows((prevRows) => {
+        return parsedRows.map((row, index) => {
+          const previous = prevRows[index];
+          return createSubFieldRow(
+            {
+              ...row,
+              uiId: previous?.uiId,
+            },
+            index
+          );
+        });
+      });
+    } catch (error) {
+      setSubFieldRows([]);
+    }
+  }, [questionData.questionType, questionData.subFieldsConfig]);
+
+  const applySubFieldsTemplate = (templateId) => {
+    const template = SUB_FIELDS_CONFIG_TEMPLATES.find((item) => item.id === templateId);
+    if (!template) return;
+
+    const nextRows = template.config.map((row, index) => createSubFieldRow(row, index));
+    setSubFieldRows(nextRows);
+    setQuestionData((prev) => ({
+      ...prev,
+      subFieldsConfig: stringifySubFieldsConfig(sanitizeSubFieldRows(nextRows)),
+    }));
+  };
+
+  const formatSubFieldsConfig = () => {
+    try {
+      const parsed = JSON.parse(questionData.subFieldsConfig || "[]");
+      setQuestionData((prev) => ({
+        ...prev,
+        subFieldsConfig: JSON.stringify(parsed, null, 2),
+      }));
+    } catch (error) {
+      setMessageDialog({
+        open: true,
+        title: "JSON chua dung",
+        description: "Khong the format vi JSON dang sai. Hay sua loi JSON truoc.",
+      });
+    }
+  };
+
+  const updateSubFieldsFromRows = (rows) => {
+    const normalizedRows = rows.map((row, index) => createSubFieldRow(row, index));
+    setSubFieldRows(normalizedRows);
+    setQuestionData((prev) => ({
+      ...prev,
+      subFieldsConfig: stringifySubFieldsConfig(sanitizeSubFieldRows(normalizedRows)),
+    }));
+  };
+
+  const addSubFieldRow = () => {
+    const nextIndex = subFieldRows.length + 1;
+    const nextRows = [
+      ...subFieldRows,
+      createSubFieldRow({
+        key: `field_${nextIndex}`,
+        label: `Truong ${nextIndex}`,
+        type: "TEXT",
+        placeholder: "",
+      }, nextIndex - 1),
+    ];
+    updateSubFieldsFromRows(nextRows);
+  };
+
+  const removeSubFieldRow = (index) => {
+    const nextRows = subFieldRows.filter((_, idx) => idx !== index);
+    updateSubFieldsFromRows(nextRows);
+  };
+
+  const updateSubFieldRow = (index, patch) => {
+    const nextRows = subFieldRows.map((row, idx) => {
+      if (idx !== index) {
+        return row;
+      }
+      return createSubFieldRow({ ...row, ...patch }, idx);
+    });
+    updateSubFieldsFromRows(nextRows);
+  };
+
+  const updateSelectOptions = (index, rawOptions) => {
+    const optionLines = (rawOptions || "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const options = optionLines.map((line) => ({ value: line, label: line }));
+    updateSubFieldRow(index, { options });
+  };
+
+  const addMatrixRow = () => {
+    const nextIndex = (questionData.matrixRows || []).length + 1;
+    const nextRows = [
+      ...(questionData.matrixRows || []),
+      { key: `disease_${nextIndex}`, label: `Benh ${nextIndex}` },
+    ];
+    setQuestionData((prev) => ({ ...prev, matrixRows: nextRows }));
+  };
+
+  const updateMatrixRow = (index, patch) => {
+    const nextRows = (questionData.matrixRows || []).map((row, idx) => {
+      if (idx !== index) return row;
+      const nextRow = { ...row, ...patch };
+      if (Object.prototype.hasOwnProperty.call(patch, "label") && (!nextRow.key || nextRow.key.startsWith("disease_"))) {
+        const generated = slugifyMatrixKey(nextRow.label);
+        if (generated) nextRow.key = generated;
+      }
+      return nextRow;
+    });
+    setQuestionData((prev) => ({ ...prev, matrixRows: nextRows }));
+  };
+
+  const removeMatrixRow = (index) => {
+    const nextRows = (questionData.matrixRows || []).filter((_, idx) => idx !== index);
+    setQuestionData((prev) => ({ ...prev, matrixRows: nextRows }));
+  };
+
+  const addMatrixColumn = () => {
+    const nextIndex = (questionData.matrixColumns || []).length + 1;
+    const nextColumns = [
+      ...(questionData.matrixColumns || []),
+      { key: `member_${nextIndex}`, label: `Thanh vien ${nextIndex}`, birth_year: null, relationship: "" },
+    ];
+    setQuestionData((prev) => ({ ...prev, matrixColumns: nextColumns }));
+  };
+
+  const updateMatrixColumn = (index, patch) => {
+    const nextColumns = (questionData.matrixColumns || []).map((col, idx) => {
+      if (idx !== index) return col;
+      const nextCol = { ...col, ...patch };
+      if (Object.prototype.hasOwnProperty.call(patch, "label") && (!nextCol.key || nextCol.key.startsWith("member_"))) {
+        const generated = slugifyMatrixKey(nextCol.label);
+        if (generated) nextCol.key = generated;
+      }
+      return nextCol;
+    });
+    setQuestionData((prev) => ({ ...prev, matrixColumns: nextColumns }));
+  };
+
+  const removeMatrixColumn = (index) => {
+    const nextColumns = (questionData.matrixColumns || []).filter((_, idx) => idx !== index);
+    setQuestionData((prev) => ({ ...prev, matrixColumns: nextColumns }));
+  };
+
+  const toggleQuestionSelect = (questionId, checked) => {
+    setSelectedQuestionIds((prev) => {
+      if (checked) {
+        return prev.includes(questionId) ? prev : [...prev, questionId];
+      }
+      return prev.filter((id) => id !== questionId);
+    });
+  };
+
+  const clearSelectedQuestions = () => {
+    setSelectedQuestionIds([]);
+    setBulkGroupConfig((prev) => ({
+      ...prev,
+      rootQuestionId: "",
+    }));
+  };
+
+  const applyBulkGroupConfig = async () => {
+    if (selectedQuestionIds.length === 0) {
+      setMessageDialog({
+        open: true,
+        title: "Chưa chọn câu hỏi",
+        description: "Hãy chọn ít nhất 1 câu hỏi để gán Group ID.",
+      });
+      return;
+    }
+
+    const fallbackGroupId = `grp_${Date.now()}`;
+    const sanitizedDisplayCondition = sanitizeDisplayCondition(questionData.displayCondition || "");
+    // Parse rootQuestionId as UUID or null
+    let rootId = null;
+    if (bulkGroupConfig.rootQuestionId && bulkGroupConfig.rootQuestionId.trim()) {
+      rootId = bulkGroupConfig.rootQuestionId.trim();
+    } else {
+      rootId = selectedQuestionIds[0];
+    }
+
+    // Handle maxRepeat - be careful with falsy values like 0
+    let maxRepeatValue = null;
+    if (bulkGroupConfig.maxRepeat !== "" && bulkGroupConfig.maxRepeat !== null && bulkGroupConfig.maxRepeat !== undefined) {
+      const parsed = Number(bulkGroupConfig.maxRepeat);
+      if (!isNaN(parsed) && parsed > 0) {
+        maxRepeatValue = parsed;
+      }
+    } else {
+      // Default to 3 if not specified
+      maxRepeatValue = 3;
+    }
+
+    const payload = {
+      questionIds: selectedQuestionIds,
+      groupId: bulkGroupConfig.groupId?.trim() || fallbackGroupId,
+      rootQuestionId: rootId,
+      displayCondition: sanitizedDisplayCondition || null,
+      labelAddButton: bulkGroupConfig.labelAddButton?.trim() || "Thêm mục khác",
+    };
+
+    console.log("Bulk group config payload:", payload); // Debug log
+
+    try {
+      const response = await api.put("/api/forms/admin/questions/group-config", payload);
+      await loadFormData();
+      clearSelectedQuestions();
+      setMessageDialog({
+        open: true,
+        title: "Đã gán group thành công",
+        description: `Đã cập nhật ${response.data?.updatedCount || selectedQuestionIds.length} câu hỏi vào group ${payload.groupId}`,
+      });
+    } catch (error) {
+      setMessageDialog({
+        open: true,
+        title: "Không thể gán group",
+        description: error?.response?.data?.message || "Lỗi khi gán group hàng loạt.",
+      });
+    }
+  };
+
   const handleSectionChange = (e) => {
     const { name, value } = e.target;
     setSectionData((prev) => ({
@@ -390,23 +907,103 @@ const AdminQuestionManagement = () => {
 
   const handleQuestionChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setQuestionData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setQuestionData((prev) => {
+      const next = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+
+      if (name === "isRepeatableGroup" && checked && !next.groupId) {
+        next.groupId = buildDefaultGroupId(next.questionCode, next.questionText);
+      }
+
+      if (name === "questionCode" && next.isRepeatableGroup && !prev.groupId) {
+        next.groupId = buildDefaultGroupId(value, next.questionText);
+      }
+
+      return next;
+    });
+  };
+
+  const slugify = (input) => {
+    return (input || "")
+      .toString()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toLowerCase();
+  };
+
+  const buildDefaultGroupId = (questionCode, questionText) => {
+    const codePart = slugify(questionCode);
+    if (codePart) {
+      return `grp_${codePart}`;
+    }
+
+    const textPart = slugify(questionText);
+    if (textPart) {
+      return `grp_${textPart.substring(0, 24)}`;
+    }
+
+    return `grp_${Date.now()}`;
   };
 
   const buildOptionPayload = () => {
-    const lines = questionData.options
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+    const lines = parseOptionLines(questionData.options);
+
+    let normalizedSubFieldsConfig = null;
+    if (SUB_FIELDS_QUESTION_TYPES.includes(questionData.questionType)) {
+      try {
+        const parsed = sanitizeSubFieldRows(parseSubFieldsConfig(questionData.subFieldsConfig || "[]"));
+        normalizedSubFieldsConfig = parsed.length > 0 ? stringifySubFieldsConfig(parsed) : null;
+      } catch (error) {
+        normalizedSubFieldsConfig = questionData.subFieldsConfig || null;
+      }
+    }
 
     return lines.map((text, index) => ({
       optionText: text,
       optionValue: text,
       optionOrder: index + 1,
+      subFieldsConfig:
+        SUB_FIELDS_QUESTION_TYPES.includes(questionData.questionType)
+          ? normalizedSubFieldsConfig
+          : null,
     }));
+  };
+
+  const updateOptionList = (nextOptions) => {
+    setQuestionData((prev) => ({
+      ...prev,
+      options: stringifyOptionLines(nextOptions),
+    }));
+  };
+
+  const addChoiceOption = () => {
+    const normalized = optionDraft.trim();
+    if (!normalized) return;
+
+    const currentOptions = parseOptionLines(questionData.options);
+    updateOptionList([...currentOptions, normalized]);
+    setOptionDraft("");
+  };
+
+  const removeChoiceOption = (index) => {
+    const currentOptions = parseOptionLines(questionData.options);
+    updateOptionList(currentOptions.filter((_, idx) => idx !== index));
+  };
+
+  const updateChoiceOption = (index, value) => {
+    const currentOptions = parseOptionLines(questionData.options);
+    const next = currentOptions.map((item, idx) => (idx === index ? value : item));
+    updateOptionList(next);
+  };
+
+  const handleChoiceOptionDraftKeyDown = (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    addChoiceOption();
   };
 
   const resetQuestionForm = () => {
@@ -419,13 +1016,25 @@ const AdminQuestionManagement = () => {
       minValue: "",
       maxValue: "",
       options: "",
+      subFieldsConfig: "",
+      matrixRows: [],
+      matrixColumns: [],
+      matrixAllowAdditionalColumn: true,
+      matrixAllowAdditionalRow: true,
       required: true,
       allowAdditionalAnswers: false,
       maxAdditionalAnswers: "",
+      groupId: "",
+      isRepeatableGroup: false,
+      repeatGroupRoot: false,
+      maxRepeat: "",
+      labelAddButton: "",
       questionOrder: 1,
       helpText: "",
       displayCondition: "",
     });
+    setSubFieldRows([]);
+    setOptionDraft("");
     setConditionalRules([]);
     setScoringRules("");
     setEditingQuestion(null);
@@ -535,6 +1144,24 @@ const AdminQuestionManagement = () => {
       return;
     }
 
+    if (questionData.isRepeatableGroup && !questionData.groupId?.trim()) {
+      setMessageDialog({
+        open: true,
+        title: "Thiếu Group ID",
+        description: "Vui lòng nhập Group ID hoặc bấm nút tạo tự động.",
+      });
+      return;
+    }
+
+    if (SUB_FIELDS_QUESTION_TYPES.includes(questionData.questionType) && !subFieldsConfigState.valid) {
+      setMessageDialog({
+        open: true,
+        title: "Sub-fields config chua hop le",
+        description: subFieldsConfigState.message,
+      });
+      return;
+    }
+
     const payload = {
       questionCode: questionData.questionCode || undefined,
       questionOrder: Number(questionData.questionOrder) || 1,
@@ -549,12 +1176,32 @@ const AdminQuestionManagement = () => {
       maxAdditionalAnswers: questionData.allowAdditionalAnswers
         ? (questionData.maxAdditionalAnswers === "" ? null : Number(questionData.maxAdditionalAnswers))
         : null,
+      groupId: questionData.groupId?.trim() || null,
+      isRepeatableGroup: Boolean(questionData.isRepeatableGroup),
+      repeatGroupRoot: Boolean(questionData.isRepeatableGroup && questionData.repeatGroupRoot),
+      maxRepeat: questionData.isRepeatableGroup
+        ? (questionData.maxRepeat === "" ? null : Number(questionData.maxRepeat))
+        : null,
+      labelAddButton: questionData.isRepeatableGroup
+        ? (questionData.labelAddButton?.trim() || null)
+        : null,
       helpText: questionData.helpText || null,
       displayCondition: questionData.displayCondition || null,
+      matrixConfig:
+        questionData.questionType === "MATRIX_FAMILY_DISEASE"
+          ? {
+              // This matrix type is always user-driven at runtime.
+              rows: [],
+              columns: [],
+              allowAdditionalColumn: true,
+              allowAdditionalRow: true,
+            }
+          : null,
       options:
         questionData.questionType === "SINGLE_CHOICE" ||
         questionData.questionType === "MULTIPLE_CHOICE" ||
-        questionData.questionType === "SELECT_DROPDOWN"
+        questionData.questionType === "SELECT_DROPDOWN" ||
+        SUB_FIELDS_QUESTION_TYPES.includes(questionData.questionType)
           ? buildOptionPayload()
           : [],
     };
@@ -581,10 +1228,11 @@ const AdminQuestionManagement = () => {
       await loadFormData();
     } catch (error) {
       console.error("Error saving question:", error);
+      const backendMessage = error?.response?.data?.message;
       setMessageDialog({
         open: true,
         title: "Không thể lưu",
-        description: "Lỗi khi lưu câu hỏi.",
+        description: backendMessage || "Lỗi khi lưu câu hỏi.",
       });
     }
   };
@@ -620,15 +1268,83 @@ const AdminQuestionManagement = () => {
       options: (question.optionItems || [])
         .map((option) => option.optionText)
         .join("\n"),
+      subFieldsConfig: question.optionItems?.[0]?.subFieldsConfig || "",
+      matrixRows: question.matrixConfig?.rows || [],
+      matrixColumns: question.matrixConfig?.columns || [],
+      matrixAllowAdditionalColumn: question.matrixConfig?.allowAdditionalColumn !== false,
+      matrixAllowAdditionalRow: question.matrixConfig?.allowAdditionalRow !== false,
       required: question.required !== false,
       allowAdditionalAnswers: question.allowAdditionalAnswers === true,
       maxAdditionalAnswers: question.maxAdditionalAnswers ?? "",
+      groupId: question.groupId || "",
+      isRepeatableGroup: question.isRepeatableGroup === true,
+      repeatGroupRoot: question.repeatGroupRoot === true,
+      maxRepeat: question.maxRepeat ?? "",
+      labelAddButton: question.labelAddButton || "",
       questionOrder: question.questionOrder || 1,
       helpText: question.helpText || "",
       displayCondition: question.displayCondition || "",
     });
+    setOptionDraft("");
     setShowQuestionForm(true);
   };
+
+  useEffect(() => {
+    if (!sections.length) {
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const focusCodeRaw = params.get("focusCode");
+    const focusCode = (focusCodeRaw || "").trim().toUpperCase();
+
+    if (!focusCode) {
+      return;
+    }
+
+    let matchedSectionId = null;
+    let matchedQuestion = null;
+
+    for (const section of sections) {
+      const found = (section.questions || []).find(
+        (q) => (q.questionCode || "").trim().toUpperCase() === focusCode
+      );
+      if (found) {
+        matchedSectionId = section.sectionId;
+        matchedQuestion = found;
+        break;
+      }
+    }
+
+    if (!matchedQuestion) {
+      setMessageDialog({
+        open: true,
+        title: "Không tìm thấy câu hỏi",
+        description: `Không tìm thấy question code '${focusCodeRaw}' trong biểu mẫu này.`,
+      });
+      return;
+    }
+
+    setHighlightQuestionId(matchedQuestion.questionId);
+    setTimeout(() => {
+      const el = document.getElementById(`question-${matchedQuestion.questionId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 0);
+
+    handleEditQuestion(matchedSectionId, matchedQuestion);
+
+    const nextParams = new URLSearchParams(location.search);
+    nextParams.delete("focusCode");
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextParams.toString() ? `?${nextParams.toString()}` : "",
+      },
+      { replace: true }
+    );
+  }, [sections, location.search, location.pathname, navigate]);
 
   const handleDeleteQuestion = async (questionId) => {
     setConfirmDialog({
@@ -795,6 +1511,70 @@ const AdminQuestionManagement = () => {
         </button>
       </div>
 
+      {selectedQuestionIds.length > 0 && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-base font-bold text-emerald-800">
+              Gán Repeat Group hàng loạt ({selectedQuestionIds.length} câu hỏi)
+            </h3>
+            <button
+              type="button"
+              onClick={clearSelectedQuestions}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Bỏ chọn tất cả
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <input
+              type="text"
+              value={bulkGroupConfig.groupId}
+              onChange={(e) => setBulkGroupConfig((prev) => ({ ...prev, groupId: e.target.value }))}
+              placeholder="Group ID (vd: cancer_history)"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            />
+            <input
+              type="number"
+              min="1"
+              value={bulkGroupConfig.maxRepeat}
+              onChange={(e) => setBulkGroupConfig((prev) => ({ ...prev, maxRepeat: e.target.value }))}
+              placeholder="max_repeat"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            />
+            <input
+              type="text"
+              value={bulkGroupConfig.labelAddButton}
+              onChange={(e) => setBulkGroupConfig((prev) => ({ ...prev, labelAddButton: e.target.value }))}
+              placeholder="Label nút thêm"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            />
+            <select
+              value={bulkGroupConfig.rootQuestionId}
+              onChange={(e) => setBulkGroupConfig((prev) => ({ ...prev, rootQuestionId: e.target.value }))}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            >
+              <option value="">Root question (mặc định câu đầu)</option>
+              {selectedQuestions.map((question) => (
+                <option key={question.questionId} value={question.questionId}>
+                  {question.questionCode || question.questionId} - {question.questionText?.slice(0, 40)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={applyBulkGroupConfig}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Áp dụng cho câu đã chọn
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Questions List */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
         <SortableContext items={sections.map((s) => s.sectionId)} strategy={verticalListSortingStrategy}>
@@ -828,8 +1608,11 @@ const AdminQuestionManagement = () => {
                               key={question.questionId}
                               question={question}
                               index={index}
+                              highlighted={highlightQuestionId === question.questionId}
                               onEdit={() => handleEditQuestion(section.sectionId, question)}
                               onDelete={() => handleDeleteQuestion(question.questionId)}
+                              selected={selectedQuestionIds.includes(question.questionId)}
+                              onToggleSelect={toggleQuestionSelect}
                             />
                           ))
                         ) : (
@@ -1018,6 +1801,9 @@ const AdminQuestionManagement = () => {
                   <option value="NUMBER">Số</option>
                   <option value="SINGLE_CHOICE">Chọn 1</option>
                   <option value="MULTIPLE_CHOICE">Chọn nhiều</option>
+                  <option value="SINGLE_CHOICE_WITH_SUBFIELDS">Chọn 1 + trường phụ</option>
+                  <option value="MULTIPLE_CHOICE_WITH_SUBFIELDS">Chọn nhiều + trường phụ</option>
+                  <option value="MATRIX_FAMILY_DISEASE">Ma tran benh su gia dinh</option>
                   <option value="SELECT_DROPDOWN">Dropdown</option>
                   <option value="DATE">Ngày tháng</option>
                   <option value="BOOLEAN">Có/Không</option>
@@ -1087,20 +1873,276 @@ const AdminQuestionManagement = () => {
 
             {(questionData.questionType === "SINGLE_CHOICE" ||
               questionData.questionType === "MULTIPLE_CHOICE" ||
-              questionData.questionType === "SELECT_DROPDOWN") && (
+              questionData.questionType === "SELECT_DROPDOWN" ||
+              SUB_FIELDS_QUESTION_TYPES.includes(questionData.questionType)) && (
               <div>
-                <label htmlFor="options" className="block text-sm font-semibold text-slate-700 mb-2">
-                  Các lựa chọn (mỗi dòng 1 lựa chọn)
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Các lựa chọn
                 </label>
-                <textarea
-                  id="options"
-                  name="options"
-                  value={questionData.options}
-                  onChange={handleQuestionChange}
-                  rows="4"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none font-mono text-sm"
-                  placeholder="Lựa chọn A&#10;Lựa chọn B&#10;Lựa chọn C"
-                />
+                <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={optionDraft}
+                      onChange={(e) => setOptionDraft(e.target.value)}
+                      onKeyDown={handleChoiceOptionDraftKeyDown}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      placeholder="Nhập lựa chọn rồi bấm Enter"
+                    />
+                    <button
+                      type="button"
+                      onClick={addChoiceOption}
+                      className="px-3 py-2 text-sm rounded-lg border border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                    >
+                      + Thêm
+                    </button>
+                  </div>
+
+                  {parseOptionLines(questionData.options).length === 0 ? (
+                    <p className="text-xs text-slate-500">Chưa có lựa chọn.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {parseOptionLines(questionData.options).map((option, index) => (
+                        <div key={`option-${index}`} className="flex gap-2">
+                          <input
+                            type="text"
+                            value={option}
+                            onChange={(e) => updateChoiceOption(index, e.target.value)}
+                            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeChoiceOption(index)}
+                            className="px-3 py-2 text-xs rounded border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100"
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div>
+                    <label htmlFor="options" className="block text-xs font-semibold text-slate-600 mb-1">
+                      Nhập nhanh nhiều dòng (tuỳ chọn)
+                    </label>
+                    <textarea
+                      id="options"
+                      name="options"
+                      value={questionData.options}
+                      onChange={handleQuestionChange}
+                      rows="3"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                      placeholder="Lựa chọn A&#10;Lựa chọn B&#10;Lựa chọn C"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {SUB_FIELDS_QUESTION_TYPES.includes(questionData.questionType) && (
+              <div>
+                <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Cau hinh truong phu
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedSubFieldsJson((prev) => !prev)}
+                    className="px-3 py-1.5 text-xs rounded-full border border-slate-300 text-slate-700 bg-white hover:bg-slate-50"
+                  >
+                    {showAdvancedSubFieldsJson ? "An JSON nang cao" : "Mo JSON nang cao"}
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {SUB_FIELDS_CONFIG_TEMPLATES.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => applySubFieldsTemplate(template.id)}
+                      className="px-3 py-1.5 text-xs rounded-full border border-teal-300 text-teal-700 bg-teal-50 hover:bg-teal-100"
+                      title={template.description}
+                    >
+                      Dung mau: {template.label}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={addSubFieldRow}
+                    className="px-3 py-1.5 text-xs rounded-full border border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100"
+                  >
+                    + Them truong phu
+                  </button>
+                </div>
+
+                {subFieldRows.length === 0 ? (
+                  <div className="p-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-600">
+                    Chua co truong phu. Bam "Them truong phu" hoac dung mau de tao nhanh.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {subFieldRows.map((field, index) => (
+                      <div key={field.uiId} className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">Nhan hien thi</label>
+                            <input
+                              type="text"
+                              value={field.label || ""}
+                              onChange={(e) => updateSubFieldRow(index, { label: e.target.value })}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              placeholder="Vi du: Nam tiem"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">Ma truong (key)</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={field.key || ""}
+                                onChange={(e) => updateSubFieldRow(index, { key: e.target.value })}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                placeholder="year"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const generated = slugifySubFieldKey(field.label);
+                                  if (generated) {
+                                    updateSubFieldRow(index, { key: generated });
+                                  }
+                                }}
+                                className="px-2 py-2 text-xs rounded border border-slate-300 bg-white hover:bg-slate-100"
+                                title="Tao key tu nhan"
+                              >
+                                Tu dong
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">Loai du lieu</label>
+                            <select
+                              value={field.type || "TEXT"}
+                              onChange={(e) => updateSubFieldRow(index, { type: e.target.value })}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              {SUB_FIELD_TYPE_OPTIONS.map((typeOption) => (
+                                <option key={typeOption.value} value={typeOption.value}>{typeOption.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">Placeholder (tuy chon)</label>
+                            <input
+                              type="text"
+                              value={field.placeholder || ""}
+                              onChange={(e) => updateSubFieldRow(index, { placeholder: e.target.value })}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              placeholder="Goi y cho nguoi nhap"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">So dong textarea</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={field.rows || ""}
+                              onChange={(e) => {
+                                const nextRows = e.target.value === "" ? undefined : Number(e.target.value);
+                                updateSubFieldRow(index, { rows: nextRows });
+                              }}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              disabled={field.type !== "TEXT" && field.type !== "TEXTAREA"}
+                            />
+                          </div>
+                        </div>
+
+                        {(field.type === "SELECT" || field.type === "SINGLE_CHOICE" || field.type === "MULTIPLE_CHOICE") && (
+                          <div className="mt-3">
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">
+                              Danh sach lua chon (moi dong 1 gia tri)
+                            </label>
+                            <textarea
+                              rows="3"
+                              value={(field.options || []).map((opt) => opt?.value || opt?.label || "").filter(Boolean).join("\n")}
+                              onChange={(e) => updateSelectOptions(index, e.target.value)}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                              placeholder="PCV13&#10;PPSV23"
+                            />
+                          </div>
+                        )}
+
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => removeSubFieldRow(index)}
+                            className="px-3 py-1.5 text-xs rounded-md border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100"
+                          >
+                            Xoa truong nay
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {showAdvancedSubFieldsJson && (
+                  <div className="mt-3 space-y-2">
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={formatSubFieldsConfig}
+                        className="px-3 py-1.5 text-xs rounded-full border border-slate-300 text-slate-700 bg-slate-50 hover:bg-slate-100"
+                      >
+                        Format JSON
+                      </button>
+                    </div>
+                    <textarea
+                      id="subFieldsConfig"
+                      name="subFieldsConfig"
+                      value={questionData.subFieldsConfig}
+                      onChange={handleQuestionChange}
+                      rows="8"
+                      placeholder='[{"key":"year","label":"Nam tiem","type":"NUMBER"}]'
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none font-mono text-sm"
+                    />
+                  </div>
+                )}
+
+                <div className={`mt-2 text-sm ${subFieldsConfigState.valid ? "text-emerald-700" : "text-rose-700"}`}>
+                  {subFieldsConfigState.valid ? "JSON hop le" : subFieldsConfigState.message}
+                </div>
+
+                {subFieldsConfigState.valid && subFieldsConfigState.fields.length > 0 && (
+                  <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                    <p className="text-xs font-semibold text-slate-600 mb-2">Preview cho bac si</p>
+                    <div className="space-y-2">
+                      {subFieldsConfigState.fields.map((field) => (
+                        <div key={field.key} className="text-sm text-slate-700">
+                          <span className="font-semibold">{field.label}</span>
+                          <span className="text-slate-500"> ({field.type})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {questionData.questionType === "MATRIX_FAMILY_DISEASE" && (
+              <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-slate-700">Cau hinh matrix benh su gia dinh</h4>
+                </div>
+
+                <p className="text-xs text-slate-600">
+                  Loai cau hoi nay mac dinh de nguoi dung tu nhap danh sach benh va thanh vien gia dinh khi dien form. Admin khong can cau hinh san cot/hang.
+                </p>
               </div>
             )}
 
@@ -1121,6 +2163,27 @@ const AdminQuestionManagement = () => {
 
             {/* Conditional Rules Builder */}
             <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-slate-700">Dieu kien hien thi</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConditionalRules([]);
+                    setQuestionData((prev) => ({
+                      ...prev,
+                      displayCondition: "",
+                    }));
+                    setMessageDialog({
+                      open: true,
+                      title: "Da xoa dieu kien",
+                      description: "Tat ca dieu kien hien thi cua cau hoi nay da duoc xoa. Bam Cap nhat de luu.",
+                    });
+                  }}
+                  className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                >
+                  Xoa tat ca dieu kien
+                </button>
+              </div>
               <ConditionalRuleBuilder
                 questions={sections.flatMap(s => s.questions || [])}
                 value={conditionalRules}
@@ -1191,6 +2254,103 @@ const AdminQuestionManagement = () => {
                     placeholder="Ví dụ: 5"
                   />
                 </div>
+              )}
+            </div>
+
+            <div className="space-y-3 bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+              <div>
+                <label htmlFor="groupId" className="block text-sm font-semibold text-slate-700 mb-2">
+                  Group ID (repeat group)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="groupId"
+                    type="text"
+                    name="groupId"
+                    value={questionData.groupId}
+                    onChange={handleQuestionChange}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    placeholder="Ví dụ: cancer_history"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuestionData((prev) => ({
+                        ...prev,
+                        groupId: buildDefaultGroupId(prev.questionCode, prev.questionText),
+                      }));
+                    }}
+                    className="px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-100 text-sm font-semibold"
+                  >
+                    Tạo ID
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Các câu hỏi cùng Group ID sẽ được lặp cùng nhau.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="isRepeatableGroup"
+                  type="checkbox"
+                  name="isRepeatableGroup"
+                  checked={questionData.isRepeatableGroup}
+                  onChange={handleQuestionChange}
+                  className="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-2 focus:ring-emerald-500"
+                />
+                <label htmlFor="isRepeatableGroup" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
+                  Bật Repeatable Group
+                </label>
+              </div>
+
+              {questionData.isRepeatableGroup && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="repeatGroupRoot"
+                      type="checkbox"
+                      name="repeatGroupRoot"
+                      checked={questionData.repeatGroupRoot}
+                      onChange={handleQuestionChange}
+                      className="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <label htmlFor="repeatGroupRoot" className="text-sm font-semibold text-slate-700 cursor-pointer select-none">
+                      Là câu root của group
+                    </label>
+                  </div>
+
+                  <div>
+                    <label htmlFor="maxRepeat" className="block text-sm font-semibold text-slate-700 mb-2">
+                      max_repeat (để trống = không giới hạn)
+                    </label>
+                    <input
+                      id="maxRepeat"
+                      type="number"
+                      name="maxRepeat"
+                      value={questionData.maxRepeat}
+                      onChange={handleQuestionChange}
+                      min="1"
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                      placeholder="Ví dụ: 5"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="labelAddButton" className="block text-sm font-semibold text-slate-700 mb-2">
+                      Label nút thêm
+                    </label>
+                    <input
+                      id="labelAddButton"
+                      type="text"
+                      name="labelAddButton"
+                      value={questionData.labelAddButton}
+                      onChange={handleQuestionChange}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                      placeholder="Ví dụ: Thêm bệnh ung thư khác"
+                    />
+                  </div>
+                </>
               )}
             </div>
 

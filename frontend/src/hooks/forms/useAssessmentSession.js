@@ -61,47 +61,103 @@ const calculateAge = (dob) => {
     if (!currentAnswers) return true;
 
     try {
-      const conditions = JSON.parse(question.displayCondition);
-      const conditionList = Array.isArray(conditions) ? conditions : [conditions];
+      const parsed = JSON.parse(question.displayCondition);
 
-      return conditionList.some(cond => {
-        const targetQ = allQuestions.find(q => 
-          (cond.questionCode && q.questionCode === cond.questionCode) || 
+      const normalize = (v) => {
+        const s = String(v).trim().toUpperCase();
+        if (s === "ĐÃ TIÊM" || s === "CÓ" || s === "YES" || s === "TRUE") return "YES";
+        if (s === "CHƯA TIÊM" || s === "KHÔNG" || s === "NO" || s === "FALSE") return "NO";
+        return s;
+      };
+
+      const evaluateSimpleCondition = (cond) => {
+        const targetQ = allQuestions.find((q) =>
+          (cond.questionCode && q.questionCode === cond.questionCode) ||
           (cond.questionId && q.questionId === cond.questionId)
         );
-        
+
         if (!targetQ) return false;
         const targetValue = currentAnswers[`question_${targetQ.questionId}`];
         if (isEmpty(targetValue)) return false;
 
-        const normalize = (v) => {
-          const s = String(v).trim().toUpperCase();
-          if (s === "ĐÃ TIÊM" || s === "CÓ" || s === "YES" || s === "TRUE") return "YES";
-          if (s === "CHƯA TIÊM" || s === "KHÔNG" || s === "NO" || s === "FALSE") return "NO";
-          return s;
-        };
-
         const valStr = normalize(targetValue);
         const condVal = normalize(cond.value);
+        const op = String(cond.operator || "equals").toLowerCase();
 
         if (targetQ.questionType === "NUMBER") {
           const valNum = parseFloat(targetValue);
           const condNum = parseFloat(cond.value);
-          switch (cond.operator) {
-            case "lessThan": return valNum < condNum;
-            case "greaterThan": return valNum > condNum;
-            case "greaterThanOrEqual": return valNum >= condNum;
-            default: return valNum === condNum;
+          if (Number.isNaN(valNum) || Number.isNaN(condNum)) return false;
+
+          switch (op) {
+            case "lessthan":
+            case "less_than":
+              return valNum < condNum;
+            case "greaterthan":
+            case "greater_than":
+              return valNum > condNum;
+            case "greaterthanorequal":
+            case "greater_than_or_equal":
+              return valNum >= condNum;
+            case "lessthanorequal":
+            case "less_than_or_equal":
+              return valNum <= condNum;
+            default:
+              return valNum === condNum;
           }
         }
 
-        if (cond.operator === "in") {
+        if (op === "in") {
           const condArray = Array.isArray(cond.value) ? cond.value.map(normalize) : [condVal];
           return condArray.includes(valStr);
         }
 
+        if (op === "not_equals" || op === "notequals") {
+          return valStr !== condVal;
+        }
+
         return valStr === condVal;
-      });
+      };
+
+      const evaluateNode = (node) => {
+        if (!node) return true;
+
+        if (node.rules) {
+          return evaluateNode(node.rules);
+        }
+
+        if (Array.isArray(node)) {
+          // Legacy default for list: AND all conditions
+          return node.every((item) => evaluateNode(item));
+        }
+
+        if (Array.isArray(node.AND)) {
+          return node.AND.every((item) => evaluateNode(item));
+        }
+
+        if (Array.isArray(node.OR)) {
+          return node.OR.some((item) => evaluateNode(item));
+        }
+
+        if (node.NOT) {
+          return !evaluateNode(node.NOT);
+        }
+
+        if (Array.isArray(node.conditions)) {
+          const mode = String(node.operators || "AND").toUpperCase() === "OR" ? "OR" : "AND";
+          return mode === "OR"
+            ? node.conditions.some((item) => evaluateNode(item))
+            : node.conditions.every((item) => evaluateNode(item));
+        }
+
+        if (node.questionCode || node.questionId) {
+          return evaluateSimpleCondition(node);
+        }
+
+        return true;
+      };
+
+      return evaluateNode(parsed);
     } catch (e) { return true; }
   };
 

@@ -1,5 +1,5 @@
 // components/form/DynamicFormRenderer.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useConditionalLogic } from '../../hooks/system/useConditionalLogic';
 import { useFormAutosave } from '../../hooks/system/useFormAutosave';
 import { Send, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -7,6 +7,7 @@ import { formatToVietnamese, toDateInputValue, formatVietnameseLong, getAgeFromD
 import { convertValue } from '../../utils/unitConverter';
 import { validateMedicalValue, classifyBloodPressure, classifyBMI, getValidationStyles } from '../../utils/medicalValidation';
 import MedicalHistoryComponent from './MedicalHistoryComponent';
+import { MatrixDiseaseQuestion } from './MatrixDiseaseQuestion';
 
 const EMPTY_ANSWERS = {};
 
@@ -27,12 +28,58 @@ export const DynamicFormRenderer = ({
 }) => {
   
   const [answers, setAnswers] = useState(initialAnswers);
+  const [repeatGroups, setRepeatGroups] = useState({});
   const [errors, setErrors] = useState({});
   const [validationWarnings, setValidationWarnings] = useState({});
   const { evaluateConditions } = useConditionalLogic();
   const { loadDraft, clearDraft } = useFormAutosave(formId, answers);
   
   const [conditionalState, setConditionalState] = useState({});
+
+  const repeatGroupConfigs = useMemo(() => {
+    const configs = {};
+    if (!formSchema?.sections) {
+      return configs;
+    }
+
+    formSchema.sections.forEach((section, sectionIdx) => {
+      const sectionKey = section.sectionId || section.sectionCode || `section-${sectionIdx}`;
+      (section.questions || []).forEach((question) => {
+        if (!question.groupId || question.isRepeatableGroup !== true) {
+          return;
+        }
+
+        if (!configs[question.groupId]) {
+          configs[question.groupId] = {
+            groupId: question.groupId,
+            sectionKey,
+            rootQuestion: null,
+            childQuestions: [],
+            maxRepeat: question.maxRepeat ?? null,
+            labelAddButton: question.labelAddButton || 'Thêm mục khác',
+          };
+        }
+
+        if (question.repeatGroupRoot) {
+          configs[question.groupId].rootQuestion = question;
+          if (question.maxRepeat !== null && question.maxRepeat !== undefined) {
+            configs[question.groupId].maxRepeat = question.maxRepeat;
+          }
+          if (question.labelAddButton) {
+            configs[question.groupId].labelAddButton = question.labelAddButton;
+          }
+        } else {
+          configs[question.groupId].childQuestions.push(question);
+        }
+      });
+    });
+
+    Object.values(configs).forEach((config) => {
+      config.childQuestions.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+    });
+
+    return configs;
+  }, [formSchema]);
 
   const visibleQuestions = (formSchema?.sections || [])
     .flatMap(section => section.questions || [])
@@ -70,6 +117,18 @@ export const DynamicFormRenderer = ({
       setAnswers(initialAnswers);
     }
   }, [initialAnswers]);
+
+  useEffect(() => {
+    setRepeatGroups((prev) => {
+      const next = { ...prev };
+      Object.keys(repeatGroupConfigs).forEach((groupId) => {
+        if (!Array.isArray(next[groupId])) {
+          next[groupId] = [];
+        }
+      });
+      return next;
+    });
+  }, [repeatGroupConfigs]);
   
   useEffect(() => {
     // Recalculate conditional state whenever answers change
@@ -142,6 +201,117 @@ export const DynamicFormRenderer = ({
       }
     }
   };
+
+  const handleRepeatAnswerChange = (groupId, repeatIndex, questionCode, value) => {
+    setRepeatGroups((prev) => {
+      const groupEntries = Array.isArray(prev[groupId]) ? [...prev[groupId]] : [];
+      const entryIndex = groupEntries.findIndex((entry) => entry.repeatIndex === repeatIndex);
+      if (entryIndex === -1) {
+        groupEntries.push({ repeatIndex, answers: { [questionCode]: value } });
+      } else {
+        const currentEntry = groupEntries[entryIndex];
+        groupEntries[entryIndex] = {
+          ...currentEntry,
+          answers: {
+            ...(currentEntry.answers || {}),
+            [questionCode]: value,
+          },
+        };
+      }
+      return {
+        ...prev,
+        [groupId]: groupEntries,
+      };
+    });
+
+    const repeatKey = `${questionCode}__${groupId}__${repeatIndex}`;
+    if (errors[repeatKey]) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[repeatKey];
+        return updated;
+      });
+    }
+  };
+
+  const addRepeatGroupEntry = (groupId) => {
+    const config = repeatGroupConfigs[groupId];
+    if (!config) return;
+
+    setRepeatGroups((prev) => {
+      const current = Array.isArray(prev[groupId]) ? [...prev[groupId]] : [];
+      const nextRepeatIndex = current.length + 1;
+      if (config.maxRepeat !== null && config.maxRepeat !== undefined && nextRepeatIndex > config.maxRepeat) {
+        return prev;
+      }
+      current.push({ repeatIndex: nextRepeatIndex, answers: {} });
+      return {
+        ...prev,
+        [groupId]: current,
+      };
+    });
+  };
+
+  const removeRepeatGroupEntry = (groupId, repeatIndex) => {
+    setRepeatGroups((prev) => {
+      const current = Array.isArray(prev[groupId]) ? prev[groupId] : [];
+      const filtered = current.filter((entry) => entry.repeatIndex !== repeatIndex);
+      return {
+        ...prev,
+        [groupId]: filtered,
+      };
+    });
+  };
+
+  const isEmptyValue = (value) => {
+    if (value === undefined || value === null || value === '') {
+      return true;
+    }
+    if (Array.isArray(value)) {
+      return value.length === 0;
+    }
+    if (value && typeof value === 'object' && Array.isArray(value.selectedOptions)) {
+      return value.selectedOptions.length === 0;
+    }
+    // For MATRIX_FAMILY_DISEASE: if value object exists with matrix structure,
+    // it's valid even when empty (means "no diseases in family")
+    if (value && typeof value === 'object' && Array.isArray(value.matrix)) {
+      return false;
+    }
+    return false;
+  };
+
+  const buildSubmitAnswers = () => {
+    const payload = { ...answers };
+
+    Object.values(repeatGroupConfigs).forEach((config) => {
+      if (!config.childQuestions || config.childQuestions.length === 0) {
+        return;
+      }
+
+      config.childQuestions.forEach((question) => {
+        const entries = [];
+        const firstValue = answers[question.questionCode];
+        if (!isEmptyValue(firstValue)) {
+          entries.push({ repeatIndex: 0, value: firstValue });
+        }
+
+        const extras = Array.isArray(repeatGroups[config.groupId]) ? repeatGroups[config.groupId] : [];
+        extras.forEach((entry) => {
+          const nextValue = entry?.answers?.[question.questionCode];
+          if (!isEmptyValue(nextValue)) {
+            entries.push({ repeatIndex: entry.repeatIndex, value: nextValue });
+          }
+        });
+
+        if (entries.length > 0) {
+          payload[question.questionCode] = entries;
+        }
+      });
+    });
+
+    return payload;
+  };
   
   const validateForm = () => {
     const newErrors = {};
@@ -166,6 +336,34 @@ export const DynamicFormRenderer = ({
         if (isRequired && (!answers[question.questionCode] || answers[question.questionCode] === '')) {
           newErrors[question.questionCode] = `${question.questionText} is required`;
         }
+      });
+    });
+
+    Object.values(repeatGroupConfigs).forEach((config) => {
+      const extraEntries = Array.isArray(repeatGroups[config.groupId]) ? repeatGroups[config.groupId] : [];
+      if (extraEntries.length === 0) {
+        return;
+      }
+
+      config.childQuestions.forEach((question) => {
+        const questionKey = question.questionId || question.questionCode;
+        const state = conditionalState[questionKey];
+        if (state && !state.visible) {
+          return;
+        }
+
+        const isRequired = state ? state.required : question.required;
+        if (!isRequired || question.formulaExpression) {
+          return;
+        }
+
+        extraEntries.forEach((entry) => {
+          const value = entry?.answers?.[question.questionCode];
+          if (isEmptyValue(value)) {
+            const errorKey = `${question.questionCode}__${config.groupId}__${entry.repeatIndex}`;
+            newErrors[errorKey] = `${question.questionText} is required`;
+          }
+        });
       });
     });
     
@@ -193,7 +391,7 @@ export const DynamicFormRenderer = ({
     clearDraft();
     
     if (onSubmit) {
-      await onSubmit(answers);
+      await onSubmit(buildSubmitAnswers());
     }
   };
   
@@ -373,6 +571,102 @@ export const DynamicFormRenderer = ({
                 </div>
               );
             })}
+
+            {Object.values(repeatGroupConfigs)
+              .filter((config) => config.sectionKey === (section.sectionId || section.sectionCode || `section-${sectionIdx}`))
+              .map((config) => {
+                const extraEntries = Array.isArray(repeatGroups[config.groupId]) ? repeatGroups[config.groupId] : [];
+                const maxRepeat = config.maxRepeat;
+                const canAdd = !readOnly && (maxRepeat === null || maxRepeat === undefined || extraEntries.length < maxRepeat);
+
+                const hasVisibleChild = config.childQuestions.some((question) => {
+                  const questionKey = question.questionId || question.questionCode;
+                  const state = conditionalState[questionKey];
+                  return state ? state.visible : true;
+                });
+
+                if (!hasVisibleChild) {
+                  return null;
+                }
+
+                return (
+                  <div key={`repeat-group-${config.groupId}`} className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                    {extraEntries.map((entry) => (
+                      <div key={`repeat-entry-${config.groupId}-${entry.repeatIndex}`} className="space-y-3 rounded-lg border border-emerald-200 bg-white p-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-emerald-700">Nhóm lặp #{entry.repeatIndex + 1}</p>
+                          {!readOnly && (
+                            <button
+                              type="button"
+                              onClick={() => removeRepeatGroupEntry(config.groupId, entry.repeatIndex)}
+                              className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                            >
+                              Xóa nhóm này
+                            </button>
+                          )}
+                        </div>
+
+                        {config.childQuestions.map((question, childIdx) => {
+                          const questionKey = question.questionId || question.questionCode;
+                          const state = conditionalState[questionKey];
+                          const isVisible = state ? state.visible : true;
+                          const isRequired = state ? state.required : question.required;
+                          const isDisabled = state ? state.disabled : false;
+                          if (!isVisible) {
+                            return null;
+                          }
+
+                          const value = entry?.answers?.[question.questionCode];
+                          const errorKey = `${question.questionCode}__${config.groupId}__${entry.repeatIndex}`;
+
+                          return (
+                            <div
+                              key={`repeat-question-${question.questionId || question.questionCode || childIdx}`}
+                              className="rounded-lg border border-emerald-100 bg-white p-4"
+                            >
+                              <label className="mb-2 block text-sm font-semibold text-gray-800">
+                                {question.questionText}
+                                {isRequired && <span className="ml-1 text-red-500">*</span>}
+                              </label>
+
+                              {question.helpText && (
+                                <p className="mb-2 rounded-lg border-l-4 border-blue-300 bg-blue-50 px-3 py-2 text-xs text-gray-600">
+                                  {question.helpText}
+                                </p>
+                              )}
+
+                              {renderQuestionInput(
+                                question,
+                                value,
+                                (nextValue) => handleRepeatAnswerChange(config.groupId, entry.repeatIndex, question.questionCode, nextValue),
+                                isDisabled || Boolean(question.formulaExpression),
+                                readOnly
+                              )}
+
+                              {errors[errorKey] && (
+                                <div className="mt-2 flex items-center gap-2 rounded-lg border-l-4 border-red-500 bg-red-50 px-3 py-2 text-sm text-red-600">
+                                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                                  <p className="font-medium">{errors[errorKey]}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+
+                    {canAdd && (
+                      <button
+                        type="button"
+                        onClick={() => addRepeatGroupEntry(config.groupId)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+                      >
+                        + {config.labelAddButton || 'Thêm mục khác'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         </section>
       ))}
@@ -416,7 +710,7 @@ export const DynamicFormRenderer = ({
  */
 function renderQuestionInput(question, value, onChange, disabled, readOnly) {
   const questionType = question.questionType?.toUpperCase();
-  const inputClasses = "w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500";
+  const inputClasses = "w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none text-base text-gray-900 placeholder-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500";
   
   switch (questionType) {
     case 'TEXT':
@@ -566,6 +860,253 @@ function renderQuestionInput(question, value, onChange, disabled, readOnly) {
             );
           })}
         </div>
+      );
+      
+    case 'SINGLE_CHOICE_WITH_SUBFIELDS':
+    case 'MULTIPLE_CHOICE_WITH_SUBFIELDS':
+      // Value structure: { selectedOptions: [...], subFieldsData: {...} }
+      const currentValue = value && typeof value === 'object' ? value : { selectedOptions: [], subFieldsData: {} };
+      const selectedOpts = Array.isArray(currentValue.selectedOptions) ? currentValue.selectedOptions : [];
+      const subFieldsData = currentValue.subFieldsData || {};
+      const isSingleChoice = question.questionType === 'SINGLE_CHOICE_WITH_SUBFIELDS';
+      
+      return (
+        <div className="space-y-3">
+          {question.options?.map((option, idx) => {
+            const optionId = `${question.questionCode}-${idx}`;
+            const optionValue = option.optionValue || option.value || option.optionText || option.text;
+            const isChecked = selectedOpts.includes(optionValue);
+            
+            // Parse sub-fields config from option
+            let subFields = [];
+            try {
+              if (option.subFieldsConfig) {
+                subFields = typeof option.subFieldsConfig === 'string' 
+                  ? JSON.parse(option.subFieldsConfig) 
+                  : option.subFieldsConfig;
+              }
+            } catch (e) {
+              console.error('Failed to parse subFieldsConfig:', e);
+            }
+            
+            const optionSubData = subFieldsData[optionValue] || {};
+            
+            return (
+              <div key={`${question.questionCode}-${idx}`} className="border-2 border-gray-200 rounded-xl overflow-hidden">
+                {/* Main option */}
+                <label 
+                  htmlFor={optionId} 
+                  className={`flex items-center gap-3 p-4 transition-all duration-200 cursor-pointer ${
+                    isChecked 
+                      ? 'bg-blue-50 border-blue-500' 
+                      : 'bg-white hover:border-blue-300 hover:bg-blue-50'
+                  } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <input
+                    id={optionId}
+                    type={isSingleChoice ? 'radio' : 'checkbox'}
+                    name={question.questionCode}
+                    value={optionValue}
+                    checked={isChecked}
+                    onChange={(e) => {
+                      const newSelectedOpts = isSingleChoice ? [] : [...selectedOpts];
+                      const newSubFieldsData = { ...subFieldsData };
+                      
+                      if (e.target.checked) {
+                        if (isSingleChoice) {
+                          // Keep only selected option data for single-choice mode.
+                          Object.keys(newSubFieldsData).forEach((key) => delete newSubFieldsData[key]);
+                        }
+                        newSelectedOpts.push(optionValue);
+                        // Initialize sub-fields data if needed
+                        if (subFields.length > 0) {
+                          newSubFieldsData[optionValue] = {};
+                        }
+                      } else {
+                        const idx = newSelectedOpts.indexOf(optionValue);
+                        if (idx > -1) newSelectedOpts.splice(idx, 1);
+                        delete newSubFieldsData[optionValue];
+                      }
+                      
+                      onChange({
+                        selectedOptions: newSelectedOpts,
+                        subFieldsData: newSubFieldsData
+                      });
+                    }}
+                    disabled={disabled || readOnly}
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
+                  />
+                  <span className={`text-base font-medium ${isChecked ? 'text-blue-800' : 'text-gray-700'}`}>
+                    {option.optionText || option.text}
+                  </span>
+                </label>
+                
+                {/* Sub-fields (only show when checked) */}
+                {isChecked && subFields.length > 0 && (
+                  <div className="bg-gray-50 p-4 border-t-2 border-gray-200 space-y-3">
+                    {subFields.map((subField, sfIdx) => {
+                      const subFieldValue = optionSubData[subField.key] || '';
+                      const subFieldId = `${optionId}-sf-${sfIdx}`;
+                      
+                      return (
+                        <div key={sfIdx} className="space-y-1">
+                          <label htmlFor={subFieldId} className="block text-sm font-medium text-gray-700">
+                            {subField.label}
+                          </label>
+                          
+                          {subField.type === 'NUMBER' ? (
+                            <input
+                              id={subFieldId}
+                              type="number"
+                              value={subFieldValue}
+                              onChange={(e) => {
+                                const newSubFieldsData = { ...subFieldsData };
+                                if (!newSubFieldsData[optionValue]) {
+                                  newSubFieldsData[optionValue] = {};
+                                }
+                                newSubFieldsData[optionValue][subField.key] = e.target.value;
+                                
+                                onChange({
+                                  selectedOptions: selectedOpts,
+                                  subFieldsData: newSubFieldsData
+                                });
+                              }}
+                              disabled={disabled || readOnly}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all disabled:bg-gray-100 text-gray-900 placeholder-gray-400"
+                              placeholder={subField.placeholder || `Nhập ${subField.label.toLowerCase()}...`}
+                            />
+                          ) : subField.type === 'DATE' ? (
+                            <input
+                              id={subFieldId}
+                              type="date"
+                              value={subFieldValue}
+                              onChange={(e) => {
+                                const newSubFieldsData = { ...subFieldsData };
+                                if (!newSubFieldsData[optionValue]) {
+                                  newSubFieldsData[optionValue] = {};
+                                }
+                                newSubFieldsData[optionValue][subField.key] = e.target.value;
+                                
+                                onChange({
+                                  selectedOptions: selectedOpts,
+                                  subFieldsData: newSubFieldsData
+                                });
+                              }}
+                              disabled={disabled || readOnly}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all disabled:bg-gray-100 text-gray-900 placeholder-gray-400"
+                            />
+                          ) : (subField.type === 'SELECT' || subField.type === 'SINGLE_CHOICE' || subField.type === 'MULTIPLE_CHOICE') && subField.options ? (
+                            <select
+                              id={subFieldId}
+                              value={subFieldValue}
+                              onChange={(e) => {
+                                const newSubFieldsData = { ...subFieldsData };
+                                if (!newSubFieldsData[optionValue]) {
+                                  newSubFieldsData[optionValue] = {};
+                                }
+                                newSubFieldsData[optionValue][subField.key] = e.target.value;
+                                
+                                onChange({
+                                  selectedOptions: selectedOpts,
+                                  subFieldsData: newSubFieldsData
+                                });
+                              }}
+                              disabled={disabled || readOnly}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all disabled:bg-gray-100 text-gray-900"
+                            >
+                              <option value="">-- Chọn --</option>
+                              {(subField.options || []).map((opt, optIdx) => (
+                                <option key={optIdx} value={opt.value || opt}>
+                                  {opt.label || opt}
+                                </option>
+                              ))}
+                            </select>
+                          ) : subField.type === 'BOOLEAN' ? (
+                            <select
+                              id={subFieldId}
+                              value={subFieldValue}
+                              onChange={(e) => {
+                                const newSubFieldsData = { ...subFieldsData };
+                                if (!newSubFieldsData[optionValue]) {
+                                  newSubFieldsData[optionValue] = {};
+                                }
+                                newSubFieldsData[optionValue][subField.key] = e.target.value;
+
+                                onChange({
+                                  selectedOptions: selectedOpts,
+                                  subFieldsData: newSubFieldsData
+                                });
+                              }}
+                              disabled={disabled || readOnly}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all disabled:bg-gray-100 text-gray-900"
+                            >
+                              <option value="">-- Chọn --</option>
+                              <option value="true">Có</option>
+                              <option value="false">Không</option>
+                            </select>
+                          ) : subField.type === 'TEXT' ? (
+                            <input
+                              id={subFieldId}
+                              type="text"
+                              value={subFieldValue}
+                              onChange={(e) => {
+                                const newSubFieldsData = { ...subFieldsData };
+                                if (!newSubFieldsData[optionValue]) {
+                                  newSubFieldsData[optionValue] = {};
+                                }
+                                newSubFieldsData[optionValue][subField.key] = e.target.value;
+
+                                onChange({
+                                  selectedOptions: selectedOpts,
+                                  subFieldsData: newSubFieldsData
+                                });
+                              }}
+                              disabled={disabled || readOnly}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all disabled:bg-gray-100 text-gray-900 placeholder-gray-400"
+                              placeholder={subField.placeholder || `Nhập ${subField.label.toLowerCase()}...`}
+                            />
+                          ) : (
+                            <textarea
+                              id={subFieldId}
+                              value={subFieldValue}
+                              onChange={(e) => {
+                                const newSubFieldsData = { ...subFieldsData };
+                                if (!newSubFieldsData[optionValue]) {
+                                  newSubFieldsData[optionValue] = {};
+                                }
+                                newSubFieldsData[optionValue][subField.key] = e.target.value;
+                                
+                                onChange({
+                                  selectedOptions: selectedOpts,
+                                  subFieldsData: newSubFieldsData
+                                });
+                              }}
+                              disabled={disabled || readOnly}
+                              rows={subField.rows || 2}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all disabled:bg-gray-100 resize-y text-gray-900 placeholder-gray-400"
+                              placeholder={subField.placeholder || `Nhập ${subField.label.toLowerCase()}...`}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+
+    case 'MATRIX_FAMILY_DISEASE':
+      return (
+        <MatrixDiseaseQuestion
+          question={question}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          readOnly={readOnly}
+        />
       );
       
     case 'IMAGE_UPLOAD':

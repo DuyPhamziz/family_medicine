@@ -12,6 +12,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
@@ -32,6 +33,7 @@ public class DynamicExcelExportService {
     private final FormQuestionRepository questionRepository;
     private final HospitalTemplateRepository templateRepository;
     private final FormCalculationEngine calculationEngine;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Export submission theo form template động
@@ -104,7 +106,12 @@ public class DynamicExcelExportService {
             // Sheet 2: Kết quả khám (dynamic theo form template)
             createExaminationResultSheet(workbook, questions, answerMap, template);
 
-            // Sheet 3: Đánh giá sơ bộ
+            // Sheet 3: Ma trận phả hệ (nếu có MATRIX_FAMILY_DISEASE questions)
+            if (hasMatrixQuestions(questions)) {
+                createMatrixFamilyDiseaseSheet(workbook, questions, answerMap, template);
+            }
+
+            // Sheet 4: Đánh giá sơ bộ
             createAssessmentSheet(workbook, submission, questions, answerMap);
 
             workbook.write(out);
@@ -260,11 +267,17 @@ public class DynamicExcelExportService {
         }
 
         // Data rows (dynamic theo questions)
+        // Skip MATRIX_FAMILY_DISEASE questions - they have their own sheet
         CellStyle dataStyle = createDataStyle(workbook);
         int stt = 1;
         
         if (questions != null && !questions.isEmpty()) {
             for (FormQuestion question : questions) {
+                // Skip matrix questions - they are displayed in MA_TRAN_PHA_HE sheet
+                if (question.getQuestionType() == FormQuestion.QuestionType.MATRIX_FAMILY_DISEASE) {
+                    continue;
+                }
+                
                 Row dataRow = sheet.createRow(rowIndex++);
                 
                 // STT
@@ -282,7 +295,8 @@ public class DynamicExcelExportService {
                 Cell valueCell = dataRow.createCell(2);
                 String value = "-";
                 if (question.getQuestionCode() != null && answerMap.containsKey(question.getQuestionCode())) {
-                    value = answerMap.get(question.getQuestionCode());
+                    String rawValue = answerMap.get(question.getQuestionCode());
+                    value = formatAnswerValue(question, rawValue);
                 } 
                 valueCell.setCellValue(value != null ? value : "-");
                 valueCell.setCellStyle(dataStyle);
@@ -621,5 +635,358 @@ public class DynamicExcelExportService {
         template.setDepartment("Khoa Nội tổng quát");
         template.setAddress("123 Đường ABC, Quận XYZ");
         return template;
+    }
+
+    /**
+     * Check if form has any MATRIX_FAMILY_DISEASE questions
+     */
+    private boolean hasMatrixQuestions(List<FormQuestion> questions) {
+        return questions != null && questions.stream()
+                .anyMatch(q -> q.getQuestionType() == FormQuestion.QuestionType.MATRIX_FAMILY_DISEASE);
+    }
+
+    /**
+     * Format answer value based on question type
+     * Converts complex JSON structures to human-readable format
+     */
+    private String formatAnswerValue(FormQuestion question, String rawValue) {
+        if (rawValue == null || rawValue.isBlank() || rawValue.equals("null")) {
+            return "-";
+        }
+
+        // For SINGLE_CHOICE_WITH_SUBFIELDS and MULTIPLE_CHOICE_WITH_SUBFIELDS
+        if (question.getQuestionType() == FormQuestion.QuestionType.SINGLE_CHOICE_WITH_SUBFIELDS ||
+            question.getQuestionType() == FormQuestion.QuestionType.MULTIPLE_CHOICE_WITH_SUBFIELDS) {
+            
+            try {
+                // Parse the answer JSON
+                com.fasterxml.jackson.databind.JsonNode answerNode = objectMapper.readTree(rawValue);
+                
+                // Get selected options
+                com.fasterxml.jackson.databind.JsonNode selectedOptionsNode = answerNode.get("selectedOptions");
+                if (selectedOptionsNode == null || !selectedOptionsNode.isArray() || selectedOptionsNode.isEmpty()) {
+                    return "-";
+                }
+                
+                List<String> formattedParts = new ArrayList<>();
+                
+                // Build a map of option values to labels
+                Map<String, String> optionLabels = new HashMap<>();
+                if (question.getOptionItems() != null) {
+                    for (FormQuestionOption option : question.getOptionItems()) {
+                        String key = option.getOptionValue() != null ? option.getOptionValue() : option.getOptionText();
+                        optionLabels.put(key, option.getOptionText());
+                    }
+                }
+                
+                // Get subFieldsData
+                com.fasterxml.jackson.databind.JsonNode subFieldsDataNode = answerNode.get("subFieldsData");
+                
+                // Process each selected option
+                for (com.fasterxml.jackson.databind.JsonNode optionNode : selectedOptionsNode) {
+                    String optionKey = optionNode.asText();
+                    String optionLabel = optionLabels.getOrDefault(optionKey, optionKey);
+                    
+                    StringBuilder optionText = new StringBuilder(optionLabel);
+                    
+                    // If this option has sub-field data, append it
+                    if (subFieldsDataNode != null && subFieldsDataNode.has(optionKey)) {
+                        com.fasterxml.jackson.databind.JsonNode optionSubData = subFieldsDataNode.get(optionKey);
+                        
+                        List<String> subFieldValues = new ArrayList<>();
+                        optionSubData.fields().forEachRemaining(entry -> {
+                            String fieldKey = entry.getKey();
+                            String fieldValue = entry.getValue().asText();
+                            if (fieldValue != null && !fieldValue.isBlank()) {
+                                subFieldValues.add(fieldKey + ": " + fieldValue);
+                            }
+                        });
+                        
+                        if (!subFieldValues.isEmpty()) {
+                            optionText.append(" (").append(String.join(", ", subFieldValues)).append(")");
+                        }
+                    }
+                    
+                    formattedParts.add(optionText.toString());
+                }
+                
+                return String.join("; ", formattedParts);
+                
+            } catch (Exception e) {
+                // If parsing fails, return raw value
+                return rawValue;
+            }
+        }
+        
+        // For SINGLE_CHOICE, try to get label from options
+        if (question.getQuestionType() == FormQuestion.QuestionType.SINGLE_CHOICE) {
+            if (question.getOptionItems() != null) {
+                for (FormQuestionOption option : question.getOptionItems()) {
+                    String optionValue = option.getOptionValue() != null ? option.getOptionValue() : option.getOptionText();
+                    if (optionValue.equals(rawValue)) {
+                        return option.getOptionText();
+                    }
+                }
+            }
+        }
+        
+        // For MULTIPLE_CHOICE, try to parse as array and get labels
+        if (question.getQuestionType() == FormQuestion.QuestionType.MULTIPLE_CHOICE) {
+            try {
+                com.fasterxml.jackson.databind.JsonNode arrayNode = objectMapper.readTree(rawValue);
+                if (arrayNode.isArray()) {
+                    Map<String, String> optionLabels = new HashMap<>();
+                    if (question.getOptionItems() != null) {
+                        for (FormQuestionOption option : question.getOptionItems()) {
+                            String key = option.getOptionValue() != null ? option.getOptionValue() : option.getOptionText();
+                            optionLabels.put(key, option.getOptionText());
+                        }
+                    }
+                    
+                    List<String> labels = new ArrayList<>();
+                    for (com.fasterxml.jackson.databind.JsonNode node : arrayNode) {
+                        String value = node.asText();
+                        labels.add(optionLabels.getOrDefault(value, value));
+                    }
+                    return String.join(", ", labels);
+                }
+            } catch (Exception e) {
+                // Fall through to return raw value
+            }
+        }
+        
+        // For BOOLEAN type
+        if (question.getQuestionType() == FormQuestion.QuestionType.BOOLEAN) {
+            if ("true".equalsIgnoreCase(rawValue)) return "Có";
+            if ("false".equalsIgnoreCase(rawValue)) return "Không";
+        }
+        
+        // Default: return as-is
+        return rawValue;
+    }
+
+    /**
+     * Create sheet for MATRIX_FAMILY_DISEASE questions
+     * Displays family disease history as a proper table
+     */
+    private void createMatrixFamilyDiseaseSheet(
+            Workbook workbook,
+            List<FormQuestion> questions,
+            Map<String, String> answerMap,
+            HospitalTemplate template
+    ) {
+        // Filter for matrix questions only
+        List<FormQuestion> matrixQuestions = questions.stream()
+                .filter(q -> q.getQuestionType() == FormQuestion.QuestionType.MATRIX_FAMILY_DISEASE)
+                .collect(Collectors.toList());
+
+        if (matrixQuestions.isEmpty()) return;
+
+        Sheet sheet = workbook.createSheet("MA_TRAN_PHA_HE");
+
+        // Set wide columns for disease and family member names
+        sheet.setColumnWidth(0, 3000);  // STT
+        sheet.setColumnWidth(1, 6000);  // Bệnh
+        sheet.setColumnWidth(2, 5000);  // Thành viên
+        sheet.setColumnWidth(3, 4000);  // Có bệnh
+        sheet.setColumnWidth(4, 5000);  // Năm mắc
+        sheet.setColumnWidth(5, 4000);  // Đã mất
+
+        int rowIndex = 0;
+
+        // Hospital header
+        Row hospitalRow = sheet.createRow(rowIndex++);
+        Cell hospitalCell = hospitalRow.createCell(0);
+        String hospitalName = template != null && template.getHospitalName() != null 
+                ? template.getHospitalName() : "BỆNH VIỆN ĐA KHOA";
+        hospitalCell.setCellValue(hospitalName);
+        CellStyle hospitalStyle = createHospitalHeaderStyle(workbook);
+        hospitalCell.setCellStyle(hospitalStyle);
+        sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 5));
+
+        rowIndex++;
+
+        // Title
+        Row titleRow = sheet.createRow(rowIndex++);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue("MA TRẬN PHÁ HỆ BỆNH - LỊCH SỬ GIA ĐÌNH");
+        CellStyle titleStyle = createTitleStyleEnhanced(workbook);
+        titleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(rowIndex - 1, rowIndex - 1, 0, 5));
+
+        rowIndex++; // Space
+        rowIndex++; // Space
+
+        // Process each matrix question
+        int questionIdx = 1;
+        for (FormQuestion question : matrixQuestions) {
+            String questionCode = question.getQuestionCode();
+            String answerValue = answerMap.getOrDefault(questionCode, "{}");
+
+            try {
+                // Parse matrix data from JSON
+                MatrixData matrixData = objectMapper.readValue(answerValue, MatrixData.class);
+
+                // Section header
+                addSectionHeader(sheet, workbook, rowIndex++, 
+                        "Câu " + questionIdx + ": " + (question.getQuestionText() != null ? question.getQuestionText() : ""));
+                rowIndex++; // Space
+
+                // Table header
+                Row headerRow = sheet.createRow(rowIndex++);
+                CellStyle headerStyle = createHeaderStyle(workbook);
+
+                String[] headers = {"STT", "Bệnh", "Thành viên", "Có bệnh", "Năm mắc", "Đã mất"};
+                for (int i = 0; i < headers.length; i++) {
+                    Cell cell = headerRow.createCell(i);
+                    cell.setCellValue(headers[i]);
+                    cell.setCellStyle(headerStyle);
+                }
+
+                // Data rows
+                if (matrixData != null && matrixData.getMatrix() != null && !matrixData.getMatrix().isEmpty()) {
+                    CellStyle dataStyle = createDataStyle(workbook);
+                    int stt = 1;
+
+                    for (MatrixEntry entry : matrixData.getMatrix()) {
+                        Row dataRow = sheet.createRow(rowIndex++);
+
+                        // STT
+                        Cell sttCell = dataRow.createCell(0);
+                        sttCell.setCellValue(stt++);
+                        sttCell.setCellStyle(dataStyle);
+
+                        // Disease
+                        String diseaseLabel = "-";
+                        if (matrixData.getRows() != null) {
+                            MatrixItem disease = matrixData.getRows().stream()
+                                    .filter(r -> r.getKey().equals(entry.getRow()))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (disease != null) diseaseLabel = disease.getLabel();
+                        }
+                        Cell diseaseCell = dataRow.createCell(1);
+                        diseaseCell.setCellValue(diseaseLabel);
+                        diseaseCell.setCellStyle(dataStyle);
+
+                        // Family member
+                        String memberLabel = "-";
+                        String memberInfo = "";
+                        if (matrixData.getColumns() != null) {
+                            MatrixColumn column = matrixData.getColumns().stream()
+                                    .filter(c -> c.getKey().equals(entry.getColumn()))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (column != null) {
+                                memberLabel = column.getLabel();
+                                if (column.getRelationship() != null) {
+                                    memberInfo = " (" + column.getRelationship() + ")";
+                                }
+                                if (column.getBirth_year() != null) {
+                                    memberInfo += ", SN: " + column.getBirth_year();
+                                }
+                            }
+                        }
+                        Cell memberCell = dataRow.createCell(2);
+                        memberCell.setCellValue(memberLabel + memberInfo);
+                        memberCell.setCellStyle(dataStyle);
+
+                        // Has disease
+                        Cell hasCell = dataRow.createCell(3);
+                        hasCell.setCellValue(entry.isHas_disease() ? "Có" : "Không");
+                        hasCell.setCellStyle(dataStyle);
+
+                        // Year
+                        Cell yearCell = dataRow.createCell(4);
+                        yearCell.setCellValue(entry.getYear() != null ? String.valueOf(entry.getYear()) : "-");
+                        yearCell.setCellStyle(dataStyle);
+
+                        // Deceased status
+                        Cell deceasedCell = dataRow.createCell(5);
+                        deceasedCell.setCellValue(entry.getIs_deceased() != null && entry.getIs_deceased() ? "Có" : "Không");
+                        deceasedCell.setCellStyle(dataStyle);
+                    }
+                } else {
+                    // No data
+                    Row emptyRow = sheet.createRow(rowIndex++);
+                    Cell emptyCell = emptyRow.createCell(1);
+                    emptyCell.setCellValue("Chưa có dữ liệu");
+                    CellStyle dataStyle = createDataStyle(workbook);
+                    emptyCell.setCellStyle(dataStyle);
+                }
+
+                rowIndex += 2; // Space between questions
+                questionIdx++;
+
+            } catch (Exception e) {
+                // If parsing fails, show error
+                Row errorRow = sheet.createRow(rowIndex++);
+                Cell errorCell = errorRow.createCell(1);
+                errorCell.setCellValue("Lỗi đọc dữ liệu: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Helper classes for matrix data JSON parsing
+     */
+    public static class MatrixData {
+        private List<MatrixItem> rows;
+        private List<MatrixColumn> columns;
+        private List<MatrixEntry> matrix;
+
+        public List<MatrixItem> getRows() { return rows; }
+        public void setRows(List<MatrixItem> rows) { this.rows = rows; }
+
+        public List<MatrixColumn> getColumns() { return columns; }
+        public void setColumns(List<MatrixColumn> columns) { this.columns = columns; }
+
+        public List<MatrixEntry> getMatrix() { return matrix; }
+        public void setMatrix(List<MatrixEntry> matrix) { this.matrix = matrix; }
+    }
+
+    public static class MatrixItem {
+        private String key;
+        private String label;
+
+        public String getKey() { return key; }
+        public void setKey(String key) { this.key = key; }
+
+        public String getLabel() { return label; }
+        public void setLabel(String label) { this.label = label; }
+    }
+
+    public static class MatrixColumn extends MatrixItem {
+        private Integer birth_year;
+        private String relationship;
+
+        public Integer getBirth_year() { return birth_year; }
+        public void setBirth_year(Integer birth_year) { this.birth_year = birth_year; }
+
+        public String getRelationship() { return relationship; }
+        public void setRelationship(String relationship) { this.relationship = relationship; }
+    }
+
+    public static class MatrixEntry {
+        private String row;
+        private String column;
+        private boolean has_disease;
+        private Integer year;
+        private Boolean is_deceased;
+
+        public String getRow() { return row; }
+        public void setRow(String row) { this.row = row; }
+
+        public String getColumn() { return column; }
+        public void setColumn(String column) { this.column = column; }
+
+        public boolean isHas_disease() { return has_disease; }
+        public void setHas_disease(boolean has_disease) { this.has_disease = has_disease; }
+
+        public Integer getYear() { return year; }
+        public void setYear(Integer year) { this.year = year; }
+
+        public Boolean getIs_deceased() { return is_deceased; }
+        public void setIs_deceased(Boolean is_deceased) { this.is_deceased = is_deceased; }
     }
 }

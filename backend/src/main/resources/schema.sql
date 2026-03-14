@@ -115,7 +115,15 @@ ALTER TABLE diagnostic_forms
 
 ALTER TABLE form_questions
     ADD COLUMN IF NOT EXISTS allow_additional_answers BOOLEAN NOT NULL DEFAULT false,
-    ADD COLUMN IF NOT EXISTS max_additional_answers INTEGER;
+    ADD COLUMN IF NOT EXISTS max_additional_answers INTEGER,
+    ADD COLUMN IF NOT EXISTS group_id VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS is_repeatable_group BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS repeat_group_root BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS max_repeat INTEGER,
+    ADD COLUMN IF NOT EXISTS label_add_button VARCHAR(255);
+
+ALTER TABLE submission_answers
+    ADD COLUMN IF NOT EXISTS repeat_index INTEGER NOT NULL DEFAULT 0;
 
 ALTER TABLE patient_form_submissions
     DROP CONSTRAINT IF EXISTS patient_form_submissions_status_check;
@@ -187,4 +195,37 @@ CREATE TABLE IF NOT EXISTS public_form_rate_limits (
 CREATE INDEX IF NOT EXISTS idx_rate_limit_ip_date ON public_form_rate_limits(client_ip, submission_date);
 CREATE INDEX IF NOT EXISTS idx_rate_limit_form_id ON public_form_rate_limits(form_id);
 CREATE INDEX IF NOT EXISTS idx_rate_limit_blocked ON public_form_rate_limits(blocked);
+
+CREATE TABLE IF NOT EXISTS family_disease_matrix_config (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    question_id UUID NOT NULL UNIQUE,
+    rows_json TEXT,
+    columns_json TEXT,
+    allow_additional_column BOOLEAN NOT NULL DEFAULT false,
+    allow_additional_row BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_matrix_config_question FOREIGN KEY (question_id)
+        REFERENCES form_questions(question_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS answer_matrix (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    response_id UUID NOT NULL,
+    question_id UUID NOT NULL,
+    row_key VARCHAR(255) NOT NULL,
+    column_key VARCHAR(255) NOT NULL,
+    has_disease BOOLEAN NOT NULL DEFAULT false,
+    diagnosis_year INTEGER,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_answer_matrix_response FOREIGN KEY (response_id)
+        REFERENCES patient_form_submissions(submission_id) ON DELETE CASCADE,
+    CONSTRAINT fk_answer_matrix_question FOREIGN KEY (question_id)
+        REFERENCES form_questions(question_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_family_disease_matrix_config_question_id ON family_disease_matrix_config(question_id);
+CREATE INDEX IF NOT EXISTS idx_answer_matrix_response_id ON answer_matrix(response_id);
+CREATE INDEX IF NOT EXISTS idx_answer_matrix_question_id ON answer_matrix(question_id);
 
